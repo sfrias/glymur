@@ -355,7 +355,7 @@ class TestSuiteWrite(fixtures.MetadataBase):
                     data=data,
                     psizes=[(128, 128)] * 3,
                     cratios=[100, 20, 2],
-                    tilesize=(480, 640),
+                    tileshape=(480, 640),
                     cbsize=(32, 32))
 
             # Should be three layers.
@@ -388,7 +388,7 @@ class TestSuiteWrite(fixtures.MetadataBase):
         infile = opj_data_file('input/nonregression/Bretagne2.ppm')
         data = read_image(infile)
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            j = Jp2k(tfile.name, data=data, tilesize=(127, 127), prog="PCRL")
+            j = Jp2k(tfile.name, data=data, tileshape=(127, 127), prog="PCRL")
 
             codestream = j.get_codestream()
 

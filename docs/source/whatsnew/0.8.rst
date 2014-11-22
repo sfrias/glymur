@@ -7,4 +7,5 @@ Changes in 0.8.0
 
     * Simplified writing images by moving data and options into the
       constructor.  This is backwards-incompatible with 0.7.x.
+    * Tilesize parameter is now called tileshape.
     * Deprecated :py:meth:`read` method in favor of array-style slicing.

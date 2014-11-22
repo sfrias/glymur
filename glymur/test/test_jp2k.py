@@ -76,6 +76,24 @@ class SliceProtocolBase(unittest.TestCase):
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestSliceProtocolBaseWrite(SliceProtocolBase):
 
+    def test_basic_write_by_tile_2d(self):
+        data = self.j2k_data[:, :, 0].copy()
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            kwargs = {
+                    'shape': (800, 480),
+                    'tileshape': (400, 240)
+            }
+            with Jp2k(tfile.name, **kwargs) as jp2:
+                jp2[:400, :240] = data[:400, :240]
+                jp2[:400, 240:480] = data[:400, 240:480]
+                jp2[400:800, :240] = data[400:800, :240]
+                jp2[400:800, 240:480] = data[400:800, 240:480]
+
+            actual = Jp2k(tfile.name).read()
+            expected = data
+            import shutil; shutil.copyfile(tfile.name, '/Users/jevans/aa.jp2')
+            np.testing.assert_array_equal(actual, expected)
+
     def test_write_ellipsis(self):
         expected = self.j2k_data
 

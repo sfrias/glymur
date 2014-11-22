@@ -81,7 +81,8 @@ class Jp2k(Jp2kBox):
     (728, 1296, 3)
     """
 
-    def __init__(self, filename, data=None, shape=None, **kwargs):
+    def __init__(self, filename, data=None, shape=None, tileshape=None,
+                 **kwargs):
         """
         Only the filename parameter is required in order to read a JPEG 2000
         file.
@@ -94,6 +95,8 @@ class Jp2k(Jp2kBox):
             image data to be written
         shape : tuple
             size of image data, only required when image_data is not provided
+        tileshape : tuple, optional, default is same as shape
+            tile size
         cbsize : tuple, optional
             code block size (DY, DX)
         cinema2k : int, optional
@@ -134,9 +137,6 @@ class Jp2k(Jp2kBox):
             if true, write SOP marker before each packet
         subsam : tuple, optional
             subsampling factors (dy, dx)
-        tilesize : tuple, optional
-            numeric tuple specifying tile size in terms of (numrows, numcols),
-            not (X, Y)
         verbose : bool, optional
             print informational messages produced by the OpenJPEG library
         """
@@ -152,6 +152,11 @@ class Jp2k(Jp2kBox):
             self._shape = data.shape
         else:
             self._shape = shape
+
+        if tileshape is not None:
+            self._tileshape = tileshape
+        else:
+            self._tileshape = shape
 
         self._ignore_pclr_cmap_cdef = False
         self._verbose = False
@@ -250,6 +255,89 @@ class Jp2k(Jp2kBox):
         else:
             metadata.append(str(self.codestream))
         return '\n'.join(metadata)
+
+    def __enter__(self):
+        """
+        """
+        self._determine_colorspace()
+        self._populate_cparams()
+
+        #self._cparams.cp_fixed_quality = 1
+        #self._cparams.tcp_distoratio[0] = 20
+        # set cp_fixed_quality = 1 ??
+
+        self._num_tiles_per_row = np.ceil(self.shape[1] / self._tileshape[1])
+
+        if len(self.shape) == 2:
+            num_comps = 1
+        else:
+            num_comps = self.shape[2]
+
+        # Populate comptparms
+        # Only two precisions are possible.
+        #if img_array.dtype == np.uint8:
+        comp_prec = 8
+        #else:
+        #comp_prec = 16
+        
+        if len(self.shape) == 2:
+            numrows, numcols = self.shape
+            numcops = 1
+        else:
+            numrows, numcols, num_comps = self.shape
+        comptparms = (opj2.ImageComptParmType * num_comps)()
+
+        for j in range(num_comps):
+            comptparms[j].dx = self._cparams.subsampling_dx
+            comptparms[j].dy = self._cparams.subsampling_dy
+            comptparms[j].w = numcols
+            comptparms[j].h = numrows
+            comptparms[j].x0 = self._cparams.image_offset_x0
+            comptparms[j].y0 = self._cparams.image_offset_y0
+            comptparms[j].prec = comp_prec
+            comptparms[j].bpp = comp_prec
+            comptparms[j].sgnd = 0
+        self._comptparms = comptparms
+
+        self._codec = opj2.create_compress(self._cparams.codec_fmt)
+
+        num_tile_pixels = self._cparams.cp_tdx * self._cparams.cp_tdy
+        self._tile_size = num_tile_pixels * num_comps * comptparms[j].prec / 8
+
+        #self._image = opj2.image_tile_create(self._comptparms, self._colorspace)
+        self._image = opj2.image_create(self._comptparms, self._colorspace)
+
+        self._image.contents.x0 = 0
+        self._image.contents.y0 = 0
+        self._image.contents.x1 = self.shape[1]
+        self._image.contents.y1 = self.shape[0]
+
+        # Is this needed?
+        self._image.contents.color_space = self._colorspace
+
+        opj2.setup_encoder(self._codec, self._cparams, self._image)
+        self._stream = opj2.stream_create_default_file_stream(self.filename,
+                                                              False)
+        opj2.start_compress(self._codec, self._image, self._stream)
+
+        #print('cparams')
+        #print(self._cparams)
+        #print('comptparms[0]')
+        #print(self._comptparms[0])
+        #print('comptparms[1]')
+        #print(self._comptparms[1])
+        #print('comptparms[2]')
+        #print(self._comptparms[2])
+        #print('image')
+        #print(self._image[0])
+
+        return self
+
+    def __exit__(self, *pargs):
+        opj2.end_compress(self._codec, self._stream)
+        opj2.stream_destroy(self._stream)
+        opj2.destroy_codec(self._codec)
+        opj2.image_destroy(self._image)
 
     def parse(self):
         """Parses the JPEG 2000 file.
@@ -498,8 +586,27 @@ class Jp2k(Jp2kBox):
             msg += "in order to write images."
             raise RuntimeError(msg)
 
+        # What would the point of 1D images be?
+        if img_array.ndim == 1 or img_array.ndim > 3:
+            msg = "{0}D imagery is not allowed.".format(img_array.ndim)
+            raise IOError(msg)
+
+        if re.match("2.0.0", version.openjpeg_version) is not None:
+            if (((img_array.ndim != 2) and
+                 (img_array.shape[2] != 1 and img_array.shape[2] != 3))):
+                msg = "Writing images is restricted to single-channel "
+                msg += "greyscale images or three-channel RGB images when "
+                msg += "the OpenJPEG library version is the official 2.0.0 "
+                msg += "release."
+                raise IOError(msg)
+
+        if img_array.dtype != np.uint8 and img_array.dtype != np.uint16:
+            msg = "Only uint8 and uint16 datatypes are currently supported "
+            msg += "when writing."
+            raise RuntimeError(msg)
+
         self._determine_colorspace(**kwargs)
-        self._populate_cparams(img_array, **kwargs)
+        self._populate_cparams(**kwargs)
 
         if opj2.OPENJP2 is not None:
             self._write_openjp2(img_array, verbose=verbose)
@@ -944,6 +1051,52 @@ class Jp2k(Jp2kBox):
             #
             # Should have a slice object where start = stop = step = None
             self._write(data)
+
+        elif isinstance(index, tuple):
+
+            # determine what tile number to write to
+            rows, cols = index
+            if rows.start is None:
+                tr1 = 0
+            else:
+                tr1 = np.floor(rows.start / self._tileshape[0])
+            if rows.stop is None:
+                tr2 = np.floor(self._shape[0] / self._tileshape[0])
+            else:
+                tr2 = np.floor((rows.stop - 1) / self._tileshape[0])
+
+            if tr1 == tr2:
+                tile_row = tr1
+            else:
+                msg = "Slice arguments cannot cross tile boundaries."
+                raise IOError(msg)
+
+            if cols.start is None:
+                tc1 = 0
+            else:
+                tc1 = np.floor(cols.start / self._tileshape[1])
+            if rows.stop is None:
+                tc2 = np.floor(self._shape[1] / self._tileshape[1])
+            else:
+                tc2 = np.floor((cols.stop - 1) / self._tileshape[1])
+
+            if tc1 == tc2:
+                tile_col = tc1
+            else:
+                msg = "Slice arguments cannot cross tile boundaries."
+                raise IOError(msg)
+
+            num_tile_pixels = self._cparams.cp_tdx * self._cparams.cp_tdy
+            num_comps = len(self._shape)
+            if data.dtype == np.uint8:
+                nbytes = num_tile_pixels * num_comps
+            else:
+                nbytes = num_tile_pixels * num_comps * 2
+
+            tile_no = tile_row * self._num_tiles_per_row + tile_col
+            opj2.write_tile(self._codec, tile_no, data, nbytes, self._stream)
+            return
+
         else:
             msg = "Partial write operations are currently not allowed."
             raise TypeError(msg)

@@ -100,6 +100,9 @@ class TestWarnings(unittest.TestCase):
             Jp2k(jfile).get_codestream()
 
     def test_NR_gdal_fuzzer_assert_in_opj_j2k_read_SQcd_SQcc_patch_jp2(self):
+        """
+        QCC segment lists an impossible component number
+        """
         lst = ['input', 'nonregression',
                'gdal_fuzzer_assert_in_opj_j2k_read_SQcd_SQcc.patch.jp2']
         jfile = opj_data_file('/'.join(lst))

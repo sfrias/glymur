@@ -9,3 +9,4 @@ Changes in 0.8.0
       constructor.  This is backwards-incompatible with 0.7.x.
     * Tilesize parameter is now called tileshape.
     * Deprecated :py:meth:`read` method in favor of array-style slicing.
+    * Many TypeErrors changed to IOErrors

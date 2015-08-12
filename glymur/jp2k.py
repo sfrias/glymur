@@ -1093,6 +1093,7 @@ class Jp2k(Jp2kBox):
             else:
                 nbytes = num_tile_pixels * num_comps * 2
 
+            data = data.T.swapaxes(1,2).copy()
             tile_no = tile_row * self._num_tiles_per_row + tile_col
             opj2.write_tile(self._codec, tile_no, data, nbytes, self._stream)
             return

@@ -152,25 +152,49 @@ class TestSliceProtocolBaseWrite(SliceProtocolBase):
     def test_cannot_write_a_pixel(self):
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
             j = Jp2k(tfile.name, shape=self.j2k_data.shape)
-            with self.assertRaises(TypeError):
+            with self.assertRaises(IOError):
                 j[25, 35] = self.j2k_data[25, 35]
 
     def test_cannot_write_a_column(self):
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
             j = Jp2k(tfile.name, shape=self.j2k_data.shape)
-            with self.assertRaises(TypeError):
+            # Error message is related to lack of tileshape
+            with self.assertRaises(IOError):
+                j[:, 25, :] = self.j2k_data[:, :25, :]
+
+            # Repeat with tileshape defined
+            kwargs = {'shape': self.j2k_data.shape,
+                      'tileshape': self.j2k_data.shape}
+            j = Jp2k(tfile.name, **kwargs)
+            with self.assertRaises(IOError):
                 j[:, 25, :] = self.j2k_data[:, :25, :]
 
     def test_cannot_write_a_band(self):
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
             j = Jp2k(tfile.name, shape=self.j2k_data.shape)
-            with self.assertRaises(TypeError):
+            # Error message is related to lack of tileshape
+            with self.assertRaises(IOError):
+                j[:, :, 0] = self.j2k_data[:, :, 0]
+
+            # Repeat with tileshape defined
+            kwargs = {'shape': self.j2k_data.shape,
+                      'tileshape': self.j2k_data.shape}
+            j = Jp2k(tfile.name, **kwargs)
+            with self.assertRaises(IOError):
                 j[:, :, 0] = self.j2k_data[:, :, 0]
 
     def test_cannot_write_a_subarray(self):
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
             j = Jp2k(tfile.name, shape=self.j2k_data.shape)
-            with self.assertRaises(TypeError):
+            # Error message is related to lack of tileshape
+            with self.assertRaises(IOError):
+                j[:25, :45, :] = self.j2k_data[:25, :25, :]
+
+            # Repeat with tileshape defined
+            kwargs = {'shape': self.j2k_data.shape,
+                      'tileshape': self.j2k_data.shape}
+            j = Jp2k(tfile.name, **kwargs)
+            with self.assertRaises(IOError):
                 j[:25, :45, :] = self.j2k_data[:25, :25, :]
 
 

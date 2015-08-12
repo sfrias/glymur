@@ -9,7 +9,6 @@ License:  MIT
 
 import sys
 
-# Exitstack not found in contextlib in 2.7
 if sys.hexversion >= 0x03030000:
     from contextlib import ExitStack
     from itertools import filterfalse
@@ -156,7 +155,8 @@ class Jp2k(Jp2kBox):
         if tileshape is not None:
             self._tileshape = tileshape
         else:
-            self._tileshape = shape
+            self._tileshape = None
+            #self._tileshape = shape
 
         self._ignore_pclr_cmap_cdef = False
         self._verbose = False
@@ -1053,6 +1053,16 @@ class Jp2k(Jp2kBox):
             self._write(data)
 
         elif isinstance(index, tuple):
+
+            if len(index) > 2:
+                if self._tileshape is None:
+                    msg = ("Cannot write a portion of a JP2/J2K file unless "
+                           "tileshape is defined.") 
+                    raise IOError(msg)
+            if any(isinstance(x, int) for x in index):
+                msg = ("Cannot write to a single pixel, row, column, or "
+                       "band.")
+                raise IOError(msg)
 
             # determine what tile number to write to
             rows, cols = index

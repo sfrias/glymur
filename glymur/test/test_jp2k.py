@@ -76,7 +76,6 @@ class SliceProtocolBase(unittest.TestCase):
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestSliceProtocolBaseWrite(SliceProtocolBase):
 
-    @unittest.skip('not working')
     def test_basic_write_by_tile_2d(self):
         data = self.j2k_data[:, :, 0].copy()
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
@@ -92,7 +91,6 @@ class TestSliceProtocolBaseWrite(SliceProtocolBase):
 
             actual = Jp2k(tfile.name).read()
             expected = data
-            import shutil; shutil.copyfile(tfile.name, '/Users/jevans/aa.jp2')
             np.testing.assert_array_equal(actual, expected)
 
     def test_basic_write_by_tile_3d(self):

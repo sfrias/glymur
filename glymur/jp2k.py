@@ -248,16 +248,7 @@ class Jp2k(Jp2kBox):
         self._determine_colorspace()
         self._populate_cparams()
 
-        #self._cparams.cp_fixed_quality = 1
-        #self._cparams.tcp_distoratio[0] = 20
-        # set cp_fixed_quality = 1 ??
-
         self._num_tiles_per_row = np.ceil(self.shape[1] / self._tileshape[1])
-
-        if len(self.shape) == 2:
-            num_comps = 1
-        else:
-            num_comps = self.shape[2]
 
         # Populate comptparms
         # Only two precisions are possible.
@@ -268,7 +259,7 @@ class Jp2k(Jp2kBox):
         
         if len(self.shape) == 2:
             numrows, numcols = self.shape
-            numcops = 1
+            num_comps = 1
         else:
             numrows, numcols, num_comps = self.shape
         comptparms = (opj2.ImageComptParmType * num_comps)()
@@ -998,8 +989,13 @@ class Jp2k(Jp2kBox):
                        "band.")
                 raise IOError(msg)
 
+            if not hasattr(self, '_cparams'):
+                msg = ("Cannot write a partial image without using the "
+                       "context management protocol.")
+                raise IOError(msg)
+
             # determine what tile number to write to
-            rows, cols = index
+            rows, cols = index[0:2]
             if rows.start is None:
                 tr1 = 0
             else:
@@ -1031,13 +1027,22 @@ class Jp2k(Jp2kBox):
                 raise IOError(msg)
 
             num_tile_pixels = self._cparams.cp_tdx * self._cparams.cp_tdy
-            num_comps = len(self._shape)
+
+            if len(self._shape) == 3:
+                num_comps = 3
+            else:
+                num_comps = 1
+
             if data.dtype == np.uint8:
                 nbytes = num_tile_pixels * num_comps
             else:
                 nbytes = num_tile_pixels * num_comps * 2
 
-            data = data.T.swapaxes(1,2).copy()
+            # Must permute the image data to be band-interleaved, not
+            # pixel-interleaved.
+            if len(self.shape) > 2:
+                data = data.T.swapaxes(1,2).copy()
+
             tile_no = tile_row * self._num_tiles_per_row + tile_col
             opj2.write_tile(self._codec, tile_no, data, nbytes, self._stream)
             return

@@ -83,7 +83,6 @@ class SliceProtocolBase(unittest.TestCase):
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestSliceProtocolBaseWrite(SliceProtocolBase):
 
-    @unittest.skip('not working')
     def test_basic_write_by_tile_2d(self):
         data = self.j2k_data[:, :, 0].copy()
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
@@ -99,7 +98,6 @@ class TestSliceProtocolBaseWrite(SliceProtocolBase):
 
             actual = Jp2k(tfile.name).read()
             expected = data
-            import shutil; shutil.copyfile(tfile.name, '/Users/jevans/aa.jp2')
             np.testing.assert_array_equal(actual, expected)
 
     def test_basic_write_by_tile_3d(self):
@@ -1198,9 +1196,9 @@ class TestJp2kOpjDataRoot(unittest.TestCase):
         """Irreversible"""
         filename = opj_data_file('input/nonregression/issue141.rawl')
         expdata = np.fromfile(filename, dtype=np.uint16)
-        expdata.resize((2816, 2048))
+        expdata.resize((32, 2048))
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            j = Jp2k(tfile.name, data=expdata, irreversible=True)
+            j = Jp2k(tfile.name, data=expdata, irreversible=True, numres=5)
 
             codestream = j.get_codestream()
             self.assertEqual(codestream.segment[2].spcod[8],

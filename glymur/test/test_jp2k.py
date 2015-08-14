@@ -1,14 +1,6 @@
 """
 Tests for general glymur functionality.
 """
-# E1101:  assertWarns introduced in python 3.2
-# pylint: disable=E1101
-
-# R0904:  Not too many methods in unittest.
-# pylint: disable=R0904
-
-# E0611:  unittest.mock is unknown to python2.7/pylint
-# pylint: disable=E0611,F0401
 
 import doctest
 import os
@@ -47,9 +39,6 @@ from . import fixtures
 
 # Doc tests should be run as well.
 def load_tests(loader, tests, ignore):
-    # W0613:  "loader" and "ignore" are necessary for the protocol
-    # They are unused here, however.
-    # pylint: disable=W0613
 
     """Should run doc tests as well"""
     if os.name == "nt":
@@ -116,6 +105,19 @@ class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
             actual = Jp2k(tfile.name)[:]
             expected = data
             np.testing.assert_array_equal(actual, expected)
+
+    def test_precinct_size_too_small(self):
+        """first precinct size must be >= 2x that of the code block size"""
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                kwargs = {
+                        'shape': (640, 480, 3),
+                        'tileshape': (160, 120),
+                        'cbsize': (16, 16),
+                        'psizes': [(16, 16)]
+                }
+                with Jp2k(tfile.name, **kwargs) as jp2:
+                    jp2[:160, :120] = np.zeros((160, 120, 3), dtype=np.uint8)
 
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)

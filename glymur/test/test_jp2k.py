@@ -78,10 +78,10 @@ class SliceProtocolBase(unittest.TestCase):
         self.j2k_data_r5 = self.j2k[::32, ::32]
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
-@unittest.skipIf(re.match("1.5|2", glymur.version.openjpeg_version) is None,
-                 "Must have openjpeg 1.5 or higher to run")
+@unittest.skipIf(re.match("2.1", glymur.version.openjpeg_version) is None,
+                 "Must have openjpeg 2.1 or higher to run")
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
-class TestSliceProtocolBaseWrite(SliceProtocolBase):
+class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
 
     def test_basic_write_by_tile_2d(self):
         data = self.j2k_data[:, :, 0].copy()
@@ -96,7 +96,7 @@ class TestSliceProtocolBaseWrite(SliceProtocolBase):
                 jp2[400:800, :240] = data[400:800, :240]
                 jp2[400:800, 240:480] = data[400:800, 240:480]
 
-            actual = Jp2k(tfile.name).read()
+            actual = Jp2k(tfile.name)[:]
             expected = data
             np.testing.assert_array_equal(actual, expected)
 
@@ -116,6 +116,13 @@ class TestSliceProtocolBaseWrite(SliceProtocolBase):
             actual = Jp2k(tfile.name)[:]
             expected = data
             np.testing.assert_array_equal(actual, expected)
+
+
+@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
+@unittest.skipIf(re.match("1.5|2", glymur.version.openjpeg_version) is None,
+                 "Must have openjpeg 1.5 or higher to run")
+@unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
+class TestSliceProtocolBaseWrite(SliceProtocolBase):
 
     def test_write_ellipsis(self):
         expected = self.j2k_data

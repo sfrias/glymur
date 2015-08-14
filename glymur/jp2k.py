@@ -250,38 +250,15 @@ class Jp2k(Jp2kBox):
 
         self._num_tiles_per_row = np.ceil(self.shape[1] / self._tileshape[1])
 
-        # Populate comptparms
-        # Only two precisions are possible.
-        #if img_array.dtype == np.uint8:
-        comp_prec = 8
-        #else:
-        #comp_prec = 16
-        
-        if len(self.shape) == 2:
-            numrows, numcols = self.shape
-            num_comps = 1
-        else:
-            numrows, numcols, num_comps = self.shape
-        comptparms = (opj2.ImageComptParmType * num_comps)()
-
-        for j in range(num_comps):
-            comptparms[j].dx = self._cparams.subsampling_dx
-            comptparms[j].dy = self._cparams.subsampling_dy
-            comptparms[j].w = numcols
-            comptparms[j].h = numrows
-            comptparms[j].x0 = self._cparams.image_offset_x0
-            comptparms[j].y0 = self._cparams.image_offset_y0
-            comptparms[j].prec = comp_prec
-            comptparms[j].bpp = comp_prec
-            comptparms[j].sgnd = 0
-        self._comptparms = comptparms
+        self._populate_comptparms(comp_prec=8)
+        num_comps = len(self._comptparms)
 
         self._codec = opj2.create_compress(self._cparams.codec_fmt)
 
         num_tile_pixels = self._cparams.cp_tdx * self._cparams.cp_tdy
-        self._tile_size = num_tile_pixels * num_comps * comptparms[j].prec / 8
+        self._tile_size = num_tile_pixels * num_comps
+        self._tile_size *= self._comptparms[0].prec / 8
 
-        #self._image = opj2.image_tile_create(self._comptparms, self._colorspace)
         self._image = opj2.image_create(self._comptparms, self._colorspace)
 
         self._image.contents.x0 = 0
@@ -296,17 +273,6 @@ class Jp2k(Jp2kBox):
         self._stream = opj2.stream_create_default_file_stream(self.filename,
                                                               False)
         opj2.start_compress(self._codec, self._image, self._stream)
-
-        #print('cparams')
-        #print(self._cparams)
-        #print('comptparms[0]')
-        #print(self._comptparms[0])
-        #print('comptparms[1]')
-        #print(self._comptparms[1])
-        #print('comptparms[2]')
-        #print(self._comptparms[2])
-        #print('image')
-        #print(self._image[0])
 
         return self
 
@@ -603,7 +569,7 @@ class Jp2k(Jp2kBox):
                                           img_array.shape[1],
                                           1)
 
-        self._populate_comptparms(img_array)
+        self._populate_comptparms(img_array=img_array)
 
         with ExitStack() as stack:
             image = opj.image_create(self._comptparms, self._colorspace)
@@ -755,7 +721,7 @@ class Jp2k(Jp2kBox):
             numrows, numcols = img_array.shape
             img_array = img_array.reshape(numrows, numcols, 1)
 
-        self._populate_comptparms(img_array)
+        self._populate_comptparms(img_array=img_array)
 
         with ExitStack() as stack:
             image = opj2.image_create(self._comptparms, self._colorspace)
@@ -1642,7 +1608,7 @@ class Jp2k(Jp2kBox):
 
         return image
 
-    def _populate_comptparms(self, img_array):
+    def _populate_comptparms(self, img_array=None, comp_prec=None):
         """Instantiate and populate comptparms structure.
 
         This structure defines the image components.
@@ -1653,12 +1619,21 @@ class Jp2k(Jp2kBox):
             Image data to be written to file.
         """
         # Only two precisions are possible.
-        if img_array.dtype == np.uint8:
-            comp_prec = 8
-        else:
-            comp_prec = 16
+        if comp_prec is None and img_array is not None:
+            if img_array.dtype == np.uint8:
+                comp_prec = 8
+            else:
+                comp_prec = 16
 
-        numrows, numcols, num_comps = img_array.shape
+        if img_array is not None:
+            numrows, numcols, num_comps = img_array.shape
+        else:
+            if len(self._shape) == 2:
+                numrows, numcols = self._shape
+                num_comps = 1
+            else:
+                numrows, numcols, num_comps = self._shape
+
         if version.openjpeg_version_tuple[0] == 1:
             comptparms = (opj.ImageComptParmType * num_comps)()
         else:

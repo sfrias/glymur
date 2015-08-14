@@ -110,6 +110,19 @@ class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
             expected = data
             np.testing.assert_array_equal(actual, expected)
 
+    def test_precinct_size_too_small(self):
+        """first precinct size must be >= 2x that of the code block size"""
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                kwargs = {
+                        'shape': (640, 480, 3),
+                        'tileshape': (160, 120),
+                        'cbsize': (16, 16),
+                        'psizes': [(16, 16)]
+                }
+                with Jp2k(tfile.name, **kwargs) as jp2:
+                    jp2[:160, :120] = np.zeros((160, 120, 3), dtype=np.uint8)
+
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(re.match("1.5|2", glymur.version.openjpeg_version) is None,

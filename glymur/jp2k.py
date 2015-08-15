@@ -140,6 +140,8 @@ class Jp2k(Jp2kBox):
         Jp2kBox.__init__(self)
         self.filename = filename
 
+        self._kwargs = kwargs
+
         self.box = []
         self._codec_format = None
         self._colorspace = None
@@ -153,7 +155,6 @@ class Jp2k(Jp2kBox):
             self._tileshape = tileshape
         else:
             self._tileshape = None
-            #self._tileshape = shape
 
         self._ignore_pclr_cmap_cdef = False
         self._verbose = False
@@ -246,7 +247,7 @@ class Jp2k(Jp2kBox):
         """
         """
         self._determine_colorspace()
-        self._populate_cparams()
+        self._populate_cparams(**self._kwargs)
 
         self._num_tiles_per_row = np.ceil(self.shape[1] / self._tileshape[1])
 

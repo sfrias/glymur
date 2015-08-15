@@ -75,15 +75,18 @@ class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
     def test_basic_write_by_tile_2d(self):
         data = self.j2k_data[:, :, 0].copy()
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            height, width = (800, 480)
+            tile_height, tile_width = (400, 240)
             kwargs = {
-                    'shape': (800, 480),
-                    'tileshape': (400, 240)
+                    'shape': (height, width),
+                    'tileshape': (tile_height, tile_width)
             }
             with Jp2k(tfile.name, **kwargs) as jp2:
-                jp2[:400, :240] = data[:400, :240]
-                jp2[:400, 240:480] = data[:400, 240:480]
-                jp2[400:800, :240] = data[400:800, :240]
-                jp2[400:800, 240:480] = data[400:800, 240:480]
+                for r in range(0, height, tile_height):
+                    rows = slice(r, r + tile_height)
+                    for c in range(0, width, tile_width):
+                        cols = slice(c, c + tile_width)
+                        jp2[rows, cols] = data[rows, cols]
 
             actual = Jp2k(tfile.name)[:]
             expected = data
@@ -92,15 +95,18 @@ class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
     def test_basic_write_by_tile_3d(self):
         data = self.j2k_data[:].copy()
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            height, width = (800, 480)
+            tile_height, tile_width = (400, 240)
             kwargs = {
                     'shape': (800, 480, 3),
                     'tileshape': (400, 240)
             }
             with Jp2k(tfile.name, **kwargs) as jp2:
-                jp2[:400, :240] = data[:400, :240, :]
-                jp2[:400, 240:480] = data[:400, 240:480, :]
-                jp2[400:800, :240] = data[400:800, :240, :]
-                jp2[400:800, 240:480] = data[400:800, 240:480, :]
+                for r in range(0, height, tile_height):
+                    rows = slice(r, r + tile_height)
+                    for c in range(0, width, tile_width):
+                        cols = slice(c, c + tile_width)
+                        jp2[rows, cols] = data[rows, cols]
 
             actual = Jp2k(tfile.name)[:]
             expected = data

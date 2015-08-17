@@ -10,7 +10,7 @@ from .jp2box import (get_printoptions,
                      set_printoptions,
                      get_parseoptions,
                      set_parseoptions)
-
+from .tif2jp2 import tif2jp2
 from . import data
 
 
@@ -22,4 +22,4 @@ def runtests():
 
 
 __all__ = [__version__, Jp2k, get_printoptions, set_printoptions,
-           get_parseoptions, set_parseoptions, data, runtests]
+           get_parseoptions, set_parseoptions, data, runtests, tif2jp2]

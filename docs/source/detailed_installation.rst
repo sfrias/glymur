@@ -55,14 +55,21 @@ mac, linux, or Cygwin, and OpenJPEG is provided by your package manager.
 Testing
 '''''''
 
-It is not necessary, but you may wish to download OpenJPEG's test
-data for the purpose of configuring and running OpenJPEG's test
-suite.  Check their instructions on how to do that.  You can then
-set the **OPJ_DATA_ROOT** environment variable for the purpose of
-pointing Glymur to OpenJPEG's test suite. ::
+It is not necessary, but you may wish to download additional data from
+GitHub and remotesensing.org for the purpose of running more of Glymur's
+tests.::
 
-    $ git clone https://github.com/uclouvain/openjpeg-data.git
-    $ export OPJ_DATA_ROOT=`pwd`/openjpeg-data
+    $ git co https://github.com/uclouvain/openjpeg-data.git
+
+A set of TIFFs may be downloaded from
+ftp://ftp.remotesensing.org/pub/libtiff/pics-3.8.0.tar.gz
+
+You can then modify the glymur configuration file (creating it if it
+does not already exist) and add the following items ::
+
+    [testdata]
+    opj_data_root: /path/to/openjpeg-data
+    libtiffpic:  /path/to/libtiffpic-data
 
 In order to run the tests, you can either run them from within
 python as follows ... ::

@@ -40,7 +40,7 @@ from .core import (_COLORSPACE_MAP_DISPLAY, _COLOR_TYPE_MAP_DISPLAY,
                    ANY_ICC_PROFILE, VENDOR_COLOR_METHOD,
                    _Keydefaultdict)
 
-from . import _uuid_io
+from .tiffreader import Tiff
 
 
 _factory = lambda x: '{0} (invalid)'.format(x)
@@ -3438,24 +3438,28 @@ class UUIDBox(Jp2kBox):
 
         try:
             self._parse_raw_data()
-        except KeyError as error:
-            # Such as when an Exif tag is unrecognized.
-            warnings.warn(str(error))
-        except IOError as error:
-            # Such as when Exif byte order is unrecognized.
-            warnings.warn(str(error))
+        except IOError as err:
+            warnings.warn(str(err))
 
     def _parse_raw_data(self):
         """
         Private function for parsing UUID payloads if possible.
         """
         if self.uuid == UUID('be7acfcb-97a9-42e8-9c71-999491e3afac'):
-            self.data = _uuid_io.xml(self.raw_data)
+            if sys.hexversion < 0x03000000:
+                elt = ET.fromstring(self.raw_data)
+            else:
+                text = self.raw_data.decode('utf-8')
+                elt = ET.fromstring(text)
+            self.data = ET.ElementTree(elt)
+
         elif self.uuid == _GEOTIFF_UUID:
-            self.data = _uuid_io.tiff_header(self.raw_data)
+            self.data = Tiff(buffer=self.raw_data).ifd[0]
+
         elif self.uuid == _EXIF_UUID:
             # Cut off 'EXIF\0\0' part.
-            self.data = _uuid_io.tiff_header(self.raw_data[6:])
+            self.data = Tiff(buffer=self.raw_data[6:]).ifd[0]
+
         else:
             self.data = self.raw_data
 

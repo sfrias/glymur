@@ -633,12 +633,11 @@ class TestAppend(unittest.TestCase):
 
             jp2 = Jp2k(tfile.name)
 
-            # Make a UUID box.  Only XMP UUID boxes can currently be appended.
-            uuid_instance = UUID('00000000-0000-0000-0000-000000000000')
-            data = b'0123456789'
-            uuidbox = glymur.jp2box.UUIDBox(uuid_instance, data)
+            # Make a free box.  Only XML and UUID boxes can currently be
+            # appended.
+            freebox = glymur.jp2box.FreeBox()
             with self.assertRaises(IOError):
-                jp2.append(uuidbox)
+                jp2.append(freebox)
 
 
 @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)

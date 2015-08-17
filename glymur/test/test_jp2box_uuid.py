@@ -196,7 +196,8 @@ class TestSuiteWarns(unittest.TestCase):
             tfile.write(struct.pack('<HHI4s', 171, 2, 3, b'HTC\x00'))
             tfile.flush()
 
-            with self.assertWarnsRegex(UserWarning, 'Unrecognized Exif tag'):
+            regex = 'Unrecognized TIFF tag:  171'
+            with self.assertWarnsRegex(UserWarning, regex):
                 glymur.Jp2k(tfile.name)
 
     def test_bad_tag_datatype(self):
@@ -221,7 +222,7 @@ class TestSuiteWarns(unittest.TestCase):
             tfile.write(struct.pack('<HHI4s', 271, 2000, 3, b'HTC\x00'))
             tfile.flush()
 
-            with self.assertWarnsRegex(UserWarning, 'Invalid TIFF tag'):
+            with self.assertWarnsRegex(UserWarning, 'Invalid tag datatype'):
                 j = glymur.Jp2k(tfile.name)
 
             self.assertEqual(j.box[-1].box_id, 'uuid')

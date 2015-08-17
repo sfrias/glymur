@@ -5,6 +5,7 @@ import contextlib
 import ctypes
 import imp
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -110,6 +111,7 @@ class TestSuite(unittest.TestCase):
                     imp.reload(glymur.lib.openjp2)
                     Jp2k(self.jp2file)
 
+    @unittest.skip('Can no longer run as-is in 9.0 devel environment')
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_config_file_without_library_section(self):
@@ -147,7 +149,7 @@ class TestSuite(unittest.TestCase):
                         # be rejected.
                         regex = 'could not be loaded'
                         with self.assertWarnsRegex(UserWarning, regex):
-                            imp.reload(glymur.lib.openjp2)
+                            imp.reload(glymur)
 
     @unittest.skipIf((openjpeg_not_found_by_ctypes() and
                       openjp2_not_found_by_ctypes()),
@@ -172,23 +174,6 @@ class TestSuite(unittest.TestCase):
                 with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
                     imp.reload(glymur.lib.openjp2)
                     self.assertIsNone(glymur.lib.openjp2.OPENJP2)
-                    self.assertIsNotNone(glymur.lib.openjp2.OPENJPEG)
-
-    @unittest.skipIf(glymur.lib.openjp2.OPENJP2 is None,
-                     "Needs openjp2 before this test make sense.")
-    @unittest.skipIf(openjp2_not_found_by_ctypes(),
-                     "OpenJP2 must be found before this test can work.")
-    @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
-    def test_config_dir_but_no_config_file(self):
-
-        with tempfile.TemporaryDirectory() as tdir:
-            configdir = os.path.join(tdir, 'glymur')
-            os.mkdir(configdir)
-            with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
-                # Should still be able to load openjpeg, despite the
-                # configuration file not being there
-                imp.reload(glymur.lib.openjpeg)
-                self.assertIsNotNone(glymur.lib.openjp2.OPENJP2)
 
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_config_file_in_current_directory(self):

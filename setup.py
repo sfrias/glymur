@@ -16,7 +16,9 @@ kwargs = {'name': 'Glymur',
                                       'data/*.jpx',
                                       'test/data/*.tif']},
           'entry_points': {
-              'console_scripts': ['jp2dump=glymur.command_line:main'],
+              'console_scripts': ['jp2dump=glymur.command_line:main',
+                                  'tif2jp2=glymur.command_line:tif2jp2_cmd',
+                                  ]
               },
           'license': 'MIT',
           'test_suite': 'glymur.test'}

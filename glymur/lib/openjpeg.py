@@ -4,9 +4,9 @@
 import ctypes
 import sys
 
-from .config import glymur_config
+from glymur.config import CONFIG
 
-_, OPENJPEG = glymur_config()
+OPENJPEG = CONFIG['openjpeg']
 
 # Maximum number of tile parts expected by JPWL: increase at your will
 JPWL_MAX_NO_TILESPECS = 16

@@ -5,12 +5,45 @@ import argparse
 import os
 import warnings
 
-from . import Jp2k, set_printoptions, set_parseoptions, lib
+from . import Jp2k, set_printoptions, set_parseoptions, lib, tif2jp2, core
+
+
+def tif2jp2_cmd():
+    """
+    Entry point for console script tif2jp2
+    """
+    kwargs = {'description': 'Convert TIFF to JPEG2000',
+              'formatter_class': argparse.ArgumentDefaultsHelpFormatter}
+    parser = argparse.ArgumentParser(**kwargs)
+    parser.add_argument('-n', '--num-resolutions',
+                        help='number of resolution',
+                        dest='num_res',
+                        default=6,
+                        type=int)
+    parser.add_argument('-p', '--progression-order',
+                        help='progression order',
+                        dest='progression_order',
+                        default='LRCP',
+                        choices=['LRCP', 'RPCL', 'RLCP', 'PCRL', 'CPRL'])
+    parser.add_argument('-t', '--tile-size',
+                        help='shape of tiles',
+                        metavar=('NRows', 'NCols'),
+                        nargs=2,
+                        type=int,
+                        default=None)
+    parser.add_argument('input_tiff', type=str)
+    parser.add_argument('output_jp2', type=str)
+    args = parser.parse_args()
+
+    tif2jp2(args.input_tiff, args.output_jp2,
+            num_res=args.num_res,
+            tilesize=args.tile_size,
+            prog=args.progression_order)
 
 
 def main():
     """
-    Entry point for console script jp2dump.
+    Entry point for console script jp2dump
     """
 
     kwargs = {'description': 'Print JPEG2000 metadata.',

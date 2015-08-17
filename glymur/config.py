@@ -17,19 +17,8 @@ else:
 
 # default library locations for MacPorts
 _macports_default_location = {'openjp2': '/opt/local/lib/libopenjp2.dylib',
-                              'openjpeg': '/opt/local/lib/libopenjpeg.dylib'}
-
-# default library locations on Windows
-_windows_default_location = {'openjp2': os.path.join('C:\\',
-                                                     'Program files',
-                                                     'OpenJPEG 2.0',
-                                                     'bin',
-                                                     'openjp2.dll'),
-                             'openjpeg': os.path.join('C:\\',
-                                                      'Program files',
-                                                      'OpenJPEG 1.5',
-                                                      'bin',
-                                                      'openjpeg.dll')}
+                              'openjpeg': '/opt/local/lib/libopenjpeg.dylib',
+                              'tiff': '/opt/local/lib/libtiff.dylib'}
 
 
 def glymurrc_fname():
@@ -56,7 +45,20 @@ def glymurrc_fname():
     return None
 
 
-def load_openjpeg_library(libname):
+def load_library(libname):
+    """
+    Load shared library.
+
+    Parameters
+    ----------
+    library : str
+        Path to shared library.
+
+    Returns
+    -------
+    ctypes.CDLL
+        Loaded DLL/shared library.
+    """
 
     path = read_config_file(libname)
     if path is not None:
@@ -71,8 +73,6 @@ def load_openjpeg_library(libname):
         if platform.system() == 'Darwin':
             # MacPorts
             path = _macports_default_location[libname]
-        elif os.name == 'nt':
-            path = _windows_default_location[libname]
 
         if path is not None and not os.path.exists(path):
             # the mac/win default location does not exist.
@@ -82,7 +82,9 @@ def load_openjpeg_library(libname):
 
 
 def load_library_handle(path):
-    """Load the library, return the ctypes handle."""
+    """
+    Load the library, return the ctypes handle.
+    """
 
     if path is None or path in ['None', 'none']:
         # Either could not find a library via ctypes or
@@ -134,26 +136,56 @@ def read_config_file(libname):
     return path
 
 
-def glymur_config():
+def _load_data_source(src):
     """
-    Try to ascertain locations of openjp2, openjpeg libraries.
+    Extract data source locations from a configuration file.
+
+    Parameters
+    ----------
+    src : str
+        One of either 'opj_data_root' or 'libtiffpic'
 
     Returns
     -------
-    tuple
-        tuple of library handles
+    path : None or str
+        None if no location is specified, otherwise a path to the directory.
     """
-    handles = (load_openjpeg_library(x) for x in ['openjp2', 'openjpeg'])
-    handles = tuple(handles)
+    filename = glymurrc_fname()
+    if filename is None:
+        # There's no library file path to return in this case.
+        return None
 
-    if all(handle is None for handle in handles):
+    # Read the configuration file for the library location.
+    parser = ConfigParser()
+    parser.read(filename)
+    try:
+        path = parser.get('testdata', src)
+    except (NoOptionError, NoSectionError):
+        path = None
+    return path
+
+
+def glymur_config():
+    """
+    Try to ascertain locations of openjp2, openjpeg, tiff libraries.
+
+    Returns
+    -------
+    config : dict
+        dictionary of library handles
+    """
+    config = {}
+    for libname in ['openjp2', 'openjpeg', 'tiff']:
+        config[libname] = load_library(libname)
+    if config['openjp2'] is None and config['openjpeg'] is None:
         msg = "Neither the openjp2 nor the openjpeg library could be loaded.  "
         warnings.warn(msg)
-    return handles
+    return config
 
 
 def get_configdir():
-    """Return string representing the configuration directory.
+    """
+    Return string representing the configuration directory.
 
     Default is $HOME/.config/glymur.  You can override this with the
     XDG_CONFIG_HOME environment variable.
@@ -168,3 +200,7 @@ def get_configdir():
 
     # Last stand.  Should handle windows... others?
     return os.path.join(os.path.expanduser('~'), 'glymur')
+
+
+# This should be the only item that need be referenced from elsewhere.
+CONFIG = glymur_config()

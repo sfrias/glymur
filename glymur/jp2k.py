@@ -23,7 +23,6 @@ import math
 import os
 import re
 import struct
-from uuid import UUID
 import warnings
 
 import numpy as np
@@ -658,7 +657,7 @@ class Jp2k(Jp2kBox):
         """
         if img_array.dtype != np.uint8 and img_array.dtype != np.uint16:
             msg = "Only uint8 and uint16 datatypes are currently supported "
-            msg += "when writing."
+            msg += "when writing JPEG2000 images."
             raise RuntimeError(msg)
 
     def _validate_compression_params(self, img_array, cparams, colorspace):
@@ -777,11 +776,8 @@ class Jp2k(Jp2kBox):
             msg = "Only JP2 files can currently have boxes appended to them."
             raise IOError(msg)
 
-        if not ((box.box_id == 'xml ') or
-                (box.box_id == 'uuid' and
-                 box.uuid == UUID('be7acfcb-97a9-42e8-9c71-999491e3afac'))):
-            msg = "Only XML boxes and XMP UUID boxes can currently be "
-            msg += "appended."
+        if not ((box.box_id == 'xml ') or (box.box_id == 'uuid')):
+            msg = "Only XML boxes and UUID boxes can currently be appended."
             raise IOError(msg)
 
         # Check the last box.  If the length field is zero, then rewrite

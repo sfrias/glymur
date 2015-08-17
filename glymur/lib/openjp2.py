@@ -7,9 +7,9 @@ import re
 import sys
 import textwrap
 
-from .config import glymur_config
+from glymur.config import CONFIG
 
-OPENJP2, OPENJPEG = glymur_config()
+OPENJP2 = CONFIG['openjp2']
 
 
 def version():

@@ -37,6 +37,14 @@ elif re.match('1.[0-6]', six.__version__) is not None:
 # Cannot reopen a named temporary file in windows.
 WINDOWS_TMP_FILE_MSG = "cannot use NamedTemporaryFile like this in windows"
 
+# Load the locations of external data sources.
+#
+# opj_data_root: test suite from https://github.com/oclouvain/openjpeg-data.git
+# libtiffpic: normal TIFFs from remotesensing.org
+# geotiff:  download.osgeo.org
+DATASRC = {}
+for src in ['opj_data_root', 'libtiffpic', 'geotiff']:
+    DATASRC[src] = glymur.config._load_data_source(src)
 
 class MetadataBase(unittest.TestCase):
     """
@@ -181,7 +189,6 @@ except KeyError:
 except:
     raise
 
-
 # The Cinema2K/4K tests seem to need the freeimage backend to skimage.io
 # in order to work.  Unfortunately, scikit-image/freeimage is about as wonky as
 # it gets.  Anaconda can get totally weirded out on versions up through 3.6.4
@@ -232,10 +239,20 @@ def _indent(textstr):
         return '\n'.join(lst)
 
 
+def libtiffpic_file(relative_file_name):
+    """Compact way of forming a full filename from libtiffpic test suite."""
+    tfile = os.path.join(DATASRC['libtiffpic'], relative_file_name)
+    return tfile
+
 def opj_data_file(relative_file_name):
     """Compact way of forming a full filename from OpenJPEG's test suite."""
-    jfile = os.path.join(OPJ_DATA_ROOT, relative_file_name)
+    jfile = os.path.join(DATASRC['opj_data_root'], relative_file_name)
     return jfile
+
+def geotiff_file(relative_file_name):
+    """Compact way of forming a full filename from geotiff test suite."""
+    tfile = os.path.join(DATASRC['geotiff'], relative_file_name)
+    return tfile
 
 try:
     import matplotlib

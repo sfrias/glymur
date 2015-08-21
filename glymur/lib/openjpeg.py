@@ -3,10 +3,14 @@
 
 import ctypes
 import sys
+import warnings
 
 from .config import glymur_config
 
-_, OPENJPEG = glymur_config()
+OPENJP2, OPENJPEG = glymur_config()
+if OPENJP2 is not None:
+    # We have openjp2 so disable openjpeg if it's present.
+    OPENJPEG = None
 
 # Maximum number of tile parts expected by JPWL: increase at your will
 JPWL_MAX_NO_TILESPECS = 16
@@ -27,6 +31,11 @@ def version():
 # Need to get the minor version, make sure we are at least at 1.4.x
 if OPENJPEG is not None:
     _MINOR = version().split('.')[1]
+    if int(_MINOR) < 5:
+        msg = "Version {version} of OpenJPEG was detected, but the minimum "
+        msg += "required version is 1.5.0."
+        warnings.warn(msg.format(version=version()))
+        OPENJPEG = None
 else:
     # Does not really matter.  But version should not be called if there is no
     # OpenJPEG library found.
@@ -351,10 +360,8 @@ class DecompressionParametersType(ctypes.Structure):
                 ("jpwl_max_tiles",    ctypes.c_int),
                 # cp_limit_decoding:  whether decoding should be done on the
                 # entire codestream or be limited to the main header
-                ("cp_limit_decoding", ctypes.c_int)]
-
-    if _MINOR == '5':
-        _fields_.append(("flags",             ctypes.c_uint))
+                ("cp_limit_decoding", ctypes.c_int),
+                ("flags",             ctypes.c_uint)]
 
 
 class ImageComptParmType(ctypes.Structure):

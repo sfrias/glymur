@@ -3,9 +3,8 @@ OPENJP2 may be present in some form or other.
 """
 import contextlib
 import ctypes
-import imp
+import importlib
 import os
-import re
 import sys
 import tempfile
 import unittest
@@ -78,13 +77,13 @@ class TestSuite(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        imp.reload(glymur)
-        imp.reload(glymur.lib.openjp2)
+        importlib.reload(glymur)
+        importlib.reload(glymur.lib.openjp2)
 
     @classmethod
     def tearDownClass(cls):
-        imp.reload(glymur)
-        imp.reload(glymur.lib.openjp2)
+        importlib.reload(glymur)
+        importlib.reload(glymur.lib.openjp2)
 
     def setUp(self):
         self.jp2file = glymur.data.nemo()
@@ -108,10 +107,9 @@ class TestSuite(unittest.TestCase):
                 tfile.write(line)
                 tfile.flush()
                 with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
-                    imp.reload(glymur.lib.openjp2)
+                    importlib.reload(glymur.lib.openjp2)
                     Jp2k(self.jp2file)
 
-    @unittest.skip('Can no longer run as-is in 9.0 devel environment')
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_config_file_without_library_section(self):
@@ -127,7 +125,7 @@ class TestSuite(unittest.TestCase):
                 fptr.write('opj_data_root: blah\n')
                 fptr.flush()
                 with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
-                    imp.reload(glymur.lib.openjp2)
+                    importlib.reload(glymur.lib.openjp2)
                     # It's enough that we did not error out
                     self.assertTrue(True)
 
@@ -144,12 +142,14 @@ class TestSuite(unittest.TestCase):
                     fptr.write('[library]\n')
                     fptr.write('openjp2: {0}.not.there\n'.format(tfile.name))
                     fptr.flush()
-                    with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
+                    with patch.dict('glymur.config.os.environ',
+                                    {'XDG_CONFIG_HOME': tdir}):
                         # Misconfigured new configuration file should
                         # be rejected.
                         regex = 'could not be loaded'
                         with self.assertWarnsRegex(UserWarning, regex):
-                            imp.reload(glymur)
+                            conf = glymur.config.glymur_config()
+                            self.assertIsNone(conf['openjp2'])
 
     @unittest.skipIf((openjpeg_not_found_by_ctypes() and
                       openjp2_not_found_by_ctypes()),
@@ -171,9 +171,11 @@ class TestSuite(unittest.TestCase):
                 msg = msg.format(openjpeg=openjpeg_lib)
                 fptr.write(msg)
                 fptr.flush()
+
                 with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
-                    imp.reload(glymur.lib.openjp2)
-                    self.assertIsNone(glymur.lib.openjp2.OPENJP2)
+                    conf = glymur.config.glymur_config()
+                    self.assertIsNone(conf['openjp2'])
+                    self.assertIsNotNone(conf['openjpeg'])
 
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_config_file_in_current_directory(self):
@@ -187,5 +189,5 @@ class TestSuite(unittest.TestCase):
                 fptr.flush()
                 with chdir(tdir1):
                     # Should be able to load openjp2 as before.
-                    imp.reload(glymur.lib.openjp2)
+                    importlib.reload(glymur.lib.openjp2)
                     self.assertEqual(glymur.lib.openjp2.OPENJP2._name, libloc)

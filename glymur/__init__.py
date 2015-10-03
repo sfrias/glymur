@@ -2,7 +2,7 @@
 """
 import unittest
 
-from glymur import version
+from glymur import version, config
 __version__ = version.version
 
 from .jp2k import Jp2k
@@ -21,5 +21,5 @@ def runtests():
     unittest.TextTestRunner(verbosity=2).run(suite)
 
 
-__all__ = [__version__, Jp2k, get_printoptions, set_printoptions,
+__all__ = [__version__, config, Jp2k, get_printoptions, set_printoptions,
            get_parseoptions, set_parseoptions, data, runtests, tif2jp2]

@@ -131,6 +131,66 @@ class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
 
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
+@unittest.skipIf(re.match("2.1", glymur.version.openjpeg_version) is None,
+                 "Must have openjpeg 2.1 or higher to run")
+@unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
+class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
+
+    def test_basic_write_by_tile_2d(self):
+        data = self.j2k_data[:, :, 0].copy()
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            height, width = (800, 480)
+            tile_height, tile_width = (400, 240)
+            kwargs = {
+                    'shape': (height, width),
+                    'tileshape': (tile_height, tile_width)
+            }
+            with Jp2k(tfile.name, **kwargs) as jp2:
+                for r in range(0, height, tile_height):
+                    rows = slice(r, r + tile_height)
+                    for c in range(0, width, tile_width):
+                        cols = slice(c, c + tile_width)
+                        jp2[rows, cols] = data[rows, cols]
+
+            actual = Jp2k(tfile.name)[:]
+            expected = data
+            np.testing.assert_array_equal(actual, expected)
+
+    def test_basic_write_by_tile_3d(self):
+        data = self.j2k_data[:].copy()
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            height, width = (800, 480)
+            tile_height, tile_width = (400, 240)
+            kwargs = {
+                    'shape': (800, 480, 3),
+                    'tileshape': (400, 240)
+            }
+            with Jp2k(tfile.name, **kwargs) as jp2:
+                for r in range(0, height, tile_height):
+                    rows = slice(r, r + tile_height)
+                    for c in range(0, width, tile_width):
+                        cols = slice(c, c + tile_width)
+                        jp2[rows, cols] = data[rows, cols]
+
+            actual = Jp2k(tfile.name)[:]
+            expected = data
+            np.testing.assert_array_equal(actual, expected)
+
+    def test_precinct_size_too_small(self):
+        """first precinct size must be >= 2x that of the code block size"""
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                kwargs = {
+                        'shape': (640, 480, 3),
+                        'tileshape': (160, 120),
+                        'cbsize': (16, 16),
+                        'psizes': [(16, 16)]
+                }
+                with Jp2k(tfile.name, **kwargs) as jp2:
+                    jp2[:160, :120] = np.zeros((160, 120, 3), dtype=np.uint8)
+
+
+@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(re.match("1.5|2", glymur.version.openjpeg_version) is None,
                  "Must have openjpeg 1.5 or higher to run")
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

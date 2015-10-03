@@ -82,8 +82,8 @@ class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
             height, width = (800, 480)
             tile_height, tile_width = (400, 240)
             kwargs = {
-                    'shape': (height, width),
-                    'tileshape': (tile_height, tile_width)
+                'shape': (height, width),
+                'tileshape': (tile_height, tile_width)
             }
             with Jp2k(tfile.name, **kwargs) as jp2:
                 for r in range(0, height, tile_height):
@@ -121,10 +121,10 @@ class TestSliceProtocolTileBaseWrite(SliceProtocolBase):
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
             with self.assertRaises(IOError):
                 kwargs = {
-                        'shape': (640, 480, 3),
-                        'tileshape': (160, 120),
-                        'cbsize': (16, 16),
-                        'psizes': [(16, 16)]
+                    'shape': (640, 480, 3),
+                    'tileshape': (160, 120),
+                    'cbsize': (16, 16),
+                    'psizes': [(16, 16)]
                 }
                 with Jp2k(tfile.name, **kwargs) as jp2:
                     jp2[:160, :120] = np.zeros((160, 120, 3), dtype=np.uint8)

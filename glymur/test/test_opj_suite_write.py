@@ -360,7 +360,7 @@ class TestSuiteWrite(fixtures.MetadataBase):
                      data=data,
                      psizes=[(128, 128)] * 3,
                      cratios=[100, 20, 2],
-                     tilesize=(480, 640),
+                     tileshape=(480, 640),
                      cbsize=(32, 32))
 
             # Should be three layers.

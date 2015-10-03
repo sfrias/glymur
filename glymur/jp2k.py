@@ -409,11 +409,11 @@ class Jp2k(Jp2kBox):
                 # 2.1 API
                 self._cparams.rsiz = core.OPJ_PROFILE_CINEMA_4K
 
-    def _populate_cparams(self, img_array, mct=None, cratios=None, psnr=None,
+    def _populate_cparams(self, img_array=None, mct=None, cratios=None, psnr=None,
                           cinema2k=None, cinema4k=None, irreversible=None,
                           cbsize=None, eph=None, grid_offset=None, modesw=None,
                           numres=None, prog=None, psizes=None, sop=None,
-                          subsam=None, tilesize=None, colorspace=None):
+                          subsam=None, tileshape=None, colorspace=None):
         """Directs processing of write method arguments.
 
         Parameters
@@ -512,9 +512,9 @@ class Jp2k(Jp2kBox):
             cparams.subsampling_dy = subsam[0]
             cparams.subsampling_dx = subsam[1]
 
-        if tilesize is not None:
-            cparams.cp_tdx = tilesize[1]
-            cparams.cp_tdy = tilesize[0]
+        if self._tileshape is not None:
+            cparams.cp_tdx = self._tileshape[1]
+            cparams.cp_tdy = self._tileshape[0]
             cparams.tile_size_on = opj2.TRUE
 
         if mct is None:
@@ -564,7 +564,7 @@ class Jp2k(Jp2kBox):
             raise RuntimeError(msg)
 
         self._determine_colorspace(**kwargs)
-        self._populate_cparams(**kwargs)
+        self._populate_cparams(img_array=img_array, **kwargs)
 
         if opj2.OPENJP2 is not None:
             self._write_openjp2(img_array, verbose=verbose)
@@ -696,12 +696,13 @@ class Jp2k(Jp2kBox):
                     msg += "must be powers of 2."
                     raise IOError(msg.format(prch, prcw))
 
-    def _validate_image_rank(self, img_array):
+    def _validate_image_rank(self):
         """
         Images must be either 2D or 3D.
         """
-        if img_array.ndim == 1 or img_array.ndim > 3:
-            msg = "{0}D imagery is not allowed.".format(img_array.ndim)
+        ndims = len(self.shape)
+        if ndims == 1 or ndims > 3:
+            msg = "{ndims}D imagery is not allowed.".format(ndims=ndims)
             raise IOError(msg)
 
     def _validate_v2_0_0_images(self, img_array):
@@ -721,7 +722,7 @@ class Jp2k(Jp2kBox):
         """
         Only uint8 and uint16 images are currently supported.
         """
-        if img_array.dtype != np.uint8 and img_array.dtype != np.uint16:
+        if img_array is not None and img_array.dtype != np.uint8 and img_array.dtype != np.uint16:
             msg = "Only uint8 and uint16 datatypes are currently supported "
             msg += "when writing."
             raise RuntimeError(msg)
@@ -735,11 +736,13 @@ class Jp2k(Jp2kBox):
             Image data to be written to file.
         cparams : CompressionParametersType(ctypes.Structure)
             Corresponds to cparameters_t type in openjp2 headers.
+        colorspace : str
+            Either 'rgb' or 'gray'.
         """
         self._validate_j2k_colorspace(cparams, colorspace)
         self._validate_codeblock_size(cparams)
         self._validate_precinct_size(cparams)
-        self._validate_image_rank(img_array)
+        self._validate_image_rank()
         self._validate_v2_0_0_images(img_array)
         self._validate_image_datatype(img_array)
 

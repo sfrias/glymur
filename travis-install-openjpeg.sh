@@ -2,6 +2,7 @@
 
 # Bail out if any errors arise.
 set -e
+set -x
 
 # Compile openjpeg from source, install into home directory.
 wget https://github.com/uclouvain/openjpeg/archive/version.2.1.tar.gz
@@ -11,7 +12,7 @@ cd openjpeg-version.2.1/build && cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/openjpeg 
 
 # Setup the configuration file. 
 mkdir -p $HOME/.config/glymur
-cat << EOF > $HOME/.config/glymur/glymurrc
+cat << EOF >> $HOME/.config/glymur/glymurrc
 [library]
 openjp2:  $HOME/openjpeg/lib/libopenjp2.so
 EOF

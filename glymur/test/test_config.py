@@ -3,9 +3,7 @@ OPENJP2 may be present in some form or other.
 """
 import contextlib
 import ctypes
-import importlib
 import os
-import re
 import sys
 import tempfile
 import unittest
@@ -16,7 +14,6 @@ else:
     from unittest.mock import patch
 
 import glymur
-from glymur import Jp2k
 
 from .fixtures import (WARNING_INFRASTRUCTURE_ISSUE,
                        WARNING_INFRASTRUCTURE_MSG,
@@ -76,48 +73,48 @@ def chdir(dirname=None):
 class TestSuite(unittest.TestCase):
     """Test suite for configuration file operation."""
 
-    @classmethod
-    def setUpClass(cls):
-        importlib.reload(glymur)
-        importlib.reload(glymur.lib.openjp2)
-
-    @classmethod
-    def tearDownClass(cls):
-        importlib.reload(glymur)
-        importlib.reload(glymur.lib.openjp2)
-
     def setUp(self):
         self.jp2file = glymur.data.nemo()
 
-    def tearDown(self):
-        pass
-
     def test_config_file_via_environ(self):
-        """Verify that we can read a configuration file set via environ var."""
-        with tempfile.TemporaryDirectory() as tdir:
-            configdir = os.path.join(tdir, 'glymur')
+        """
+        Verify that we can read a configuration file set via environ var.
+
+        Make a symlink to the openjp2 library in a temporary directory, then
+        point towards that with the XDG_CONFIG_HOME environment variable.
+        """
+        config = glymur.config.CONFIG
+        with tempfile.TemporaryDirectory() as rcdir:
+
+            configdir = os.path.join(rcdir, 'glymur')
             os.mkdir(configdir)
             filename = os.path.join(configdir, 'glymurrc')
-            with open(filename, 'wt') as tfile:
-                tfile.write('[library]\n')
 
-                # Need to reliably recover the location of the openjp2 library,
-                # so using '_name' appears to be the only way to do it.
-                libloc = glymur.lib.openjp2.OPENJP2._name
-                line = 'openjp2: {0}\n'.format(libloc)
-                tfile.write(line)
-                tfile.flush()
-                with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
-                    importlib.reload(glymur.lib.openjp2)
-                    Jp2k(self.jp2file)
+            with tempfile.TemporaryDirectory() as libdir:
 
-    @unittest.skip('Can no longer run as-is in 9.0 devel environment')
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
+                src = config['openjp2']._name
+                dest = os.path.join(libdir,
+                                    os.path.basename(config['openjp2']._name))
+                os.symlink(src, dest)
+
+                with open(filename, 'wt') as tfile:
+                    tfile.write('[library]\n')
+                    line = 'openjp2: {libloc}\n'.format(libloc=dest)
+                    tfile.write(line)
+                    tfile.flush()
+                    with patch.dict('glymur.config.os.environ',
+                                    {'XDG_CONFIG_HOME': rcdir}):
+                        actual = glymur.config.glymur_config()['openjp2']._name
+                        expected = dest
+                        self.assertEqual(actual, expected)
+
+    @unittest.skipIf(openjp2_not_found_by_ctypes(),
+                     "Needs openjp2 and openjpeg before this test make sense.")
     def test_config_file_without_library_section(self):
         """
         must ignore if no library section
         """
+        expected = ctypes.util.find_library('openjp2')
         with tempfile.TemporaryDirectory() as tdir:
             configdir = os.path.join(tdir, 'glymur')
             os.mkdir(configdir)
@@ -126,13 +123,11 @@ class TestSuite(unittest.TestCase):
                 fptr.write('[testing]\n')
                 fptr.write('opj_data_root: blah\n')
                 fptr.flush()
-                with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
-                    importlib.reload(glymur.lib.openjp2)
-                    # It's enough that we did not error out
-                    self.assertTrue(True)
+                with patch.dict('glymur.config.os.environ',
+                                {'XDG_CONFIG_HOME': tdir}):
+                    actual = glymur.config.glymur_config()['openjp2']._name
+                    self.assertEqual(actual, expected)
 
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_xdg_env_config_file_is_bad(self):
         """A non-existant library location should be rejected."""
         with tempfile.TemporaryDirectory() as tdir:
@@ -156,7 +151,6 @@ class TestSuite(unittest.TestCase):
     @unittest.skipIf((openjpeg_not_found_by_ctypes() and
                       openjp2_not_found_by_ctypes()),
                      "Needs openjp2 and openjpeg before this test make sense.")
-    @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_library_specified_as_None(self):
         """Verify that we can stop library from being loaded by using None."""
         with tempfile.TemporaryDirectory() as tdir:
@@ -179,17 +173,31 @@ class TestSuite(unittest.TestCase):
                     self.assertIsNone(conf['openjp2'])
                     self.assertIsNotNone(conf['openjpeg'])
 
-    @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_config_file_in_current_directory(self):
-        """A configuration file in the current directory should be honored."""
-        libloc = glymur.lib.openjp2.OPENJP2._name
-        with tempfile.TemporaryDirectory() as tdir1:
-            fname = os.path.join(tdir1, 'glymurrc')
-            with open(fname, 'w') as fptr:
-                fptr.write('[library]\n')
-                fptr.write('openjp2: {0}\n'.format(libloc))
-                fptr.flush()
-                with chdir(tdir1):
-                    # Should be able to load openjp2 as before.
-                    importlib.reload(glymur.lib.openjp2)
-                    self.assertEqual(glymur.lib.openjp2.OPENJP2._name, libloc)
+        """
+        A configuration file in the current directory should be honored.
+
+        Make a symlink to the openjp2 library in a temporary directory, then
+        point towards that with the rc file.
+        """
+        config = glymur.config.CONFIG
+        with tempfile.TemporaryDirectory() as libdir:
+            # New library location.
+            src = config['openjp2']._name
+            dest = os.path.join(libdir,
+                                os.path.basename(config['openjp2']._name))
+            os.symlink(src, dest)
+
+            expected = dest
+
+            with tempfile.TemporaryDirectory() as rcdir:
+                # new working directory
+                new_config_file = os.path.join(rcdir, 'glymurrc')
+                with open(new_config_file, 'w') as fptr:
+                    fptr.write('[library]\n')
+                    fptr.write('openjp2: {libloc}\n'.format(libloc=expected))
+                    fptr.flush()
+
+                    with chdir(rcdir):
+                        actual = glymur.config.glymur_config()['openjp2']._name
+                        self.assertEqual(actual, expected)

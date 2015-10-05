@@ -18,7 +18,7 @@ install:
 
 # command to run tests
 script:
-  - python -m unittest discover
+  - python -m unittest discover 
 
 notifications:
   email: "john.g.evans.ne@gmail.com"

@@ -14,12 +14,10 @@ env:
 before_install:
   - bash travis-install-openjpeg.sh
   - sudo apt-get update -qq
-  - sudo apt-get install libgdal-dev
-  - dpkg -L libgdal-dev
 
 # command to install dependencies
 install:
-    - pip install numpy==$NUMPY_VERSION lxml==$LXML_VERSION six==$SIX_VERSION contextlib2 GDAL 
+    - pip install numpy==$NUMPY_VERSION lxml==$LXML_VERSION six==$SIX_VERSION contextlib2
 
 # command to run tests
 script:

@@ -11,6 +11,12 @@ env:
     - NUMPY_VERSION=1.8.2 LXML_VERSION=3.4.4 SIX_VERSION=1.9.0
     - NUMPY_VERSION=1.7.2 LXML_VERSION=3.0.2 SIX_VERSION=1.9.0
 
+matrix:
+    exclude:
+    - python: 3.5
+        - NUMPY_VERSION='1.8.2'
+        - NUMPY_VERSION='1.9.2'
+
 before_install:
   - bash travis-install-openjpeg.sh
   - sudo apt-get update -qq

@@ -42,10 +42,11 @@ matrix:
 before_install:
   - bash travis-install-openjpeg.sh
   - sudo apt-get update -qq
+  - sudo apt-get install libexempi3
 
 # command to install dependencies
 install:
-    - pip install numpy==$NUMPY_VERSION lxml==$LXML_VERSION six contextlib2
+    - pip install numpy==$NUMPY_VERSION lxml==$LXML_VERSION python-xmp-toolkit six contextlib2
 
 # command to run tests
 script:

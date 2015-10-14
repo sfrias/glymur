@@ -2,10 +2,13 @@
 
 # Bail out if any errors arise.
 set -e
+set -x
 
 if [ '$NO_OPENJPEG' = '1' ]; then
 	exit
 fi
+
+set +x
 
 # Compile openjpeg from source, install into home directory.
 wget https://github.com/uclouvain/openjpeg/archive/version.2.1.tar.gz

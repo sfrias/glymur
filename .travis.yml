@@ -53,7 +53,7 @@ matrix:
       - NO_OPENJPEG=1
     
 before_install:
-  - bash travis-install-openjpeg.sh
+  - sh -c "if [ '$NO_OPENJPEG' = '0' ]; then bash travis-install-openjpeg.sh; fi"
   - sudo apt-get update -qq
   - sudo apt-get install libexempi3
 

@@ -1060,8 +1060,6 @@ class TestJp2k_2_1(unittest.TestCase):
                             j[::2, ::2]
 
 
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
 class TestParsing(unittest.TestCase):
     """Tests for verifying how parsing may be altered."""
     def setUp(self):
@@ -1072,6 +1070,8 @@ class TestParsing(unittest.TestCase):
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
 
+    @unittest.skipIf(OPJ_DATA_ROOT is None,
+                     "OPJ_DATA_ROOT environment variable not set")
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_bad_rsiz(self):
         """Should not warn if RSIZ when parsing is turned off."""

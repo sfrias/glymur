@@ -235,12 +235,14 @@ class TestSliceProtocolRead(SliceProtocolBase):
 class TestJp2k(unittest.TestCase):
     """These tests should be run by just about all configuration."""
 
-    def setUp(self):
-        self.jp2file = glymur.data.nemo()
-        self.j2kfile = glymur.data.goodstuff()
-        self.jpxfile = glymur.data.jpxfile()
+    @classmethod
+    def setUpClass(cls):
+        cls.jp2file = glymur.data.nemo()
+        cls.j2kfile = glymur.data.goodstuff()
+        cls.jpxfile = glymur.data.jpxfile()
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         pass
 
     @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
@@ -256,28 +258,7 @@ class TestJp2k(unittest.TestCase):
         jp2 = Jp2k(self.jp2file)
         self.assertEqual(jp2.shape, (1456, 2592, 3))
 
-    @unittest.skipIf(OPJ_DATA_ROOT is None,
-                     "OPJ_DATA_ROOT environment variable not set")
-    def test_shape_greyscale_jp2(self):
-        """verify shape attribute for greyscale JP2 file
-        """
-        with warnings.catch_warnings():
-            # Suppress a warning due to bad compatibility list entry.
-            warnings.simplefilter("ignore")
-            jfile = opj_data_file('input/conformance/file4.jp2')
-            jp2 = Jp2k(jfile)
-        self.assertEqual(jp2.shape, (512, 768))
-
-    @unittest.skipIf(OPJ_DATA_ROOT is None,
-                     "OPJ_DATA_ROOT environment variable not set")
-    def test_shape_single_channel_j2k(self):
-        """verify shape attribute for single channel J2K file
-        """
-        jfile = opj_data_file('input/conformance/p0_01.j2k')
-        jp2 = Jp2k(jfile)
-        self.assertEqual(jp2.shape, (128, 128))
-
-    def test_shape_j2k(self):
+    def test_shape_3_channel_j2k(self):
         """verify shape attribute for J2K file
         """
         j2k = Jp2k(self.j2kfile)
@@ -679,18 +660,42 @@ class TestJp2k(unittest.TestCase):
 
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
-@unittest.skipIf(re.match('1.[0-4]', openjpeg_version) is not None,
-                 "Not supported with OpenJPEG {0}".format(openjpeg_version))
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestJp2k_write(unittest.TestCase):
     """Write tests, can be run by versions 1.5+"""
 
-    def setUp(self):
-        self.jp2file = glymur.data.nemo()
-        self.j2kfile = glymur.data.goodstuff()
+    @classmethod
+    def setUpClass(cls):
+        cls.jp2file = glymur.data.nemo()
+        cls.j2kfile = glymur.data.goodstuff()
 
-    def tearDown(self):
-        pass
+        cls.j2k_data = glymur.Jp2k(cls.j2kfile)[:]
+
+        # Make single channel jp2 and j2k files.
+        obj = tempfile.NamedTemporaryFile(delete=False, suffix=".j2k")
+        glymur.Jp2k(obj.name, data=cls.j2k_data[:, :, 0])
+        cls.single_channel_j2k = obj
+
+        obj = tempfile.NamedTemporaryFile(delete=False, suffix=".jp2")
+        glymur.Jp2k(obj.name, data=cls.j2k_data[:, :, 0])
+        cls.single_channel_jp2 = obj
+
+    @classmethod
+    def tearDownClass(cls):
+        os.unlink(cls.single_channel_j2k.name)
+        os.unlink(cls.single_channel_jp2.name)
+
+    def test_shape_greyscale_jp2(self):
+        """verify shape attribute for greyscale JP2 file
+        """
+        jp2 = Jp2k(self.single_channel_jp2.name)
+        self.assertEqual(jp2.shape, (800, 480))
+
+    def test_shape_single_channel_j2k(self):
+        """verify shape attribute for single channel J2K file
+        """
+        j2k = Jp2k(self.single_channel_j2k.name)
+        self.assertEqual(j2k.shape, (800, 480))
 
     def test_precinct_size_too_small(self):
         """first precinct size must be >= 2x that of the code block size"""

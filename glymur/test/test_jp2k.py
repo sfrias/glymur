@@ -497,16 +497,16 @@ class TestJp2k(unittest.TestCase):
 
     @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
     def test_basic_jp2(self):
-        """Just a very basic test that reading a JP2 file does not error out.
+        """
+        Just a very basic test that reading a JP2 file does not error out.
         """
         j2k = Jp2k(self.jp2file)
         j2k[::2, ::2]
 
     @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
     def test_basic_j2k(self):
-        """This test is only useful when openjp2 is not available
-        and OPJ_DATA_ROOT is not set.  We need at least one
-        working J2K test.
+        """
+        Just a very basic test that reading a J2K file does not error out.
         """
         j2k = Jp2k(self.j2kfile)
         j2k[:]
@@ -1070,18 +1070,38 @@ class TestParsing(unittest.TestCase):
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
 
-    @unittest.skipIf(OPJ_DATA_ROOT is None,
-                     "OPJ_DATA_ROOT environment variable not set")
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_bad_rsiz(self):
-        """Should not warn if RSIZ when parsing is turned off."""
-        filename = opj_data_file('input/nonregression/edf_c2_1002767.jp2')
-        glymur.set_parseoptions(full_codestream=False)
-        Jp2k(filename)
+        """
+        Should not warn if RSIZ when parsing is turned off.
 
-        glymur.set_parseoptions(full_codestream=True)
-        with self.assertWarnsRegex(UserWarning, 'Invalid profile'):
-            Jp2k(filename)
+        This test was originally written for OPJ_DATA file 
+
+            input/nonregression/edf_c2_1002767.jp2'
+
+        It had an RSIZ value of 32, so that's what we use here.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                # Copy up until the RSIZ value.
+                ofile.write(ifile.read(3237))
+
+                # Write the bad RSIZ value.
+                buffer = struct.pack('>H', 32)
+                ofile.write(buffer)
+                ifile.seek(3239)
+
+                # Get the rest of the file.
+                ofile.write(ifile.read())
+
+                ofile.seek(0)
+
+            glymur.set_parseoptions(full_codestream=False)
+            Jp2k(ofile.name)
+
+            glymur.set_parseoptions(full_codestream=True)
+            with self.assertWarnsRegex(UserWarning, 'Invalid profile'):
+                Jp2k(ofile.name)
 
     def test_main_header(self):
         """verify that the main header isn't loaded during normal parsing"""

@@ -1114,27 +1114,78 @@ class TestParsing(unittest.TestCase):
 
 
 @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
+class TestJp2kWarnings(unittest.TestCase):
+    """These tests should be run by just about all configuration."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.jp2file = glymur.data.nemo()
+
+    def test_undecodeable_box_id(self):
+        """
+        Should warn in case of undecodeable box ID but not error out.
+
+        This test was originally written for this file in the OpenJPEG
+        test suite:
+
+            input/nonregression/edf_c2_1013627.jp2
+        """
+        bad_box_id = b'abcd'
+        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                ofile.write(ifile.read())
+
+                # Tack an unrecognized box onto the end of nemo.
+                buffer = struct.pack('>I4s', 8, bad_box_id)
+                ofile.write(buffer)
+                ofile.flush()
+
+            with self.assertWarnsRegex(UserWarning, 'Unrecognized box'):
+                jp2 = Jp2k(ofile.name)
+
+            # Now make sure we got all of the boxes.
+            box_ids = [box.box_id for box in jp2.box]
+            self.assertEqual(box_ids, ['jP  ', 'ftyp', 'jp2h', 'uuid', 'jp2c',
+                                       bad_box_id])
+
+    def test_bad_ftyp_brand(self):
+        """
+        Should warn in case of bad ftyp brand.
+
+        This test was originally written for this file in the OpenJPEG
+        test suite:
+
+            input/nonregression/edf_c2_1000290.jp2
+        """
+
+        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                # Write the JPEG2000 signature box
+                ofile.write(ifile.read(12))
+
+                # Write a bad version of the file type box.  'jp  ' is not
+                # allowed as a brand.
+                buffer = struct.pack('>I4s4sI4s', 20, b'ftyp', b'jp  ', 0,
+                                     b'jp2 ')
+                ofile.write(buffer)
+
+                # Write the rest of the boxes as-is.
+                ifile.seek(32)
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            pattern = "The file type brand was 'jp  '.  "
+            pattern += "It should be either 'jp2 ' or 'jpx '."
+            regex = re.compile(pattern)
+            with self.assertWarnsRegex(UserWarning, pattern):
+                Jp2k(ofile.name)
+
+
+@unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
 class TestJp2kOpjDataRootWarnings(unittest.TestCase):
     """These tests should be run by just about all configuration."""
-
-    def test_undecodeable_box_id(self):
-        """Should warn in case of undecodeable box ID but not error out."""
-        filename = opj_data_file('input/nonregression/edf_c2_1013627.jp2')
-        with self.assertWarnsRegex(UserWarning, 'Unrecognized box'):
-            jp2 = Jp2k(filename)
-
-        # Now make sure we got all of the boxes.  Ignore the last, which was
-        # bad.
-        box_ids = [box.box_id for box in jp2.box[:-1]]
-        self.assertEqual(box_ids, ['jP  ', 'ftyp', 'jp2h', 'jp2c'])
-
-    def test_bad_ftyp_brand(self):
-        """Should warn in case of bad ftyp brand."""
-        filename = opj_data_file('input/nonregression/edf_c2_1000290.jp2')
-        with self.assertWarns(UserWarning):
-            Jp2k(filename)
 
     def test_invalid_approximation(self):
         """Should warn in case of invalid approximation."""

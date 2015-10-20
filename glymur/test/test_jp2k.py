@@ -1113,7 +1113,6 @@ class TestParsing(unittest.TestCase):
         self.assertIsNotNone(jp2c._codestream)
 
 
-@unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
 class TestJp2kWarnings(unittest.TestCase):
     """These tests should be run by just about all configuration."""
 
@@ -1140,8 +1139,14 @@ class TestJp2kWarnings(unittest.TestCase):
                 ofile.write(buffer)
                 ofile.flush()
 
-            with self.assertWarnsRegex(UserWarning, 'Unrecognized box'):
-                jp2 = Jp2k(ofile.name)
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    jp2 = Jp2k(ofile.name)
+                    assert 'Unrecognized box' in str(w[-1].message)
+            else:
+                regex = re.compile('Unrecognized box')
+                with self.assertWarnsRegex(UserWarning, regex):
+                    jp2 = Jp2k(ofile.name)
 
             # Now make sure we got all of the boxes.
             box_ids = [box.box_id for box in jp2.box]
@@ -1157,7 +1162,6 @@ class TestJp2kWarnings(unittest.TestCase):
 
             input/nonregression/edf_c2_1000290.jp2
         """
-
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
             with open(self.jp2file, 'rb') as ifile:
                 # Write the JPEG2000 signature box
@@ -1176,9 +1180,51 @@ class TestJp2kWarnings(unittest.TestCase):
 
             pattern = "The file type brand was 'jp  '.  "
             pattern += "It should be either 'jp2 ' or 'jpx '."
-            regex = re.compile(pattern)
-            with self.assertWarnsRegex(UserWarning, pattern):
-                Jp2k(ofile.name)
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    jp2 = Jp2k(ofile.name)
+                    assert pattern in str(w[-1].message)
+            else:
+                regex = re.compile(pattern)
+                with self.assertWarnsRegex(UserWarning, pattern):
+                    Jp2k(ofile.name)
+
+    def test_invalid_approximation(self):
+        """
+        Should warn in case of invalid approximation.
+
+        This test was originally written for this file in the OpenJPEG
+        test suite:
+
+            input/nonregression/edf_c2_1015644.jp2
+
+        Rewrite nemo.jp2 to have an invalid approximation.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                # Copy the signature, file type, and jp2 header, image header
+                # box as-is.
+                ofile.write(ifile.read(62))
+
+                # Write a bad version of the color specification box.  32 is an
+                # invalid approximation value.
+                buffer = struct.pack('>I4sBBBI', 15, b'colr', 1, 2, 32, 16)
+                ofile.write(buffer)
+
+                # Write the rest of the boxes as-is.
+                ifile.seek(77)
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            pattern = "Invalid approximation:  32"
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    jp2 = Jp2k(ofile.name)
+                    assert pattern in str(w[-1].message)
+            else:
+                regex = re.compile(pattern)
+                with self.assertWarnsRegex(UserWarning, pattern):
+                    Jp2k(ofile.name)
 
 
 @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
@@ -1186,12 +1232,6 @@ class TestJp2kWarnings(unittest.TestCase):
                  "OPJ_DATA_ROOT environment variable not set")
 class TestJp2kOpjDataRootWarnings(unittest.TestCase):
     """These tests should be run by just about all configuration."""
-
-    def test_invalid_approximation(self):
-        """Should warn in case of invalid approximation."""
-        filename = opj_data_file('input/nonregression/edf_c2_1015644.jp2')
-        with self.assertWarnsRegex(UserWarning, 'Invalid approximation'):
-            Jp2k(filename)
 
     def test_invalid_colorspace(self):
         """

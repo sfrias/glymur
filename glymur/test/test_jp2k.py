@@ -1226,6 +1226,43 @@ class TestJp2kWarnings(unittest.TestCase):
                 with self.assertWarnsRegex(UserWarning, pattern):
                     Jp2k(ofile.name)
 
+    def test_invalid_colorspace(self):
+        """
+        Should warn in case of invalid colorspace.
+
+        This test was originally written for this file in the OpenJPEG
+        test suite:
+
+            input/nonregression/edf_c2_1103421.jp2
+
+        Rewrite nemo.jp2 to have an invalid colorspace.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                # Copy the signature, file type, and jp2 header, image header
+                # box as-is.
+                ofile.write(ifile.read(62))
+
+                # Write a bad version of the color specification box.  276 is
+                # an invalid colorspace.
+                buffer = struct.pack('>I4sBBBI', 15, b'colr', 1, 2, 0, 276)
+                ofile.write(buffer)
+
+                # Write the rest of the boxes as-is.
+                ifile.seek(77)
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            pattern = "Unrecognized colorspace: 276"
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    jp2 = Jp2k(ofile.name)
+                    assert pattern in str(w[-1].message)
+            else:
+                regex = re.compile(pattern)
+                with self.assertWarnsRegex(UserWarning, pattern):
+                    Jp2k(ofile.name)
+
     def test_stupid_windows_eol_at_end(self):
         """
         Garbage characters at the end of the file.
@@ -1256,23 +1293,6 @@ class TestJp2kWarnings(unittest.TestCase):
                 with self.assertWarnsRegex(UserWarning, pattern):
                     Jp2k(ofile.name)
 
-
-
-@unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-class TestJp2kOpjDataRootWarnings(unittest.TestCase):
-    """These tests should be run by just about all configuration."""
-
-    def test_invalid_colorspace(self):
-        """
-        Should warn in case of invalid colorspace.
-
-        There are multiple warnings, so there's no good way to regex them all.
-        """
-        filename = opj_data_file('input/nonregression/edf_c2_1103421.jp2')
-        with self.assertWarns(UserWarning):
-            Jp2k(filename)
 
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,

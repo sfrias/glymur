@@ -658,6 +658,37 @@ class TestJp2k(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     glymur.Jp2k(self.jp2file).read_bands()
 
+    def test_zero_length_reserved_segment(self):
+        """
+        Zero length reserved segment.  Unsure if this is invalid or not.
+
+        Just make sure we can parse all of it without erroring out.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                # Copy up until codestream box.
+                ofile.write(ifile.read(3223))
+                
+                # Write the new codestream length (+4) and the box ID.
+                buffer = struct.pack('>I4s', 1132296 + 4, b'jp2c')
+                ofile.write(buffer)
+
+                # Copy up until the EOC marker.
+                ifile.seek(3231)
+                ofile.write(ifile.read(1132286))
+
+                # Write the zero-length reserved segment.
+                buffer = struct.pack('>BBH', 255, 0, 0)
+                ofile.write(buffer)
+
+                # Write the EOC marker and be done with it.
+                ofile.write(ifile.read())
+                ofile.flush()
+            
+            cstr = Jp2k(ofile.name).get_codestream(header_only=False)
+            self.assertEqual(cstr.segment[11].marker_id, '0xff00')
+            self.assertEqual(cstr.segment[11].length, 0)
+
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
@@ -1299,21 +1330,6 @@ class TestJp2kWarnings(unittest.TestCase):
                  "OPJ_DATA_ROOT environment variable not set")
 class TestJp2kOpjDataRoot(unittest.TestCase):
     """These tests should be run by just about all configurations."""
-
-    def test_zero_length_reserved_segment(self):
-        """
-        Zero length reserved segment.  Unsure if this is invalid or not.
-
-        Much of the rest of the file is invalid, so just be sure we can parse
-        all of it without erroring out.
-        """
-        filename = opj_data_file('input/nonregression/issue476.jp2')
-        with warnings.catch_warnings():
-            # Suppress warnings for this corrupt file
-            warnings.simplefilter("ignore")
-            cstr = Jp2k(filename).get_codestream()
-            self.assertEqual(cstr.segment[5].marker_id, '0xff00')
-            self.assertEqual(cstr.segment[5].length, 0)
 
     @unittest.skipIf(re.match("0|1.[0-4]", glymur.version.openjpeg_version),
                      "Must have openjpeg 1.5 or higher to run")

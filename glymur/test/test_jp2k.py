@@ -252,6 +252,39 @@ class TestJp2k(unittest.TestCase):
         with self.assertWarns(DeprecationWarning):
             Jp2k(self.jp2file).read()
 
+    def test_read_differing_subsamples(self):
+        """
+        should error out with read used on differently subsampled images
+
+        Verify that we error out appropriately if we use the read method
+        on an image with differing subsamples
+        
+        Issue 86.
+
+        Copy nemo.jp2 but change the SIZ segment to have differing subsamples.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                # Copy up until codestream box.
+                ofile.write(ifile.read(3223))
+
+                # Write the jp2c header and SOC marker.
+                ofile.write(ifile.read(10))
+
+                # Read the SIZ segment, modify the last y subsampling value,
+                # and write it back out
+                buffer = bytearray(ifile.read(49))
+                buffer[-1] = 2
+                ofile.write(buffer)
+
+                # Write the rest of the file.
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            j = Jp2k(ofile.name)
+            with self.assertRaises(RuntimeError):
+                j[:]
+
     def test_shape_jp2(self):
         """verify shape attribute for JP2 file
         """
@@ -1369,17 +1402,6 @@ class TestJp2kOpjDataRoot(unittest.TestCase):
             for c in np.arange(rgb.shape[1]):
                 rgb_from_idx[r, c] = palette[idx[r, c]]
         np.testing.assert_array_equal(rgb, rgb_from_idx)
-
-    def test_read_differing_subsamples(self):
-        """should error out with read used on differently subsampled images"""
-        # Verify that we error out appropriately if we use the read method
-        # on an image with differing subsamples
-        #
-        # Issue 86.
-        filename = opj_data_file('input/conformance/p0_05.j2k')
-        j = Jp2k(filename)
-        with self.assertRaises(RuntimeError):
-            j[:]
 
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_no_cxform_cmap(self):

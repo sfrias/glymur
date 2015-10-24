@@ -246,8 +246,7 @@ class TestJp2k(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
-    @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
+    @unittest.skipIf(sys.hexversion < 0x03000000, "do not bother on python2")
     def test_warn_if_using_read_method(self):
         """Should warn if deprecated read method is called"""
         with self.assertWarns(DeprecationWarning):
@@ -354,8 +353,6 @@ class TestJp2k(unittest.TestCase):
         self.assertEqual(newjp2.filename, self.j2kfile)
         self.assertEqual(len(newjp2.box), 0)
 
-    @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_rlevel_max_backwards_compatibility(self):
         """
         Verify that rlevel=-1 gets us the lowest resolution image
@@ -364,15 +361,10 @@ class TestJp2k(unittest.TestCase):
         array-style slicing.
         """
         j = Jp2k(self.j2kfile)
-        if sys.hexversion < 0x03000000:
-            with warnings.catch_warnings():
-                # Suppress a warning due to deprecated syntax
-                # Not as easy to verify the warning under python2.
-                warnings.simplefilter("ignore")
-                thumbnail1 = j.read(rlevel=-1)
-        else:
-            with self.assertWarns(DeprecationWarning):
-                thumbnail1 = j.read(rlevel=-1)
+        with warnings.catch_warnings():
+            # Suppress the DeprecationWarning
+            warnings.simplefilter("ignore")
+            thumbnail1 = j.read(rlevel=-1)
         thumbnail2 = j[::32, ::32]
         np.testing.assert_array_equal(thumbnail1, thumbnail2)
         self.assertEqual(thumbnail1.shape, (25, 15, 3))
@@ -1437,14 +1429,15 @@ class TestJp2kOpjDataRoot(unittest.TestCase):
                 rgb_from_idx[r, c] = palette[idx[r, c]]
         np.testing.assert_array_equal(rgb, rgb_from_idx)
 
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_no_cxform_cmap(self):
         """Bands as physically ordered, not as physically intended"""
         # This file has the components physically reversed.  The cmap box
         # tells the decoder how to order them, but this flag prevents that.
         filename = opj_data_file('input/conformance/file2.jp2')
-        with self.assertWarns(UserWarning):
-            # The file has a bad compatibility list entry.  Not important here.
+        with warnings.catch_warnings():
+            # Suppress a Compatibility list item warning.  We already test
+            # for this elsewhere.
+            warnings.simplefilter("ignore")
             j = Jp2k(filename)
         ycbcr = j[:]
         j.ignore_pclr_cmap_cdef = True

@@ -1270,6 +1270,13 @@ class CompatibilityListItemWarning(UserWarning):
     pass
 
 
+class FileTypeBrandWarning(UserWarning):
+    """
+    Compatibility list items should be one of 'jp2 ', 'jpx ', or 'jpxb'
+    """
+    pass
+
+
 class FileTypeBox(Jp2kBox):
     """Container for JPEG 2000 file type box information.
 
@@ -1338,10 +1345,13 @@ class FileTypeBox(Jp2kBox):
         Validate the box before writing to file.
         """
         if self.brand not in ['jp2 ', 'jpx ']:
-            msg = "The file type brand was '{0}'.  "
+            msg = "The file type brand was '{brand}'.  "
             msg += "It should be either 'jp2 ' or 'jpx '."
-            self._dispatch_validation_error(msg.format(self.brand),
-                                            writing=writing)
+            msg = msg.format(brand=self.brand)
+            if writing:
+                raise IOError(msg)
+            else:
+                warnings.warn(msg, FileTypeBrandWarning)
         for item in self.compatibility_list:
             if item not in self._valid_cls:
                 msg = "The file type compatibility list item '{entry}' is not "

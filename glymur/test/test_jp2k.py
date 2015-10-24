@@ -22,7 +22,7 @@ import pkg_resources
 
 import glymur
 from glymur import Jp2k
-from glymur.jp2box import CompatibilityListItemWarning
+from glymur.jp2box import CompatibilityListItemWarning, FileTypeBrandWarning
 from glymur.version import openjpeg_version
 
 from .fixtures import HAS_PYTHON_XMP_TOOLKIT
@@ -1249,9 +1249,10 @@ class TestJp2kWarnings(unittest.TestCase):
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
                     Jp2k(ofile.name)
+                    assert issubclass(w[-1].category, FileTypeBrandWarning)
                     assert pattern in str(w[-1].message)
             else:
-                with self.assertWarnsRegex(UserWarning, pattern):
+                with self.assertWarnsRegex(FileTypeBrandWarning, pattern):
                     Jp2k(ofile.name)
 
     def test_bad_ftyp_compatibility_list_item(self):

@@ -1462,37 +1462,6 @@ class TestCodestreamOpjData(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
-    def test_reserved_marker_segment(self):
-        """Reserved marker segments are ok."""
-
-        # Some marker segments were reserved in FCD15444-1.  Since that
-        # standard is old, some of them may have come into use.
-        #
-        # Let's inject a reserved marker segment into a file that
-        # we know something about to make sure we can still parse it.
-        filename = os.path.join(OPJ_DATA_ROOT, 'input/conformance/p0_01.j2k')
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with open(filename, 'rb') as ifile:
-                # Everything up until the first QCD marker.
-                read_buffer = ifile.read(45)
-                tfile.write(read_buffer)
-
-                # Write the new marker segment, 0xff6f = 65391
-                read_buffer = struct.pack('>HHB', int(65391), int(3), int(0))
-                tfile.write(read_buffer)
-
-                # Get the rest of the input file.
-                read_buffer = ifile.read()
-                tfile.write(read_buffer)
-                tfile.flush()
-
-            codestream = Jp2k(tfile.name).get_codestream()
-
-            self.assertEqual(codestream.segment[2].marker_id, '0xff6f')
-            self.assertEqual(codestream.segment[2].length, 3)
-            self.assertEqual(codestream.segment[2].data, b'\x00')
-
     def test_psot_is_zero(self):
         """Psot=0 in SOT is perfectly legal.  Issue #78."""
         filename = os.path.join(OPJ_DATA_ROOT,
@@ -1574,9 +1543,40 @@ class TestCodestream(unittest.TestCase):
 
     def setUp(self):
         self.jp2file = glymur.data.nemo()
+        self.j2kfile = glymur.data.goodstuff()
 
     def tearDown(self):
         pass
+
+    @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
+    def test_reserved_marker_segment(self):
+        """Reserved marker segments are ok."""
+
+        # Some marker segments were reserved in FCD15444-1.  Since that
+        # standard is old, some of them may have come into use.
+        #
+        # Let's inject a reserved marker segment into a file that
+        # we know something about to make sure we can still parse it.
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with open(self.j2kfile, 'rb') as ifile:
+                # Everything up until the first QCD marker.
+                read_buffer = ifile.read(65)
+                tfile.write(read_buffer)
+
+                # Write the new marker segment, 0xff6f = 65391
+                read_buffer = struct.pack('>HHB', int(65391), int(3), int(0))
+                tfile.write(read_buffer)
+
+                # Get the rest of the input file.
+                read_buffer = ifile.read()
+                tfile.write(read_buffer)
+                tfile.flush()
+
+            codestream = Jp2k(tfile.name).get_codestream()
+
+            self.assertEqual(codestream.segment[3].marker_id, '0xff6f')
+            self.assertEqual(codestream.segment[3].length, 3)
+            self.assertEqual(codestream.segment[3].data, b'\x00')
 
     def test_siz_segment_ssiz_unsigned(self):
         """ssiz attribute to be removed in future release"""

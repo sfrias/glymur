@@ -1126,7 +1126,9 @@ class TestJp2k_2_1(unittest.TestCase):
 
 
 class TestParsing(unittest.TestCase):
-    """Tests for verifying how parsing may be altered."""
+    """
+    Tests for verifying how parsing may be altered.
+    """
     def setUp(self):
         self.jp2file = glymur.data.nemo()
         # Reset parseoptions for every test.
@@ -1135,7 +1137,6 @@ class TestParsing(unittest.TestCase):
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
 
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_bad_rsiz(self):
         """
         Should not warn if RSIZ when parsing is turned off.
@@ -1165,8 +1166,16 @@ class TestParsing(unittest.TestCase):
             Jp2k(ofile.name)
 
             glymur.set_parseoptions(full_codestream=True)
-            with self.assertWarns(glymur.codestream.RSizWarning):
-                Jp2k(ofile.name)
+            pattern = 'Invalid profile'
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    Jp2k(ofile.name)
+                    assert issubclass(w[-1].category, UserWarning)
+                    assert pattern in str(w[-1].message)
+            else:
+                with self.assertWarnsRegex(glymur.codestream.RSizWarning,
+                                           pattern):
+                    Jp2k(ofile.name)
 
     def test_main_header(self):
         """verify that the main header isn't loaded during normal parsing"""

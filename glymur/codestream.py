@@ -67,6 +67,12 @@ for _marker in range(0xff90, 0xff94):
     _VALID_MARKERS.append(_marker)
 
 
+class RSizWarning(UserWarning):
+    """
+    The profile should be in the range of 0 through 4.
+    """
+    pass
+
 class Codestream(object):
     """Container for codestream information.
 
@@ -678,7 +684,8 @@ class Codestream(object):
 
         rsiz = data[0]
         if rsiz not in _KNOWN_PROFILES:
-            warnings.warn("Invalid profile: (Rsiz={0}).".format(rsiz))
+            msg = "Invalid profile: (Rsiz={0}).".format(rsiz)
+            warnings.warn(msg, RSizWarning)
 
         xysiz = (data[1], data[2])
         xyosiz = (data[3], data[4])

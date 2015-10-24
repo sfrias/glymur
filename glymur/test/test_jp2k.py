@@ -22,6 +22,7 @@ import pkg_resources
 
 import glymur
 from glymur import Jp2k
+from glymur.jp2box import CompatibilityListItemWarning
 from glymur.version import openjpeg_version
 
 from .fixtures import HAS_PYTHON_XMP_TOOLKIT
@@ -258,7 +259,7 @@ class TestJp2k(unittest.TestCase):
 
         Verify that we error out appropriately if we use the read method
         on an image with differing subsamples
-        
+
         Issue 86.
 
         Copy nemo.jp2 but change the SIZ segment to have differing subsamples.
@@ -701,7 +702,7 @@ class TestJp2k(unittest.TestCase):
             with open(self.jp2file, 'rb') as ifile:
                 # Copy up until codestream box.
                 ofile.write(ifile.read(3223))
-                
+
                 # Write the new codestream length (+4) and the box ID.
                 buffer = struct.pack('>I4s', 1132296 + 4, b'jp2c')
                 ofile.write(buffer)
@@ -717,7 +718,7 @@ class TestJp2k(unittest.TestCase):
                 # Write the EOC marker and be done with it.
                 ofile.write(ifile.read())
                 ofile.flush()
-            
+
             cstr = Jp2k(ofile.name).get_codestream(header_only=False)
             self.assertEqual(cstr.segment[11].marker_id, '0xff00')
             self.assertEqual(cstr.segment[11].length, 0)
@@ -1139,7 +1140,7 @@ class TestParsing(unittest.TestCase):
         """
         Should not warn if RSIZ when parsing is turned off.
 
-        This test was originally written for OPJ_DATA file 
+        This test was originally written for OPJ_DATA file
 
             input/nonregression/edf_c2_1002767.jp2'
 
@@ -1164,7 +1165,7 @@ class TestParsing(unittest.TestCase):
             Jp2k(ofile.name)
 
             glymur.set_parseoptions(full_codestream=True)
-            with self.assertWarnsRegex(UserWarning, 'Invalid profile'):
+            with self.assertWarns(glymur.codestream.RSizWarning):
                 Jp2k(ofile.name)
 
     def test_main_header(self):
@@ -1246,11 +1247,37 @@ class TestJp2kWarnings(unittest.TestCase):
             pattern += "It should be either 'jp2 ' or 'jpx '."
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
-                    jp2 = Jp2k(ofile.name)
+                    Jp2k(ofile.name)
                     assert pattern in str(w[-1].message)
             else:
-                regex = re.compile(pattern)
                 with self.assertWarnsRegex(UserWarning, pattern):
+                    Jp2k(ofile.name)
+
+    def test_bad_ftyp_compatibility_list_item(self):
+        """
+        Should warn in case of bad ftyp compatibility list item
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                # Write the JPEG2000 signature box
+                ofile.write(ifile.read(12))
+
+                # Write a bad compatibility list item.  'jp3' is not valid.
+                buffer = struct.pack('>I4s4sI4s', 20, b'ftyp', b'jp2 ', 0,
+                                     b'jp3 ')
+                ofile.write(buffer)
+
+                # Write the rest of the boxes as-is.
+                ifile.seek(32)
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    Jp2k(ofile.name)
+                    assert 'jp3' in str(w[-1].message)
+            else:
+                with self.assertWarns(CompatibilityListItemWarning):
                     Jp2k(ofile.name)
 
     def test_invalid_approximation(self):
@@ -1283,10 +1310,9 @@ class TestJp2kWarnings(unittest.TestCase):
             pattern = "Invalid approximation:  32"
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
-                    jp2 = Jp2k(ofile.name)
+                    Jp2k(ofile.name)
                     assert pattern in str(w[-1].message)
             else:
-                regex = re.compile(pattern)
                 with self.assertWarnsRegex(UserWarning, pattern):
                     Jp2k(ofile.name)
 
@@ -1320,10 +1346,9 @@ class TestJp2kWarnings(unittest.TestCase):
             pattern = "Unrecognized colorspace: 276"
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
-                    jp2 = Jp2k(ofile.name)
+                    Jp2k(ofile.name)
                     assert pattern in str(w[-1].message)
             else:
-                regex = re.compile(pattern)
                 with self.assertWarnsRegex(UserWarning, pattern):
                     Jp2k(ofile.name)
 
@@ -1331,8 +1356,8 @@ class TestJp2kWarnings(unittest.TestCase):
         """
         Garbage characters at the end of the file.
 
-        This test was originally run on 
-        
+        This test was originally run on
+
             input/nonregression/issue211.jp2
 
         Rewrite nemo.jp2 to have a few additional bytes at the end (less than
@@ -1350,13 +1375,11 @@ class TestJp2kWarnings(unittest.TestCase):
             pattern = "Extra bytes at end of file ignored."
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
-                    jp2 = Jp2k(ofile.name)
+                    Jp2k(ofile.name)
                     assert pattern in str(w[-1].message)
             else:
-                regex = re.compile(pattern)
                 with self.assertWarnsRegex(UserWarning, pattern):
                     Jp2k(ofile.name)
-
 
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,
@@ -1382,11 +1405,13 @@ class TestJp2kOpjDataRoot(unittest.TestCase):
             actdata = j[:]
             self.assertTrue(fixtures.mse(actdata, expdata) < 250)
 
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_no_cxform_pclr_jp2(self):
         """Indices for pclr jpxfile if no color transform"""
         filename = opj_data_file('input/conformance/file9.jp2')
-        with self.assertWarns(UserWarning):
+        with warnings.catch_warnings():
+            # Suppress a Compatibility list item warning.  We already test
+            # for this elsewhere.
+            warnings.simplefilter("ignore")
             jp2 = Jp2k(filename)
         rgb = jp2[:]
         jp2.ignore_pclr_cmap_cdef = True

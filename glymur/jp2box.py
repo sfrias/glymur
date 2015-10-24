@@ -1263,6 +1263,13 @@ class DataReferenceBox(Jp2kBox):
         return cls(data_entry_url_box_list, length=length, offset=offset)
 
 
+class CompatibilityListItemWarning(UserWarning):
+    """
+    Compatibility list items should be one of 'jp2 ', 'jpx ', or 'jpxb'
+    """
+    pass
+
+
 class FileTypeBox(Jp2kBox):
     """Container for JPEG 2000 file type box information.
 
@@ -1286,6 +1293,7 @@ class FileTypeBox(Jp2kBox):
     """
     box_id = 'ftyp'
     longname = 'File Type'
+    _valid_cls = ['jp2 ', 'jpx ', 'jpxb']
 
     def __init__(self, brand='jp2 ', minor_version=0,
                  compatibility_list=None, length=0, offset=-1):
@@ -1326,19 +1334,23 @@ class FileTypeBox(Jp2kBox):
         return text
 
     def _validate(self, writing=False):
-        """Validate the box before writing to file."""
+        """
+        Validate the box before writing to file.
+        """
         if self.brand not in ['jp2 ', 'jpx ']:
             msg = "The file type brand was '{0}'.  "
             msg += "It should be either 'jp2 ' or 'jpx '."
             self._dispatch_validation_error(msg.format(self.brand),
                                             writing=writing)
-        valid_cls = ['jp2 ', 'jpx ', 'jpxb']
         for item in self.compatibility_list:
-            if item not in valid_cls:
-                msg = "The file type compatibility list item '{0}' is not "
-                msg += "valid:  valid entries are {1}"
-                msg = msg.format(item, valid_cls)
-                self._dispatch_validation_error(msg, writing=writing)
+            if item not in self._valid_cls:
+                msg = "The file type compatibility list item '{entry}' is not "
+                msg += "valid:  valid entries are {valid_entries}"
+                msg = msg.format(entry=item, valid_entries=self._valid_cls)
+                if writing:
+                    raise IOError(msg)
+                else:
+                    warnings.warn(msg, CompatibilityListItemWarning)
 
     def write(self, fptr):
         """Write a File Type box to file.

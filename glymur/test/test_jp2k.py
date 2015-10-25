@@ -233,6 +233,7 @@ class TestSliceProtocolRead(SliceProtocolBase):
         np.testing.assert_array_equal(actual, expected)
 
 
+@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 class TestJp2k(unittest.TestCase):
     """These tests should be run by just about all configuration."""
 
@@ -245,6 +246,32 @@ class TestJp2k(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         pass
+
+    @unittest.skipIf(re.match('1.5.(1|2)', openjpeg_version) is not None,
+                     "Mysteriously fails in 1.5.1 and 1.5.2")
+    def test_no_cxform_pclr_jpx(self):
+        """
+        Indices for pclr jpxfile still usable if no color transform specified
+        """
+        with warnings.catch_warnings():
+            # Suppress a Compatibility list item warning.  We already test
+            # for this elsewhere.
+            warnings.simplefilter("ignore")
+            jp2 = Jp2k(self.jpxfile)
+        rgb = jp2[:]
+        jp2.ignore_pclr_cmap_cdef = True
+        idx = jp2[:]
+        self.assertEqual(rgb.shape, (1024, 1024, 3))
+        self.assertEqual(idx.shape, (1024, 1024))
+
+        # Should be able to manually reconstruct the RGB image from the palette
+        # and indices.
+        palette = jp2.box[2].box[2].palette
+        rgb_from_idx = np.zeros(rgb.shape, dtype=np.uint8)
+        for r in np.arange(rgb.shape[0]):
+            for c in np.arange(rgb.shape[1]):
+                rgb_from_idx[r, c] = palette[idx[r, c]]
+        np.testing.assert_array_equal(rgb, rgb_from_idx)
 
     @unittest.skipIf(sys.hexversion < 0x03000000, "do not bother on python2")
     def test_warn_if_using_read_method(self):
@@ -319,30 +346,6 @@ class TestJp2k(unittest.TestCase):
 
             actdata = j2[:]
             self.assertTrue(fixtures.mse(actdata[0], expdata[0]) < 0.38)
-
-    @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
-    @unittest.skipIf(re.match('1.[0-4]', openjpeg_version) is not None,
-                     "Not supported on OpenJPEG {0}".format(openjpeg_version))
-    @unittest.skipIf(re.match('1.5.(1|2)', openjpeg_version) is not None,
-                     "Mysteriously fails in 1.5.1 and 1.5.2")
-    def test_no_cxform_pclr_jpx(self):
-        """Indices for pclr jpxfile if no color transform"""
-        j = Jp2k(self.jpxfile)
-        rgb = j[:]
-        j.ignore_pclr_cmap_cdef = True
-        idx = j[:]
-        nr, nc = 1024, 1024
-        self.assertEqual(rgb.shape, (nr, nc, 3))
-        self.assertEqual(idx.shape, (nr, nc))
-
-        # Should be able to manually reconstruct the RGB image from the palette
-        # and indices.
-        palette = j.box[2].box[2].palette
-        rgb_from_idx = np.zeros(rgb.shape, dtype=np.uint8)
-        for r in np.arange(nr):
-            for c in np.arange(nc):
-                rgb_from_idx[r, c] = palette[idx[r, c]]
-        np.testing.assert_array_equal(rgb, rgb_from_idx)
 
     @unittest.skipIf(os.name == "nt", "Unexplained failure on windows")
     def test_repr(self):
@@ -1406,29 +1409,6 @@ class TestJp2kOpjDataRoot(unittest.TestCase):
 
             actdata = j[:]
             self.assertTrue(fixtures.mse(actdata, expdata) < 250)
-
-    def test_no_cxform_pclr_jp2(self):
-        """Indices for pclr jpxfile if no color transform"""
-        filename = opj_data_file('input/conformance/file9.jp2')
-        with warnings.catch_warnings():
-            # Suppress a Compatibility list item warning.  We already test
-            # for this elsewhere.
-            warnings.simplefilter("ignore")
-            jp2 = Jp2k(filename)
-        rgb = jp2[:]
-        jp2.ignore_pclr_cmap_cdef = True
-        idx = jp2[:]
-        self.assertEqual(rgb.shape, (512, 768, 3))
-        self.assertEqual(idx.shape, (512, 768))
-
-        # Should be able to manually reconstruct the RGB image from the palette
-        # and indices.
-        palette = jp2.box[2].box[1].palette
-        rgb_from_idx = np.zeros(rgb.shape, dtype=np.uint8)
-        for r in np.arange(rgb.shape[0]):
-            for c in np.arange(rgb.shape[1]):
-                rgb_from_idx[r, c] = palette[idx[r, c]]
-        np.testing.assert_array_equal(rgb, rgb_from_idx)
 
     def test_no_cxform_cmap(self):
         """Bands as physically ordered, not as physically intended"""

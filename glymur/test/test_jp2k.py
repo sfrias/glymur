@@ -23,6 +23,9 @@ import pkg_resources
 import glymur
 from glymur import Jp2k
 from glymur.jp2box import CompatibilityListItemWarning, FileTypeBrandWarning
+from glymur.jp2box import UnrecognizedBoxWarning
+from glymur.codestream import RSizWarning
+from glymur.jp2box import InvalidApproximationWarning
 from glymur.version import openjpeg_version
 
 from .fixtures import HAS_PYTHON_XMP_TOOLKIT
@@ -1165,11 +1168,10 @@ class TestParsing(unittest.TestCase):
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
                     Jp2k(ofile.name)
-                    assert issubclass(w[-1].category, UserWarning)
+                    assert issubclass(w[-1].category, RSizWarning)
                     assert pattern in str(w[-1].message)
             else:
-                with self.assertWarnsRegex(glymur.codestream.RSizWarning,
-                                           pattern):
+                with self.assertWarnsRegex(RSizWarning, pattern):
                     Jp2k(ofile.name)
 
     def test_main_header(self):
@@ -1211,10 +1213,11 @@ class TestJp2kWarnings(unittest.TestCase):
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
                     jp2 = Jp2k(ofile.name)
+                    assert issubclass(w[-1].category, UnrecognizedBoxWarning)
                     assert 'Unrecognized box' in str(w[-1].message)
             else:
                 regex = re.compile('Unrecognized box')
-                with self.assertWarnsRegex(UserWarning, regex):
+                with self.assertWarnsRegex(UnrecognizedBoxWarning, regex):
                     jp2 = Jp2k(ofile.name)
 
             # Now make sure we got all of the boxes.
@@ -1317,8 +1320,11 @@ class TestJp2kWarnings(unittest.TestCase):
                 with warnings.catch_warnings(record=True) as w:
                     Jp2k(ofile.name)
                     assert pattern in str(w[-1].message)
+                    assert issubclass(w[-1].category,
+                                      InvalidApproximationWarning)
             else:
-                with self.assertWarnsRegex(UserWarning, pattern):
+                with self.assertWarnsRegex(InvalidApproximationWarning,
+                                           pattern):
                     Jp2k(ofile.name)
 
     def test_invalid_colorspace(self):

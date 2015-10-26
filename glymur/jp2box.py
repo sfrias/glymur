@@ -66,6 +66,16 @@ _EXIF_UUID = UUID(bytes=b'JpgTiffExif->JP2')
 _XMP_UUID = UUID('be7acfcb-97a9-42e8-9c71-999491e3afac')
 
 
+class UnrecognizedBoxWarning(UserWarning):
+    """
+    If not a JP2 box, then at least must be a JPX box we've heard of.
+
+    The problem is that we haven't seen even close to all the possible JPX
+    boxes.
+    """
+    pass
+
+
 class Jp2kBox(object):
     """Superclass for JPEG 2000 boxes.
 
@@ -194,7 +204,7 @@ class Jp2kBox(object):
             # We don't recognize the box ID, so create an UnknownBox and be
             # done with it.
             msg = 'Unrecognized box ({0}) encountered.'.format(box_id)
-            warnings.warn(msg)
+            warnings.warn(msg, UnrecognizedBoxWarning)
             box = UnknownBox(box_id, offset=start, length=num_bytes,
                              longname='Unknown')
 
@@ -284,6 +294,14 @@ class Jp2kBox(object):
         return superbox
 
 
+class InvalidApproximationWarning(UserWarning):
+    """
+    The approximation value should be in the range from 1 to 4.  Values 1-2
+    are specified in 15444-1.  Values 3-4 are specified in 15444-2.
+    """
+    pass
+
+
 class ColourSpecificationBox(Jp2kBox):
     """Container for JPEG 2000 color specification box information.
 
@@ -340,7 +358,10 @@ class ColourSpecificationBox(Jp2kBox):
             self._dispatch_validation_error(msg, writing=writing)
         if self.approximation not in (0, 1, 2, 3, 4):
             msg = "Invalid approximation:  {0}".format(self.approximation)
-            self._dispatch_validation_error(msg, writing=writing)
+            if writing:
+                raise IOError(msg)
+            else:
+                warnings.warn(msg, InvalidApproximationWarning)
 
     def _write_validate(self):
         """In addition to constructor validation steps, run validation steps

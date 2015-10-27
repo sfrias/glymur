@@ -22,8 +22,11 @@ import pkg_resources
 
 import glymur
 from glymur import Jp2k
-from glymur.jp2box import CompatibilityListItemWarning, FileTypeBrandWarning
-from glymur.jp2box import UnrecognizedBoxWarning
+from glymur.jp2box import (
+    CompatibilityListItemWarning, FileTypeBrandWarning, UnrecognizedBoxWarning,
+    ExtraBytesAtEndOfFileWarning, UnrecognizedColorspaceWarning
+)
+from glymur.jp2box import UnrecognizedBoxWarning, ExtraBytesAtEndOfFileWarning
 from glymur.codestream import RSizWarning
 from glymur.jp2box import InvalidApproximationWarning
 from glymur.version import openjpeg_version
@@ -1354,13 +1357,14 @@ class TestJp2kWarnings(unittest.TestCase):
                 ofile.write(ifile.read())
                 ofile.flush()
 
-            pattern = "Unrecognized colorspace: 276"
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
                     Jp2k(ofile.name)
-                    assert pattern in str(w[-1].message)
+                    assert issubclass(w[-1].category,
+                                      UnrecognizedColorspaceWarning)
+                    assert 'Unrecognized colorspace' in str(w[-1].message)
             else:
-                with self.assertWarnsRegex(UserWarning, pattern):
+                with self.assertWarns(UnrecognizedColorspaceWarning):
                     Jp2k(ofile.name)
 
     def test_stupid_windows_eol_at_end(self):
@@ -1387,9 +1391,12 @@ class TestJp2kWarnings(unittest.TestCase):
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
                     Jp2k(ofile.name)
+                    assert issubclass(w[-1].category,
+                                      ExtraBytesAtEndOfFileWarning)
                     assert pattern in str(w[-1].message)
             else:
-                with self.assertWarnsRegex(UserWarning, pattern):
+                with self.assertWarnsRegex(ExtraBytesAtEndOfFileWarning,
+                                           pattern):
                     Jp2k(ofile.name)
 
 

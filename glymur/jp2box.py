@@ -66,6 +66,13 @@ _EXIF_UUID = UUID(bytes=b'JpgTiffExif->JP2')
 _XMP_UUID = UUID('be7acfcb-97a9-42e8-9c71-999491e3afac')
 
 
+class ExtraBytesAtEndOfFileWarning(UserWarning):
+    """
+    Must be either 0 or more than 8 bytes at the end of each box.
+    """
+    pass
+
+
 class UnrecognizedBoxWarning(UserWarning):
     """
     If not a JP2 box, then at least must be a JPX box we've heard of.
@@ -251,7 +258,7 @@ class Jp2kBox(object):
             read_buffer = fptr.read(8)
             if len(read_buffer) < 8:
                 msg = "Extra bytes at end of file ignored."
-                warnings.warn(msg)
+                warnings.warn(msg, ExtraBytesAtEndOfFileWarning)
                 return superbox
 
             (box_length, box_id) = struct.unpack('>I4s', read_buffer)
@@ -299,6 +306,10 @@ class InvalidApproximationWarning(UserWarning):
     The approximation value should be in the range from 1 to 4.  Values 1-2
     are specified in 15444-1.  Values 3-4 are specified in 15444-2.
     """
+    pass
+
+
+class UnrecognizedColorspaceWarning(UserWarning):
     pass
 
 
@@ -476,7 +487,7 @@ class ColourSpecificationBox(Jp2kBox):
             colorspace, = struct.unpack_from('>I', read_buffer, offset=3)
             if colorspace not in _COLORSPACE_MAP_DISPLAY.keys():
                 msg = "Unrecognized colorspace: {0}".format(colorspace)
-                warnings.warn(msg)
+                warnings.warn(msg, UnrecognizedColorspaceWarning)
             icc_profile = None
 
         else:

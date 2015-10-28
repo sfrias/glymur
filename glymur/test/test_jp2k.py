@@ -751,6 +751,21 @@ class TestJp2k_write(unittest.TestCase):
         os.unlink(cls.single_channel_j2k.name)
         os.unlink(cls.single_channel_jp2.name)
 
+    def test_irreversible(self):
+        """
+        Verify that the Irreversible option works
+        """
+        expdata = self.j2k_data
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=expdata, irreversible=True, numres=5)
+
+            codestream = j.get_codestream()
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_9X7_IRREVERSIBLE)
+
+            actdata = j[:]
+            self.assertTrue(fixtures.mse(actdata, expdata) < 0.28)
+
     def test_shape_greyscale_jp2(self):
         """verify shape attribute for greyscale JP2 file
         """
@@ -1404,24 +1419,6 @@ class TestJp2kWarnings(unittest.TestCase):
                  "OPJ_DATA_ROOT environment variable not set")
 class TestJp2kOpjDataRoot(unittest.TestCase):
     """These tests should be run by just about all configurations."""
-
-    @unittest.skipIf(re.match("0|1.[0-4]", glymur.version.openjpeg_version),
-                     "Must have openjpeg 1.5 or higher to run")
-    @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
-    def test_irreversible(self):
-        """Irreversible"""
-        filename = opj_data_file('input/nonregression/issue141.rawl')
-        expdata = np.fromfile(filename, dtype=np.uint16)
-        expdata.resize((32, 2048))
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            j = Jp2k(tfile.name, data=expdata, irreversible=True, numres=5)
-
-            codestream = j.get_codestream()
-            self.assertEqual(codestream.segment[2].spcod[8],
-                             glymur.core.WAVELET_XFORM_9X7_IRREVERSIBLE)
-
-            actdata = j[:]
-            self.assertTrue(fixtures.mse(actdata, expdata) < 250)
 
     def test_no_cxform_cmap(self):
         """Bands as physically ordered, not as physically intended"""

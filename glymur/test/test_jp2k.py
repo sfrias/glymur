@@ -26,6 +26,7 @@ from glymur.jp2box import (
     CompatibilityListItemWarning, FileTypeBrandWarning, UnrecognizedBoxWarning,
     ExtraBytesAtEndOfFileWarning, UnrecognizedColorspaceWarning
 )
+from glymur.core import COLOR, RED, GREEN, BLUE
 from glymur.jp2box import UnrecognizedBoxWarning, ExtraBytesAtEndOfFileWarning
 from glymur.codestream import RSizWarning
 from glymur.jp2box import InvalidApproximationWarning
@@ -278,6 +279,42 @@ class TestJp2k(unittest.TestCase):
             for c in np.arange(rgb.shape[1]):
                 rgb_from_idx[r, c] = palette[idx[r, c]]
         np.testing.assert_array_equal(rgb, rgb_from_idx)
+
+    def test_no_cxform_cmap(self):
+        """
+        Reorder the components.
+        """
+        j2k = Jp2k(self.j2kfile)
+        rgb = j2k[:]
+        height, width, ncomps = rgb.shape
+
+        # Rewrap the J2K file to reorder the components
+        boxes = [
+            glymur.jp2box.JPEG2000SignatureBox(),
+            glymur.jp2box.FileTypeBox()
+        ]
+        jp2h = glymur.jp2box.JP2HeaderBox()
+        jp2h.box = [
+            glymur.jp2box.ImageHeaderBox(height, width, num_components=ncomps),
+            glymur.jp2box.ColourSpecificationBox(colorspace=glymur.core.SRGB)
+        ]
+
+        channel_type = [COLOR, COLOR, COLOR]
+        association = [BLUE, GREEN, RED]
+        cdef = glymur.jp2box.ChannelDefinitionBox(channel_type=channel_type,
+                                                  association=association)
+        jp2h.box.append(cdef)
+
+        boxes.append(jp2h)
+        boxes.append(glymur.jp2box.ContiguousCodestreamBox())
+
+        with tempfile.NamedTemporaryFile(suffix=".jp2") as tfile:
+            jp2 = j2k.wrap(tfile.name, boxes=boxes)
+
+            jp2.ignore_pclr_cmap_cdef = False
+            bgr = jp2[:]
+
+        np.testing.assert_array_equal(rgb, bgr[:, :, [2, 1, 0]])
 
     @unittest.skipIf(sys.hexversion < 0x03000000, "do not bother on python2")
     def test_warn_if_using_read_method(self):
@@ -1413,32 +1450,6 @@ class TestJp2kWarnings(unittest.TestCase):
                 with self.assertWarnsRegex(ExtraBytesAtEndOfFileWarning,
                                            pattern):
                     Jp2k(ofile.name)
-
-
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-class TestJp2kOpjDataRoot(unittest.TestCase):
-    """These tests should be run by just about all configurations."""
-
-    def test_no_cxform_cmap(self):
-        """Bands as physically ordered, not as physically intended"""
-        # This file has the components physically reversed.  The cmap box
-        # tells the decoder how to order them, but this flag prevents that.
-        filename = opj_data_file('input/conformance/file2.jp2')
-        with warnings.catch_warnings():
-            # Suppress a Compatibility list item warning.  We already test
-            # for this elsewhere.
-            warnings.simplefilter("ignore")
-            j = Jp2k(filename)
-        ycbcr = j[:]
-        j.ignore_pclr_cmap_cdef = True
-        crcby = j[:]
-
-        expected = np.zeros(ycbcr.shape, ycbcr.dtype)
-        for k in range(crcby.shape[2]):
-            expected[:, :, crcby.shape[2] - k - 1] = crcby[:, :, k]
-
-        np.testing.assert_array_equal(ycbcr, expected)
 
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,

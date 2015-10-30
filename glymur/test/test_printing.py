@@ -21,6 +21,7 @@ else:
 import lxml.etree as ET
 
 import glymur
+from glymur.jp2box import BitsPerComponentBox
 from glymur import Jp2k, command_line
 from . import fixtures
 from .fixtures import (OPJ_DATA_ROOT, opj_data_file,
@@ -42,6 +43,39 @@ class TestPrinting(unittest.TestCase):
 
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
+
+    def test_bpcc(self):
+        """
+        BPCC boxes are rare :-)
+        """
+        box = BitsPerComponentBox((5, 5, 5, 1),
+                                  (False, False, False, False),
+                                  length=12, offset=62)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(box)
+            actual = fake_out.getvalue().strip()
+        self.assertEqual(actual, fixtures.bpcc)
+
+    def test_cinema_profile(self):
+        """
+        Should print Cinema 2K when the profile is 3.
+        """
+        kwargs = {'rsiz': 3,
+                  'xysiz': (1920, 1080),
+                  'xyosiz': (0, 0),
+                  'xytsiz': (1920, 1080),
+                  'xytosiz': (0, 0),
+                  'Csiz': 3,
+                  'bitdepth': (12, 12, 12),
+                  'signed':  (False, False, False),
+                  'xyrsiz': ((1, 1, 1), (1, 1, 1)),
+                  'length': 47,
+                  'offset': 2}
+        segment = glymur.codestream.SIZsegment(**kwargs)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(segment)
+            actual = fake_out.getvalue().strip()
+        self.assertEqual(actual, fixtures.cinema2k_profile)
 
     def test_version_info(self):
         """Should be able to print(glymur.version.info)"""
@@ -616,27 +650,6 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_bpcc(self):
-        """BPCC boxes are rare :-)"""
-        self.maxDiff = None
-        filename = opj_data_file('input/nonregression/issue458.jp2')
-        jp2 = Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            box = jp2.box[2].box[1]
-            print(box)
-            actual = fake_out.getvalue().strip()
-        self.assertEqual(actual, fixtures.bpcc)
-
-    def test_cinema_profile(self):
-        """Should print Cinema 2K when the profile is 3."""
-        filename = opj_data_file('input/nonregression/_00042.j2k')
-        j2k = Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            c = j2k.get_codestream()
-            print(c.segment[1])
-            actual = fake_out.getvalue().strip()
-        self.assertEqual(actual, fixtures.cinema2k_profile)
 
     def test_crg(self):
         """verify printing of CRG segment"""

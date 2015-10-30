@@ -1952,11 +1952,17 @@ def _default_info_handler(msg, _):
     print("[INFO] {0}".format(msg.decode('utf-8').rstrip()))
 
 
+class OpenJPEGLibraryWarning(UserWarning):
+    """
+    Warnings emitted by OpenJPEG library
+    """
+    pass
+
 def _default_warning_handler(library_msg, _):
     """Default warning handler callback."""
     library_msg = library_msg.decode('utf-8').rstrip()
     msg = "OpenJPEG library warning:  {0}".format(library_msg)
-    warnings.warn(msg)
+    warnings.warn(msg, OpenJPEGLibraryWarning)
 
 _ERROR_CALLBACK = _CMPFUNC(_default_error_handler)
 _INFO_CALLBACK = _CMPFUNC(_default_info_handler)

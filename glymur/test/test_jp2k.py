@@ -27,7 +27,6 @@ from glymur.jp2box import (
     ExtraBytesAtEndOfFileWarning, UnrecognizedColorspaceWarning
 )
 from glymur.core import COLOR, RED, GREEN, BLUE
-from glymur.jp2box import UnrecognizedBoxWarning, ExtraBytesAtEndOfFileWarning
 from glymur.codestream import RSizWarning
 from glymur.jp2box import InvalidApproximationWarning
 from glymur.version import openjpeg_version
@@ -40,7 +39,6 @@ if HAS_PYTHON_XMP_TOOLKIT:
     import libxmp
     from libxmp import XMPMeta
 
-from .fixtures import opj_data_file
 from . import fixtures
 
 

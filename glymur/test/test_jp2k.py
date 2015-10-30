@@ -40,7 +40,7 @@ if HAS_PYTHON_XMP_TOOLKIT:
     import libxmp
     from libxmp import XMPMeta
 
-from .fixtures import OPJ_DATA_ROOT, opj_data_file
+from .fixtures import opj_data_file
 from . import fixtures
 
 
@@ -761,6 +761,32 @@ class TestJp2k(unittest.TestCase):
             self.assertEqual(cstr.segment[11].marker_id, '0xff00')
             self.assertEqual(cstr.segment[11].length, 0)
 
+    def test_psot_is_zero(self):
+        """
+        Psot=0 in SOT is perfectly legal.  Issue #78.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as ofile:
+            with open(self.j2kfile, 'rb') as ifile:
+                # Write up until the SOD segment.
+                ofile.write(ifile.read(164))
+
+                # Write a SOT box with Psot = 0
+                buffer = struct.pack('>HHHIBB', 0xff90, 10, 0, 0, 0, 1)
+                ofile.write(buffer)
+
+                # Write the rest of it.
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            j = Jp2k(ofile.name)
+            codestream = j.get_codestream(header_only=False)
+
+            # The codestream is valid, so we should be able to get the entire
+            # codestream, so the last one is EOC.
+            self.assertEqual(codestream.segment[-3].marker_id, 'SOT')
+            self.assertEqual(codestream.segment[-2].marker_id, 'SOD')
+            self.assertEqual(codestream.segment[-1].marker_id, 'EOC')
+
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
@@ -1452,40 +1478,6 @@ class TestJp2kWarnings(unittest.TestCase):
                     Jp2k(ofile.name)
 
 
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-class TestCodestreamOpjData(unittest.TestCase):
-    """Test suite for unusual codestream cases.  Uses OPJ_DATA_ROOT"""
-
-    def setUp(self):
-        self.jp2file = glymur.data.nemo()
-
-    def tearDown(self):
-        pass
-
-    def test_psot_is_zero(self):
-        """Psot=0 in SOT is perfectly legal.  Issue #78."""
-        filename = os.path.join(OPJ_DATA_ROOT,
-                                'input/nonregression/123.j2c')
-        j = Jp2k(filename)
-        codestream = j.get_codestream(header_only=False)
-
-        # The codestream is valid, so we should be able to get the entire
-        # codestream, so the last one is EOC.
-        self.assertEqual(codestream.segment[-1].marker_id, 'EOC')
-
-    def test_siz_segment_ssiz_signed(self):
-        """ssiz attribute to be removed in future release"""
-        filename = os.path.join(OPJ_DATA_ROOT, 'input/conformance/p0_03.j2k')
-        j = Jp2k(filename)
-        codestream = j.get_codestream()
-
-        # The ssiz attribute was simply a tuple of raw bytes.
-        # The first 7 bits are interpreted as the bitdepth, the MSB determines
-        # whether or not it is signed.
-        self.assertEqual(codestream.segment[1].ssiz, (131,))
-
-
 class TestCodestreamRepr(unittest.TestCase):
 
     def setUp(self):
@@ -1527,16 +1519,6 @@ class TestCodestreamRepr(unittest.TestCase):
         self.assertEqual(newseg.yrsiz, (1, 1, 1))
         self.assertEqual(newseg.bitdepth, (8, 8, 8))
         self.assertEqual(newseg.signed, (False, False, False))
-
-    def test_siz_segment_ssiz_unsigned(self):
-        """ssiz attribute to be removed in future release"""
-        j = Jp2k(self.jp2file)
-        codestream = j.get_codestream()
-
-        # The ssiz attribute was simply a tuple of raw bytes.
-        # The first 7 bits are interpreted as the bitdepth, the MSB determines
-        # whether or not it is signed.
-        self.assertEqual(codestream.segment[1].ssiz, (7, 7, 7))
 
 
 class TestCodestream(unittest.TestCase):

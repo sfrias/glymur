@@ -634,6 +634,32 @@ class TestPrinting(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
+    def test_crg(self):
+        """verify printing of CRG segment"""
+        crg = glymur.codestream.CRGsegment((65535,), (32767,), 6, 87)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(crg)
+            actual = fake_out.getvalue().strip()
+        lines = ['CRG marker segment @ (87, 6)',
+                 '    Vertical, Horizontal offset:  (0.50, 1.00)']
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
+
+    def test_rgn(self):
+        """
+        verify printing of RGN segment
+        """
+        segment = glymur.codestream.RGNsegment(0, 0, 7, 5, 310)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(segment)
+            actual = fake_out.getvalue().strip()
+        lines = ['RGN marker segment @ (310, 5)',
+                 '    Associated component:  0',
+                 '    ROI style:  0',
+                 '    Parameter:  7']
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
+
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
@@ -650,34 +676,6 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_crg(self):
-        """verify printing of CRG segment"""
-        filename = opj_data_file('input/conformance/p0_03.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[-5])
-            actual = fake_out.getvalue().strip()
-        lines = ['CRG marker segment @ (87, 6)',
-                 '    Vertical, Horizontal offset:  (0.50, 1.00)']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
-
-    def test_rgn(self):
-        """verify printing of RGN segment"""
-        filename = opj_data_file('input/conformance/p0_03.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream(header_only=False)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[12])
-            actual = fake_out.getvalue().strip()
-        lines = ['RGN marker segment @ (310, 5)',
-                 '    Associated component:  0',
-                 '    ROI style:  0',
-                 '    Parameter:  7']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
 
     def test_sop(self):
         """verify printing of SOP segment"""

@@ -689,6 +689,40 @@ class TestPrinting(unittest.TestCase):
         expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
 
+    def test_plt_segment(self):
+        """
+        verify printing of PLT segment
+        
+        Originally tested with input/conformance/p0_07.j2k
+        """
+        pkt_lengths = [9, 122, 19, 30, 27, 9, 41, 62, 18, 29, 261,
+                       55, 82, 299, 93, 941, 951, 687, 1729, 1443, 1008, 2168,
+                       2188, 2223]
+        segment = glymur.codestream.PLTsegment(0, pkt_lengths, 38, 7871146)
+
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(segment)
+            actual = fake_out.getvalue().strip()
+
+        lines = ['PLT marker segment @ (7871146, 38)',
+                 '    Index:  0',
+                 '    Iplt:  [9, 122, 19, 30, 27, 9, 41, 62, 18, 29, 261,'
+                 + ' 55, 82, 299, 93, 941, 951, 687, 1729, 1443, 1008, 2168,'
+                 + ' 2188, 2223]']
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
+
+    def test_componentmapping_box_alpha(self):
+        """Verify __repr__ method on cmap box."""
+        cmap = glymur.jp2box.ComponentMappingBox(component_index=(0, 0, 0),
+                                                 mapping_type=(1, 1, 1),
+                                                 palette_index=(0, 1, 2))
+        newbox = eval(repr(cmap))
+        self.assertEqual(newbox.box_id, 'cmap')
+        self.assertEqual(newbox.component_index, (0, 0, 0))
+        self.assertEqual(newbox.mapping_type, (1, 1, 1))
+        self.assertEqual(newbox.palette_index, (0, 1, 2))
+
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
@@ -705,23 +739,6 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_plt_segment(self):
-        """verify printing of PLT segment"""
-        filename = opj_data_file('input/conformance/p0_07.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream(header_only=False)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[49935])
-            actual = fake_out.getvalue().strip()
-
-        lines = ['PLT marker segment @ (7871146, 38)',
-                 '    Index:  0',
-                 '    Iplt:  [9, 122, 19, 30, 27, 9, 41, 62, 18, 29, 261,'
-                 + ' 55, 82, 299, 93, 941, 951, 687, 1729, 1443, 1008, 2168,'
-                 + ' 2188, 2223]']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
 
     def test_pod_segment(self):
         """verify printing of POD segment"""
@@ -799,17 +816,6 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
 
         expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
-
-    def test_componentmapping_box_alpha(self):
-        """Verify __repr__ method on cmap box."""
-        cmap = glymur.jp2box.ComponentMappingBox(component_index=(0, 0, 0),
-                                                 mapping_type=(1, 1, 1),
-                                                 palette_index=(0, 1, 2))
-        newbox = eval(repr(cmap))
-        self.assertEqual(newbox.box_id, 'cmap')
-        self.assertEqual(newbox.component_index, (0, 0, 0))
-        self.assertEqual(newbox.mapping_type, (1, 1, 1))
-        self.assertEqual(newbox.palette_index, (0, 1, 2))
 
     def test_differing_subsamples(self):
         """verify printing of SIZ with different subsampling... Issue 86."""

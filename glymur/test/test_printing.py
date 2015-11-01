@@ -660,6 +660,35 @@ class TestPrinting(unittest.TestCase):
         expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
 
+    def test_sop(self):
+        """
+        verify printing of SOP segment
+        """
+        segment = glymur.codestream.SOPsegment(15, 4, 12836)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(segment)
+            actual = fake_out.getvalue().strip()
+        lines = ['SOP marker segment @ (12836, 4)',
+                 '    Nsop:  15']
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
+
+    def test_cme(self):
+        """
+        Test printing a CME or comment marker segment.
+
+        Originally tested with input/conformance/p0_02.j2k
+        """
+        buffer = "Creator: AV-J2K (c) 2000,2001 Algo Vision".encode('latin-1')
+        segment = glymur.codestream.CMEsegment(1, buffer, 45, 85)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(segment)
+            actual = fake_out.getvalue().strip()
+        lines = ['CME marker segment @ (85, 45)',
+                 '    "Creator: AV-J2K (c) 2000,2001 Algo Vision"']
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
+
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
@@ -676,33 +705,6 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_sop(self):
-        """verify printing of SOP segment"""
-        filename = opj_data_file('input/conformance/p0_03.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream(header_only=False)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[-2])
-            actual = fake_out.getvalue().strip()
-        lines = ['SOP marker segment @ (12836, 4)',
-                 '    Nsop:  15']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
-
-    def test_cme(self):
-        """Test printing a CME or comment marker segment."""
-        filename = opj_data_file('input/conformance/p0_02.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream()
-        # 2nd to last segment in the main header
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[-2])
-            actual = fake_out.getvalue().strip()
-        lines = ['CME marker segment @ (85, 45)',
-                 '    "Creator: AV-J2K (c) 2000,2001 Algo Vision"']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
 
     def test_plt_segment(self):
         """verify printing of PLT segment"""

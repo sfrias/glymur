@@ -723,30 +723,16 @@ class TestPrinting(unittest.TestCase):
         self.assertEqual(newbox.mapping_type, (1, 1, 1))
         self.assertEqual(newbox.palette_index, (0, 1, 2))
 
-
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-@unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
-class TestPrintingOpjDataRoot(unittest.TestCase):
-    """Tests for verifying printing. restricted to OPJ_DATA_ROOT files."""
-    def setUp(self):
-        self.jpxfile = glymur.data.jpxfile()
-        self.jp2file = glymur.data.nemo()
-        self.j2kfile = glymur.data.goodstuff()
-
-        # Reset printoptions for every test.
-        glymur.set_printoptions(short=False, xml=True, codestream=True)
-
-    def tearDown(self):
-        pass
-
     def test_pod_segment(self):
-        """verify printing of POD segment"""
-        filename = opj_data_file('input/conformance/p0_13.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream()
+        """
+        verify printing of POD segment
+
+        Original test file was input/conformance/p0_13.j2k
+        """
+        params = (0, 0, 1, 33, 128, 1, 0, 128, 1, 33, 257, 4)
+        segment = glymur.codestream.PODsegment(params, 20, 878)
         with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[8])
+            print(segment)
             actual = fake_out.getvalue().strip()
 
         lines = ['POD marker segment @ (878, 20)',
@@ -769,12 +755,14 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_ppm_segment(self):
-        """verify printing of PPM segment"""
-        filename = opj_data_file('input/conformance/p1_03.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream()
+        """
+        verify printing of PPM segment
+
+        Original file tested was input/conformance/p1_03.j2k
+        """
+        segment = glymur.codestream.PPMsegment(0, b'\0' * 43709, 43712, 213)
         with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[9])
+            print(segment)
             actual = fake_out.getvalue().strip()
 
         lines = ['PPM marker segment @ (213, 43712)',
@@ -785,12 +773,14 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_ppt_segment(self):
-        """verify printing of ppt segment"""
-        filename = opj_data_file('input/conformance/p1_06.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream(header_only=False)
+        """
+        verify printing of ppt segment
+
+        Original file tested was input/conformance/p1_06.j2k
+        """
+        segment = glymur.codestream.PPTsegment(0, b'\0' * 106, 109, 155)
         with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[6])
+            print(segment)
             actual = fake_out.getvalue().strip()
 
         lines = ['PPT marker segment @ (155, 109)',
@@ -801,12 +791,17 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_tlm_segment(self):
-        """verify printing of TLM segment"""
-        filename = opj_data_file('input/conformance/p0_15.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream()
+        """
+        verify printing of TLM segment
+
+        Original file tested was input/conformance/p0_15.j2k
+        """
+        segment = glymur.codestream.TLMsegment(0,
+                                               (0, 1, 2, 3),
+                                               (4267, 2117, 4080, 2081),
+                                               28, 268)
         with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[10])
+            print(segment)
             actual = fake_out.getvalue().strip()
 
         lines = ['TLM marker segment @ (268, 28)',
@@ -816,6 +811,23 @@ class TestPrintingOpjDataRoot(unittest.TestCase):
 
         expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
+
+
+@unittest.skipIf(OPJ_DATA_ROOT is None,
+                 "OPJ_DATA_ROOT environment variable not set")
+@unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
+class TestPrintingOpjDataRoot(unittest.TestCase):
+    """Tests for verifying printing. restricted to OPJ_DATA_ROOT files."""
+    def setUp(self):
+        self.jpxfile = glymur.data.jpxfile()
+        self.jp2file = glymur.data.nemo()
+        self.j2kfile = glymur.data.goodstuff()
+
+        # Reset printoptions for every test.
+        glymur.set_printoptions(short=False, xml=True, codestream=True)
+
+    def tearDown(self):
+        pass
 
     def test_differing_subsamples(self):
         """verify printing of SIZ with different subsampling... Issue 86."""

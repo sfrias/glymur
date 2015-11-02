@@ -848,7 +848,7 @@ class Codestream(object):
             ttlm = data[0::2]
             ptlm = data[1::2]
 
-        return TLMsegment(length, offset, ztlm, ttlm, ptlm)
+        return TLMsegment(ztlm, ttlm, ptlm, length, offset)
 
     def _parse_reserved_marker(self, fptr):
         """Marker range between 0xff30 and 0xff39.
@@ -1797,7 +1797,7 @@ class TLMsegment(Segment):
        15444-1:2004 - Information technology -- JPEG 2000 image coding system:
        Core coding system
     """
-    def __init__(self, length, offset, ztlm, ttlm, ptlm):
+    def __init__(self, ztlm, ttlm, ptlm, length, offset):
         Segment.__init__(self, marker_id='TLM')
         self.length = length
         self.offset = offset
@@ -1808,13 +1808,13 @@ class TLMsegment(Segment):
     def __str__(self):
         msg = Segment.__str__(self)
         msg += '\n    '
-        lines = ['Index:  {0}',
-                 'Tile number:  {1}',
-                 'Length:  {2}']
+        lines = ['Index:  {index}',
+                 'Tile number:  {tile_number}',
+                 'Length:  {tile_length}']
         msg += '\n    '.join(lines)
-        msg = msg.format(self.ztlm,
-                         self.ttlm,
-                         self.ptlm)
+        msg = msg.format(index=self.ztlm,
+                         tile_number=self.ttlm,
+                         tile_length=self.ptlm)
 
         return msg
 

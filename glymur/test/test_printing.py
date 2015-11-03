@@ -812,30 +812,24 @@ class TestPrinting(unittest.TestCase):
         expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
 
-
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-@unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
-class TestPrintingOpjDataRoot(unittest.TestCase):
-    """Tests for verifying printing. restricted to OPJ_DATA_ROOT files."""
-    def setUp(self):
-        self.jpxfile = glymur.data.jpxfile()
-        self.jp2file = glymur.data.nemo()
-        self.j2kfile = glymur.data.goodstuff()
-
-        # Reset printoptions for every test.
-        glymur.set_printoptions(short=False, xml=True, codestream=True)
-
-    def tearDown(self):
-        pass
-
     def test_differing_subsamples(self):
-        """verify printing of SIZ with different subsampling... Issue 86."""
-        filename = opj_data_file('input/conformance/p0_05.j2k')
-        j = glymur.Jp2k(filename)
-        codestream = j.get_codestream()
+        """
+        verify printing of SIZ with different subsampling... Issue 86.
+        """
+        kwargs = {'rsiz': 1,
+                  'xysiz': (1024, 1024),
+                  'xyosiz': (0, 0),
+                  'xytsiz': (1024, 1024),
+                  'xytosiz': (0, 0),
+                  'Csiz': 4,
+                  'bitdepth': (8, 8, 8, 8),
+                  'signed':  (False, False, False, False),
+                  'xyrsiz': ((1, 1, 2, 2), (1, 1, 2, 2)),
+                  'length': 50,
+                  'offset': 2}
+        segment = glymur.codestream.SIZsegment(**kwargs)
         with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[1])
+            print(segment)
             actual = fake_out.getvalue().strip()
         lines = ['SIZ marker segment @ (2, 50)',
                  '    Profile:  0',

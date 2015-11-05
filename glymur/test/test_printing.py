@@ -867,9 +867,29 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
         pass
 
     def test_invalid_colour_specification_method(self):
-        """should not error out with invalid colour specification method"""
+        """
+        should not error out with invalid colour specification method
+
+        * Need to verify invalid ICC profile header length
+        * Invalid method
+        Not specifying enumerated color space or restricted ICC profile when jp2
+        """
         # Don't care so much about what the output looks like, just that we
         # do not error out.
+        obj = BytesIO()
+        obj.write(b'\x00' * 66)
+
+        buffer = struct.pack('>Issss', 15, b'colr')
+        obj.write(buffer)
+
+        # Write a bad method
+        buffer = struct.pack('>BBBI', 254, 0, 0, 16)
+        obj.write(buffer)
+        obj.seek(74) 
+
+        # Should be able to read the colr box now
+        box = glymur.jp2box.ColourSpecificationBox.parse(obj, obj.tell(), 15)
+        
         filename = opj_data_file('input/nonregression/issue397.jp2')
         with self.assertWarns(UserWarning):
             jp2 = Jp2k(filename)

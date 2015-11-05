@@ -1,14 +1,19 @@
 """
 Test suite for warnings issued by glymur.
 """
+from io import BytesIO
 import os
 import re
 import struct
+import sys
 import tempfile
 import unittest
+import warnings
 
 from glymur import Jp2k
 import glymur
+from glymur.jp2box import InvalidColourspaceMethod
+from glymur.jp2box import InvalidICCProfileLengthWarning
 
 from .fixtures import opj_data_file, OPJ_DATA_ROOT
 from .fixtures import WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG
@@ -17,7 +22,7 @@ from .fixtures import WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
 @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-class TestWarnings(unittest.TestCase):
+class TestWarningsOpj(unittest.TestCase):
     """Test suite for warnings issued by glymur."""
 
     def test_invalid_compatibility_list_entry(self):
@@ -159,6 +164,65 @@ class TestWarnings(unittest.TestCase):
                 with self.assertWarnsRegex(UserWarning, 'Unrecognized marker'):
                     Jp2k(tfile.name).get_codestream()
 
+
+class TestWarnings(unittest.TestCase):
+
+    def test_truncated_icc_profile(self):
+        """
+        Validate a warning for a truncated ICC profile
+        """
+        obj = BytesIO()
+        obj.write(b'\x00' * 66)
+
+        # Write a colr box with a truncated ICC profile.
+        # profile.
+        buffer = struct.pack('>I4s', 47, b'colr')
+        buffer += struct.pack('>BBB', 2, 0, 0)
+
+        buffer += b'\x00' * 12 + b'scnr' + b'XYZ ' + b'Lab '
+        # Need a date in bytes 24:36
+        buffer += struct.pack('>HHHHHH', 1966, 2, 15, 0, 0, 0)
+        obj.write(buffer)
+        obj.seek(74) 
+
+        # Should be able to read the colr box now
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 47)
+                assert issubclass(w[-1].category,
+                                  InvalidICCProfileLengthWarning)
+        else:
+            with self.assertWarns(InvalidICCProfileLengthWarning):
+                box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 47)
+        
+    def test_invalid_colour_specification_method(self):
+        """
+        should not error out with invalid colour specification method
+        """
+        obj = BytesIO()
+        obj.write(b'\x00' * 66)
+
+        # Write a colr box with a bad method (254).  This requires an ICC
+        # profile.
+        buffer = struct.pack('>I4s', 143, b'colr')
+        buffer += struct.pack('>BBB', 254, 0, 0)
+
+        buffer += b'\x00' * 12 + b'scnr' + b'XYZ ' + b'Lab '
+        # Need a date in bytes 24:36
+        buffer += struct.pack('>HHHHHH', 1966, 2, 15, 0, 0, 0)
+        buffer += b'\x00' * 92
+        obj.write(buffer)
+        obj.seek(74) 
+
+        # Should be able to read the colr box now
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 143)
+                assert issubclass(w[-1].category, InvalidColourspaceMethod)
+        else:
+            with self.assertWarns(glymur.jp2box.InvalidColourspaceMethod):
+                box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 143)
+        
 
 if __name__ == "__main__":
     unittest.main()

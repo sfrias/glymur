@@ -309,7 +309,24 @@ class InvalidApproximationWarning(UserWarning):
     pass
 
 
-class UnrecognizedColorspaceWarning(UserWarning):
+class InvalidColourspaceMethod(UserWarning):
+    """
+    The "method" of a colr box must be one of (1, 2, 3, 4)
+    """
+    pass
+
+
+class InvalidICCProfileLengthWarning(UserWarning):
+    """
+    Invoked if the ICC profile is shorter than the minimum of 128 bytes.
+    """
+    pass
+
+
+class UnrecognizedColourspaceWarning(UserWarning):
+    """
+    Only a certain number of color space enums are recognized.
+    """
     pass
 
 
@@ -365,8 +382,12 @@ class ColourSpecificationBox(Jp2kBox):
             msg = "Colorspace and icc_profile cannot both be set."
             self._dispatch_validation_error(msg, writing=writing)
         if self.method not in (1, 2, 3, 4):
-            msg = "Invalid method.".format(self.method)
-            self._dispatch_validation_error(msg, writing=writing)
+            msg = "Invalid colorspace method:  {method}"
+            msg = msg.format(method=self.method)
+            if writing:
+                raise IOError(msg)
+            else:
+                warnings.warn(msg, InvalidColourspaceMethod)
         if self.approximation not in (0, 1, 2, 3, 4):
             msg = "Invalid approximation:  {0}".format(self.approximation)
             if writing:
@@ -477,17 +498,16 @@ class ColourSpecificationBox(Jp2kBox):
         """
         num_bytes = offset + length - fptr.tell()
         read_buffer = fptr.read(num_bytes)
-        # Read the brand, minor version.
-        (method, precedence, approximation) = struct.unpack_from('>BBB',
-                                                                 read_buffer,
-                                                                 offset=0)
+
+        lst = struct.unpack_from('>BBB', read_buffer, offset=0)
+        method, precedence, approximation = lst
 
         if method == 1:
             # enumerated colour space
             colorspace, = struct.unpack_from('>I', read_buffer, offset=3)
             if colorspace not in _COLORSPACE_MAP_DISPLAY.keys():
                 msg = "Unrecognized colorspace: {0}".format(colorspace)
-                warnings.warn(msg, UnrecognizedColorspaceWarning)
+                warnings.warn(msg, UnrecognizedColourspaceWarning)
             icc_profile = None
 
         else:
@@ -496,7 +516,8 @@ class ColourSpecificationBox(Jp2kBox):
             if (num_bytes - 3) < 128:
                 msg = "ICC profile header is corrupt, length is "
                 msg += "only {0} instead of 128."
-                warnings.warn(msg.format(num_bytes - 3), UserWarning)
+                warnings.warn(msg.format(num_bytes - 3),
+                              InvalidICCProfileLengthWarning)
                 icc_profile = None
             else:
                 profile = _ICCProfile(read_buffer[3:])

@@ -24,7 +24,7 @@ import glymur
 from glymur import Jp2k
 from glymur.jp2box import (
     CompatibilityListItemWarning, FileTypeBrandWarning, UnrecognizedBoxWarning,
-    ExtraBytesAtEndOfFileWarning, UnrecognizedColorspaceWarning
+    ExtraBytesAtEndOfFileWarning, UnrecognizedColourspaceWarning
 )
 from glymur.core import COLOR, RED, GREEN, BLUE
 from glymur.codestream import RSizWarning
@@ -1437,10 +1437,10 @@ class TestJp2kWarnings(unittest.TestCase):
                 with warnings.catch_warnings(record=True) as w:
                     Jp2k(ofile.name)
                     assert issubclass(w[-1].category,
-                                      UnrecognizedColorspaceWarning)
+                                      UnrecognizedColourspaceWarning)
                     assert 'Unrecognized colorspace' in str(w[-1].message)
             else:
-                with self.assertWarns(UnrecognizedColorspaceWarning):
+                with self.assertWarns(UnrecognizedColourspaceWarning):
                     Jp2k(ofile.name)
 
     def test_stupid_windows_eol_at_end(self):

@@ -310,7 +310,7 @@ class Jp2k(Jp2kBox):
                     msg = "Color Specification box method must specify either "
                     msg += "an enumerated colorspace or a restricted ICC "
                     msg += "profile if the file type box brand is 'jp2 '."
-                    warnings.warn(msg)
+                    warnings.warn(msg, InvalidJP2ColourspaceMethodWarning)
 
     def _set_cinema_params(self, cinema_mode, fps):
         """Populate compression parameters structure for cinema2K.
@@ -1950,6 +1950,16 @@ def _default_error_handler(msg, _):
 def _default_info_handler(msg, _):
     """Default info handler callback."""
     print("[INFO] {0}".format(msg.decode('utf-8').rstrip()))
+
+
+class InvalidJP2ColourspaceMethodWarning(UserWarning):
+    """
+    If the file type box brand is JP2, the colour space method is limited.
+
+    The Colour space method must be either ICC profile or enumerated colour
+    space.
+    """
+    pass
 
 
 class OpenJPEGLibraryWarning(UserWarning):

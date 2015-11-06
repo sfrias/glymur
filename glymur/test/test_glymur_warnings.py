@@ -12,6 +12,7 @@ import warnings
 
 from glymur import Jp2k
 import glymur
+from glymur.jp2k import InvalidJP2ColourspaceMethodWarning
 from glymur.jp2box import InvalidColourspaceMethod
 from glymur.jp2box import InvalidICCProfileLengthWarning
 
@@ -167,6 +168,9 @@ class TestWarningsOpj(unittest.TestCase):
 
 class TestWarnings(unittest.TestCase):
 
+    def setUp(self):
+        self.jp2file = glymur.data.nemo()
+
     def test_truncated_icc_profile(self):
         """
         Validate a warning for a truncated ICC profile
@@ -223,6 +227,22 @@ class TestWarnings(unittest.TestCase):
             with self.assertWarns(glymur.jp2box.InvalidColourspaceMethod):
                 box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 143)
         
+    def test_bad_color_space_specification(self):
+        """
+        Verify that a warning is issued if the color space method is invalid.
+
+        For JP2, the method must be either 1 or 2.
+        """
+        jp2 = glymur.Jp2k(self.jp2file)
+        jp2.box[2].box[1].method = 3
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                jp2._validate()
+                assert issubclass(w[-1].category,
+                                  InvalidJP2ColourspaceMethodWarning)
+        else:
+            with self.assertWarns(InvalidJP2ColourspaceMethodWarning):
+                jp2._validate()
 
 if __name__ == "__main__":
     unittest.main()

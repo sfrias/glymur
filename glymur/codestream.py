@@ -1041,21 +1041,21 @@ class CODsegment(Segment):
 
         msg += '\n    '
         lines = ['Coding style parameters:',
-                 '    Progression order:  {0}',
-                 '    Number of layers:  {1}',
-                 '    Multiple component transformation usage:  {2}',
-                 '    Number of resolutions:  {3}',
-                 '    Code block height, width:  ({4} x {5})',
-                 '    Wavelet transform:  {6}']
+                 '    Progression order:  {prog}',
+                 '    Number of layers:  {num_layers}',
+                 '    Multiple component transformation usage:  {mct}',
+                 '    Number of resolutions:  {num_resolutions}',
+                 '    Code block height, width:  ({cbh} x {cbw})',
+                 '    Wavelet transform:  {xform}']
         msg += '\n    '.join(lines)
 
-        msg = msg.format(_PROGRESSION_ORDER_DISPLAY[self.spcod[0]],
-                         self.layers,
-                         mct,
-                         self.spcod[4] + 1,
-                         int(self.code_block_size[0]),
-                         int(self.code_block_size[1]),
-                         _WAVELET_TRANSFORM_DISPLAY[self.spcod[8]])
+        msg = msg.format(prog=_PROGRESSION_ORDER_DISPLAY[self.spcod[0]],
+                         num_layers=self.layers,
+                         mct=mct,
+                         num_resolutions=self.spcod[4] + 1,
+                         cbh=int(self.code_block_size[0]),
+                         cbw=int(self.code_block_size[1]),
+                         xform=_WAVELET_TRANSFORM_DISPLAY[self.spcod[8]])
 
         msg += '\n        Precinct size:  '
         if self.precinct_size is None:

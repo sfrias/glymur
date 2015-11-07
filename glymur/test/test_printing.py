@@ -45,6 +45,19 @@ class TestPrinting(unittest.TestCase):
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
 
+    def test_invalid_progression_order(self):
+        """
+        Should still be able to print even if prog order is invalid.
+
+        Original test file was 2977.pdf.asan.67.2198.jp2
+        """
+        spcod = struct.pack('>BHBBBBBB', 33, 1, 1, 5, 3, 3, 0, 0)
+        segment = glymur.codestream.CODsegment(0, spcod, 12, 174)
+        with patch('sys.stdout', new=StringIO()) as stdout:
+            print(segment)
+            actual = stdout.getvalue().strip()
+        self.assertEqual(actual, fixtures.issue_186_progression_order)
+
     def test_bad_wavelet_transform(self):
         """
         Should still be able to print if wavelet xform is bad, issue195
@@ -909,18 +922,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_invalid_progression_order(self):
-        """Should still be able to print even if prog order is invalid."""
-        jfile = opj_data_file('input/nonregression/2977.pdf.asan.67.2198.jp2')
-        with self.assertWarns(UserWarning):
-            # Multiple warnings, actually.
-            jp2 = Jp2k(jfile)
-            codestream = jp2.get_codestream()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[2])
-            actual = fake_out.getvalue().strip()
-        self.assertEqual(actual, fixtures.issue_186_progression_order)
 
     def test_xml(self):
         """verify printing of XML box"""

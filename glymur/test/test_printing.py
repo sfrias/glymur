@@ -45,6 +45,27 @@ class TestPrinting(unittest.TestCase):
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
 
+    def test_bad_rsiz(self):
+        """
+        Should still be able to print if rsiz is bad, issue196
+
+        Original test file was edf_c2_1002767.jp2
+        """
+        kwargs = {'rsiz': 33,
+                  'xysiz': (1920, 1080),
+                  'xyosiz': (0, 0),
+                  'xytsiz': (1920, 1080),
+                  'xytosiz': (0, 0),
+                  'Csiz': 3,
+                  'bitdepth': (12, 12, 12),
+                  'signed':  (False, False, False),
+                  'xyrsiz': ((1, 1, 1), (1, 1, 1)),
+                  'length': 47,
+                  'offset': 2}
+        segment = glymur.codestream.SIZsegment(**kwargs)
+        with patch('sys.stdout', new=StringIO()):
+            print(segment)
+
     def test_invalid_colorspace(self):
         """
         An invalid colorspace shouldn't cause an error.
@@ -877,14 +898,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_bad_rsiz(self):
-        """Should still be able to print if rsiz is bad, issue196"""
-        filename = opj_data_file('input/nonregression/edf_c2_1002767.jp2')
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-        with patch('sys.stdout', new=StringIO()):
-            print(j)
 
     def test_bad_wavelet_transform(self):
         """Should still be able to print if wavelet xform is bad, issue195"""

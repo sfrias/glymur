@@ -45,6 +45,17 @@ class TestPrinting(unittest.TestCase):
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
 
+    def test_bad_wavelet_transform(self):
+        """
+        Should still be able to print if wavelet xform is bad, issue195
+
+        Original test file was edf_c2_10025.jp2
+        """
+        spcod = struct.pack('>BBBBBBBBB', 0, 0, 0, 0, 0, 0, 0, 0, 2)
+        segment = glymur.codestream.CODsegment(0, spcod, 0, 0)
+        with patch('sys.stdout', new=StringIO()):
+            print(segment)
+
     def test_bad_rsiz(self):
         """
         Should still be able to print if rsiz is bad, issue196
@@ -898,14 +909,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_bad_wavelet_transform(self):
-        """Should still be able to print if wavelet xform is bad, issue195"""
-        filename = opj_data_file('input/nonregression/edf_c2_10025.jp2')
-        with self.assertWarns(UserWarning):
-            jp2 = Jp2k(filename)
-            with patch('sys.stdout', new=StringIO()):
-                print(jp2)
 
     def test_invalid_progression_order(self):
         """Should still be able to print even if prog order is invalid."""

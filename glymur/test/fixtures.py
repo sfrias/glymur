@@ -944,12 +944,19 @@ text_GBR_rreq = r"""Reader Requirements Box (rreq) @ (40, 109)
         UUID bc45a774-dd50-4ec6-a9f6-f3a137f47e90
         UUID d7c8c5ef-951f-43b2-8757-042500f538e8"""
 
-file1_xml = """XML Box (xml ) @ (36, 439)
+file1_xml = """<IMAGE_CREATION xmlns="http://www.jpeg.org/jpx/1.0/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.jpeg.org/jpx/1.0/xml http://www.jpeg.org/metadata/15444-2.xsd">
+    <GENERAL_CREATION_INFO>
+        <CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>
+        <IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>
+    </GENERAL_CREATION_INFO>
+</IMAGE_CREATION>"""
+
+file1_xml_box = """XML Box (xml ) @ (36, 439)
     <IMAGE_CREATION xmlns="http://www.jpeg.org/jpx/1.0/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.jpeg.org/jpx/1.0/xml http://www.jpeg.org/metadata/15444-2.xsd">
-    \t<GENERAL_CREATION_INFO>
-    \t\t<CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>
-    \t\t<IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>
-    \t</GENERAL_CREATION_INFO>
+        <GENERAL_CREATION_INFO>
+            <CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>
+            <IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>
+        </GENERAL_CREATION_INFO>
     </IMAGE_CREATION>"""
 
 issue_182_cmap = """Component Mapping Box (cmap) @ (130, 24)

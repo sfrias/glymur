@@ -7,6 +7,7 @@ import struct
 import sys
 import tempfile
 import unittest
+import uuid
 
 if sys.hexversion < 0x03000000:
     from StringIO import StringIO
@@ -45,6 +46,40 @@ class TestPrinting(unittest.TestCase):
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
 
+    def test_xml(self):
+        """
+        verify printing of XML box
+
+        Original test file was input/conformance/file1.jp2
+        """
+        self.maxDiff = None
+        elt = ET.fromstring(fixtures.file1_xml)
+        xml = ET.ElementTree(elt)
+        box = glymur.jp2box.XMLBox(xml=xml, length=439, offset=36)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(box)
+            actual = fake_out.getvalue().strip()
+        expected = fixtures.file1_xml_box
+        self.assertEqual(actual, expected)
+
+    def test_uuid(self):
+        """
+        verify printing of UUID box
+
+        Original test file was text_GBR.jp2
+        """
+        buuid = uuid.UUID('urn:uuid:3a0d0218-0ae9-4115-b376-4bca41ce0e71')
+        box = glymur.jp2box.UUIDBox(buuid, b'\x00', 25, 1544)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(box)
+            actual = fake_out.getvalue().strip()
+        lines = ['UUID Box (uuid) @ (1544, 25)',
+                 '    UUID:  3a0d0218-0ae9-4115-b376-4bca41ce0e71 (unknown)',
+                 '    UUID Data:  1 bytes']
+
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
+
     def test_invalid_progression_order(self):
         """
         Should still be able to print even if prog order is invalid.
@@ -52,6 +87,7 @@ class TestPrinting(unittest.TestCase):
         Original test file was 2977.pdf.asan.67.2198.jp2
         """
         spcod = struct.pack('>BHBBBBBB', 33, 1, 1, 5, 3, 3, 0, 0)
+        spcod = bytearray(spcod)
         segment = glymur.codestream.CODsegment(0, spcod, 12, 174)
         with patch('sys.stdout', new=StringIO()) as stdout:
             print(segment)
@@ -65,6 +101,7 @@ class TestPrinting(unittest.TestCase):
         Original test file was edf_c2_10025.jp2
         """
         spcod = struct.pack('>BBBBBBBBB', 0, 0, 0, 0, 0, 0, 0, 0, 2)
+        spcod = bytearray(spcod)
         segment = glymur.codestream.CODsegment(0, spcod, 0, 0)
         with patch('sys.stdout', new=StringIO()):
             print(segment)
@@ -923,16 +960,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_xml(self):
-        """verify printing of XML box"""
-        filename = opj_data_file('input/conformance/file1.jp2')
-        with self.assertWarns(UserWarning):
-            j = glymur.Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(j.box[2])
-            actual = fake_out.getvalue().strip()
-        self.assertEqual(actual, fixtures.file1_xml)
-
     def test_channel_definition(self):
         """verify printing of cdef box"""
         filename = opj_data_file('input/conformance/file2.jp2')
@@ -1025,22 +1052,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
         else:
             expected = fixtures.text_gbr_35
 
-        self.assertEqual(actual, expected)
-
-    def test_uuid(self):
-        """verify printing of UUID box"""
-        filename = opj_data_file('input/nonregression/text_GBR.jp2')
-        with self.assertWarns(UserWarning):
-            jp2 = Jp2k(filename)
-
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(jp2.box[4])
-            actual = fake_out.getvalue().strip()
-        lines = ['UUID Box (uuid) @ (1544, 25)',
-                 '    UUID:  3a0d0218-0ae9-4115-b376-4bca41ce0e71 (unknown)',
-                 '    UUID Data:  1 bytes']
-
-        expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
 
     def test_issue182(self):

@@ -22,6 +22,7 @@ import lxml.etree as ET
 
 import glymur
 from glymur.jp2box import BitsPerComponentBox
+from glymur.jp2box import ColourSpecificationBox
 from glymur import Jp2k, command_line
 from . import fixtures
 from .fixtures import (OPJ_DATA_ROOT, opj_data_file,
@@ -43,6 +44,17 @@ class TestPrinting(unittest.TestCase):
 
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
+
+    def test_invalid_colorspace(self):
+        """
+        An invalid colorspace shouldn't cause an error.
+
+        Original test file was edf_c2_1103421.jp2
+        """
+        colr = ColourSpecificationBox(colorspace=276)
+        colr.colorspace = 276
+        with patch('sys.stdout', new=StringIO()):
+            print(colr)
 
     def test_bpcc(self):
         """
@@ -865,14 +877,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_invalid_colorspace(self):
-        """An invalid colorspace shouldn't cause an error."""
-        filename = opj_data_file('input/nonregression/edf_c2_1103421.jp2')
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-        with patch('sys.stdout', new=StringIO()):
-            print(jp2)
 
     def test_bad_rsiz(self):
         """Should still be able to print if rsiz is bad, issue196"""

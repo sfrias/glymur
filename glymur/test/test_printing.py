@@ -25,13 +25,13 @@ import numpy as np
 import lxml.etree as ET
 
 import glymur
-from glymur.core import RESTRICTED_ICC_PROFILE, COLOR, RED, GREEN, BLUE
+from glymur.core import RESTRICTED_ICC_PROFILE, ANY_ICC_PROFILE
+from glymur.core import COLOR, RED, GREEN, BLUE
 from glymur.jp2box import BitsPerComponentBox
 from glymur.jp2box import ColourSpecificationBox
 from glymur import Jp2k, command_line
 from . import fixtures
-from .fixtures import (OPJ_DATA_ROOT, opj_data_file,
-                       WARNING_INFRASTRUCTURE_ISSUE,
+from .fixtures import (WARNING_INFRASTRUCTURE_ISSUE,
                        WARNING_INFRASTRUCTURE_MSG,
                        WINDOWS_TMP_FILE_MSG)
 
@@ -851,7 +851,7 @@ class TestPrinting(unittest.TestCase):
     def test_plt_segment(self):
         """
         verify printing of PLT segment
-        
+
         Originally tested with input/conformance/p0_07.j2k
         """
         pkt_lengths = [9, 122, 19, 30, 27, 9, 41, 62, 18, 29, 261,
@@ -1068,14 +1068,14 @@ class TestPrinting(unittest.TestCase):
         Original test file was input/nonregression/issue171.jp2
         """
         fptr = BytesIO()
-        
+
         s = "<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>"
         s += "<stuff>goes here</stuff>"
         s += "<?xpacket end='w'?>"
         data = s.encode('utf-8')
         fptr.write(data)
         fptr.seek(0)
-        
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             box = glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
@@ -1085,44 +1085,46 @@ class TestPrinting(unittest.TestCase):
 
         self.assertTrue(True)
 
-
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-@unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
-@unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-class TestPrintingOpjDataRootWarns(unittest.TestCase):
-    """
-    Tests for verifying printing. restricted to OPJ_DATA_ROOT files.
-
-    These tests issue warnings.
-    """
-    def setUp(self):
-        self.jpxfile = glymur.data.jpxfile()
-        self.jp2file = glymur.data.nemo()
-        self.j2kfile = glymur.data.goodstuff()
-
-        # Reset printoptions for every test.
-        glymur.set_printoptions(short=False, xml=True, codestream=True)
-
-    def tearDown(self):
-        pass
-
     def test_icc_profile(self):
         """
         verify icc profile printing with a jpx
 
         2.7, 3.3, 3.4, and 3.5 all print ordered dicts differently
+        Original file tested was input/nonregression/text_GBR.jp2.
         """
-        # ICC profiles may be used in JP2, but the approximation field should
-        # be zero unless we have jpx.  This file does both.
-        filename = opj_data_file('input/nonregression/text_GBR.jp2')
-        with self.assertWarns(UserWarning):
-            # brand is 'jp2 ', but has any icc profile.
-            jp2 = Jp2k(filename)
+        self.maxDiff = None
+        fp = BytesIO()
+        fp.write(b'\x00' * 179)
+
+        # Write the colr box header.
+        buffer = struct.pack('>I4s', 1339, b'colr')
+        buffer += struct.pack('>BBB', ANY_ICC_PROFILE, 2, 1)
+
+        buffer += struct.pack('>IIBB', 1328, 1634758764, 2, 32)
+        buffer += b'\x00' * 2 + b'mntr' + b'RGB ' + b'XYZ '
+        # Need a date in bytes 24:36
+        buffer += struct.pack('>HHHHHH', 2009, 2, 25, 11, 26, 11)
+        buffer += 'acsp'.encode('utf-8')
+        buffer += 'APPL'.encode('utf-8')
+        buffer += b'\x00' * 4
+        buffer += 'appl'.encode('utf-8')  # 48 - 52
+        buffer += b'\x00' * 16
+        buffer += struct.pack('>III', 63190, 65536, 54061)  # 68 - 80
+        buffer += 'appl'.encode('utf-8')  # 80 - 84
+        buffer += b'\x00' * 44
+        fp.write(buffer)
+        fp.seek(179 + 8)
+
+        # Should be able to read the colr box now
+        if sys.hexversion < 0x03000000:
+            box = glymur.jp2box.ColourSpecificationBox.parse(fp, 179, 1339)
+        else:
+            box = glymur.jp2box.ColourSpecificationBox.parse(fp, 179, 1339)
 
         with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(jp2.box[3].box[1])
+            print(box)
             actual = fake_out.getvalue().strip()
+
         if sys.hexversion < 0x03000000:
             expected = fixtures.text_gbr_27
         elif sys.hexversion < 0x03040000:

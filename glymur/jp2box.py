@@ -2453,21 +2453,24 @@ class ReaderRequirementsBox(Jp2kBox):
 
         lst = []
 
-        text = 'Fully Understands Aspect Mask:  0x{0:x}'.format(self.fuam)
-        lst.append(text)
+        text = 'Fully Understands Aspect Mask:  0x{fuam:x}'
+        lst.append(text.format(fuam=self.fuam))
 
-        text = 'Display Completely Mask:  0x{0:x}'.format(self.dcm)
+        text = 'Display Completely Mask:  0x{dcm:x}'.format(dcm=self.dcm)
         lst.append(text)
 
         text = 'Standard Features and Masks:'
         lst.append(text)
 
         lst2 = []
+        text = 'Feature {flag:03d}:  0x{mask:x} {decoded}'
         for j in range(len(self.standard_flag)):
-            args = (self.standard_flag[j], self.standard_mask[j],
-                    _READER_REQUIREMENTS_DISPLAY[self.standard_flag[j]])
-            text = 'Feature {0:03d}:  0x{1:x} {2}'.format(*args)
-            lst2.append(text)
+            kwargs = {
+                'flag': self.standard_flag[j],
+                'mask': self.standard_mask[j],
+                'decoded': _READER_REQUIREMENTS_DISPLAY[self.standard_flag[j]],
+            }
+            lst2.append(text.format(**kwargs))
         text = '\n'.join(lst2)
         text = self._indent(text)
         lst.append(text)

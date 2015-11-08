@@ -7,7 +7,7 @@ import struct
 import sys
 import tempfile
 import unittest
-import uuid
+from uuid import UUID
 
 if sys.hexversion < 0x03000000:
     from StringIO import StringIO
@@ -131,7 +131,7 @@ class TestPrinting(unittest.TestCase):
 
         Original test file was text_GBR.jp2
         """
-        buuid = uuid.UUID('urn:uuid:3a0d0218-0ae9-4115-b376-4bca41ce0e71')
+        buuid = UUID('urn:uuid:3a0d0218-0ae9-4115-b376-4bca41ce0e71')
         box = glymur.jp2box.UUIDBox(buuid, b'\x00', 25, 1544)
         with patch('sys.stdout', new=StringIO()) as fake_out:
             print(box)
@@ -1033,6 +1033,32 @@ class TestPrinting(unittest.TestCase):
             actual = fake_out.getvalue().strip()
         self.assertEqual(actual, fixtures.issue_183_colr)
 
+    def test_rreq(self):
+        """
+        verify printing of reader requirements box
+
+        Original file tested was text_GBR.jp2
+        """
+
+        fuam = 0xffff
+        dcm = 0xf8f0
+        standard_flag = 1, 5, 12, 18, 44
+        standard_mask = 0x8000, 0x4080, 0x2040, 0x1020, 0x810
+        vendor_feature = [UUID('{3a0d0218-0ae9-4115-b376-4bca41ce0e71}')]
+        vendor_feature.append(UUID('{47c92ccc-d1a1-4581-b904-38bb5467713b}'))
+        vendor_feature.append(UUID('{bc45a774-dd50-4ec6-a9f6-f3a137f47e90}'))
+        vendor_feature.append(UUID('{d7c8c5ef-951f-43b2-8757-042500f538e8}'))
+        vendor_mask = 0,
+        box = glymur.jp2box.ReaderRequirementsBox(fuam, dcm, standard_flag,
+                                                  standard_mask,
+                                                  vendor_feature, vendor_mask,
+                                                  length=109, offset=40)
+        self.maxDiff = None
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(box)
+            actual = fake_out.getvalue().strip()
+        self.assertEqual(actual, fixtures.text_GBR_rreq)
+
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
@@ -1054,16 +1080,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def test_rreq(self):
-        """verify printing of reader requirements box"""
-        filename = opj_data_file('input/nonregression/text_GBR.jp2')
-        with self.assertWarns(UserWarning):
-            j = glymur.Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(j.box[2])
-            actual = fake_out.getvalue().strip()
-        self.assertEqual(actual, fixtures.text_GBR_rreq)
 
     def test_icc_profile(self):
         """

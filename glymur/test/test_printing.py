@@ -19,9 +19,11 @@ if sys.hexversion <= 0x03030000:
 else:
     from unittest.mock import patch
 
+import numpy as np
 import lxml.etree as ET
 
 import glymur
+from glymur.core import RESTRICTED_ICC_PROFILE, COLOR, RED, GREEN, BLUE
 from glymur.jp2box import BitsPerComponentBox
 from glymur.jp2box import ColourSpecificationBox
 from glymur import Jp2k, command_line
@@ -45,6 +47,67 @@ class TestPrinting(unittest.TestCase):
 
     def tearDown(self):
         glymur.set_parseoptions(full_codestream=False)
+
+    def test_palette(self):
+        """
+        verify printing of pclr box
+
+        Original file tested was input/conformance/file9.jp2
+        """
+        palette = np.array([[0, 0, 0] for _ in range(256)], dtype=np.uint8)
+        bps = (8, 8, 8)
+        signed = (False, False, False)
+        box = glymur.jp2box.PaletteBox(palette, bits_per_component=bps,
+                                       signed=signed, length=782, offset=66)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(box)
+            actual = fake_out.getvalue().strip()
+        lines = ['Palette Box (pclr) @ (66, 782)',
+                 '    Size:  (256 x 3)']
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
+
+    def test_component_mapping(self):
+        """
+        verify printing of cmap box
+
+        Original file tested was input/conformance/file9.jp2
+        """
+        cmap = glymur.jp2box.ComponentMappingBox(component_index=(0, 0, 0),
+                                                 mapping_type=(1, 1, 1),
+                                                 palette_index=(0, 1, 2),
+                                                 length=20, offset=848)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(cmap)
+            actual = fake_out.getvalue().strip()
+        lines = ['Component Mapping Box (cmap) @ (848, 20)',
+                 '    Component 0 ==> palette column 0',
+                 '    Component 0 ==> palette column 1',
+                 '    Component 0 ==> palette column 2']
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
+
+    def test_channel_definition(self):
+        """
+        verify printing of cdef box
+
+        Original file tested was input/conformance/file2.jp2
+        """
+        channel_type = [COLOR, COLOR, COLOR]
+        association = [BLUE, GREEN, RED]
+        cdef = glymur.jp2box.ChannelDefinitionBox(index=[0, 1, 2],
+                                                  channel_type=channel_type,
+                                                  association=association,
+                                                  length=28, offset=81)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(cdef)
+            actual = fake_out.getvalue().strip()
+        lines = ['Channel Definition Box (cdef) @ (81, 28)',
+                 '    Channel 0 (color) ==> (3)',
+                 '    Channel 1 (color) ==> (2)',
+                 '    Channel 2 (color) ==> (1)']
+        expected = '\n'.join(lines)
+        self.assertEqual(actual, expected)
 
     def test_xml(self):
         """
@@ -938,6 +1001,38 @@ class TestPrinting(unittest.TestCase):
         expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
 
+    def test_issue182(self):
+        """
+        Should not show the format string in output.
+
+        The cmap box is wildly broken, but printing was still wrong.
+        Format strings like %d were showing up in the output.
+
+        Original file tested was input/nonregression/mem-b2ace68c-1381.jp2
+        """
+        cmap = glymur.jp2box.ComponentMappingBox(component_index=(0, 0, 0, 0),
+                                                 mapping_type=(1, 1, 1, 1),
+                                                 palette_index=(0, 1, 2, 3),
+                                                 length=24, offset=130)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(cmap)
+            actual = fake_out.getvalue().strip()
+        self.assertEqual(actual, fixtures.issue_182_cmap)
+
+    def test_issue183(self):
+        """
+        Broken ICC profile
+
+        Original file tested was input/nonregression/orb-blue10-lin-jp2.jp2
+        """
+        colr = ColourSpecificationBox(method=RESTRICTED_ICC_PROFILE,
+                                      icc_profile=None, length=12, offset=62)
+
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(colr)
+            actual = fake_out.getvalue().strip()
+        self.assertEqual(actual, fixtures.issue_183_colr)
+
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
@@ -960,50 +1055,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_channel_definition(self):
-        """verify printing of cdef box"""
-        filename = opj_data_file('input/conformance/file2.jp2')
-        with self.assertWarns(UserWarning):
-            # Bad compatibility list item.
-            j = glymur.Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(j.box[2].box[2])
-            actual = fake_out.getvalue().strip()
-        lines = ['Channel Definition Box (cdef) @ (81, 28)',
-                 '    Channel 0 (color) ==> (3)',
-                 '    Channel 1 (color) ==> (2)',
-                 '    Channel 2 (color) ==> (1)']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
-
-    def test_component_mapping(self):
-        """verify printing of cmap box"""
-        filename = opj_data_file('input/conformance/file9.jp2')
-        with self.assertWarns(UserWarning):
-            j = glymur.Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(j.box[2].box[2])
-            actual = fake_out.getvalue().strip()
-        lines = ['Component Mapping Box (cmap) @ (848, 20)',
-                 '    Component 0 ==> palette column 0',
-                 '    Component 0 ==> palette column 1',
-                 '    Component 0 ==> palette column 2']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
-
-    def test_palette7(self):
-        """verify printing of pclr box"""
-        filename = opj_data_file('input/conformance/file9.jp2')
-        with self.assertWarns(UserWarning):
-            j = glymur.Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(j.box[2].box[1])
-            actual = fake_out.getvalue().strip()
-        lines = ['Palette Box (pclr) @ (66, 782)',
-                 '    Size:  (256 x 3)']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
-
     def test_rreq(self):
         """verify printing of reader requirements box"""
         filename = opj_data_file('input/nonregression/text_GBR.jp2')
@@ -1013,19 +1064,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
             print(j.box[2])
             actual = fake_out.getvalue().strip()
         self.assertEqual(actual, fixtures.text_GBR_rreq)
-
-    def test_palette_box(self):
-        """Verify that palette (pclr) boxes are printed without error."""
-        filename = opj_data_file('input/conformance/file9.jp2')
-        with self.assertWarns(UserWarning):
-            j = glymur.Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(j.box[2].box[1])
-            actual = fake_out.getvalue().strip()
-        lines = ['Palette Box (pclr) @ (66, 782)',
-                 '    Size:  (256 x 3)']
-        expected = '\n'.join(lines)
-        self.assertEqual(actual, expected)
 
     def test_icc_profile(self):
         """
@@ -1053,31 +1091,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
             expected = fixtures.text_gbr_35
 
         self.assertEqual(actual, expected)
-
-    def test_issue182(self):
-        """Should not show the format string in output."""
-        # The cmap box is wildly broken, but printing was still wrong.
-        # Format strings like %d were showing up in the output.
-        filename = opj_data_file('input/nonregression/mem-b2ace68c-1381.jp2')
-
-        with self.assertWarns(UserWarning):
-            # Ignore warning about bad pclr box.
-            jp2 = Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(jp2.box[3].box[3])
-            actual = fake_out.getvalue().strip()
-        self.assertEqual(actual, fixtures.issue_182_cmap)
-
-    def test_issue183(self):
-        filename = opj_data_file('input/nonregression/orb-blue10-lin-jp2.jp2')
-
-        with self.assertWarns(UserWarning):
-            # Ignore warning about bad pclr box.
-            jp2 = Jp2k(filename)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(jp2.box[2].box[1])
-            actual = fake_out.getvalue().strip()
-        self.assertEqual(actual, fixtures.issue_183_colr)
 
     def test_bom(self):
         """Byte order markers are illegal in UTF-8.  Issue 185"""

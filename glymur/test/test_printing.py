@@ -1,6 +1,7 @@
 # -*- coding:  utf-8 -*-
 """Test suite for printing.
 """
+from io import BytesIO
 import os
 import re
 import struct
@@ -8,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from uuid import UUID
+import warnings
 
 if sys.hexversion < 0x03000000:
     from StringIO import StringIO
@@ -1059,6 +1061,30 @@ class TestPrinting(unittest.TestCase):
             actual = fake_out.getvalue().strip()
         self.assertEqual(actual, fixtures.text_GBR_rreq)
 
+    def test_bom(self):
+        """
+        Byte order markers are illegal in UTF-8.  Issue 185
+
+        Original test file was input/nonregression/issue171.jp2
+        """
+        fptr = BytesIO()
+        
+        s = "<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>"
+        s += "<stuff>goes here</stuff>"
+        s += "<?xpacket end='w'?>"
+        data = s.encode('utf-8')
+        fptr.write(data)
+        fptr.seek(0)
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            box = glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
+            with patch('sys.stdout', new=StringIO()):
+                # No need to verify, it's enough that we don't error out.
+                print(box)
+
+        self.assertTrue(True)
+
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
@@ -1107,19 +1133,6 @@ class TestPrintingOpjDataRootWarns(unittest.TestCase):
             expected = fixtures.text_gbr_35
 
         self.assertEqual(actual, expected)
-
-    def test_bom(self):
-        """Byte order markers are illegal in UTF-8.  Issue 185"""
-        filename = opj_data_file(os.path.join('input',
-                                              'nonregression',
-                                              'issue171.jp2'))
-        with self.assertWarns(UserWarning):
-            jp2 = Jp2k(filename)
-            with patch('sys.stdout', new=StringIO()):
-                # No need to verify, it's enough that we don't error out.
-                print(jp2)
-
-        self.assertTrue(True)
 
 
 class TestJp2dump(unittest.TestCase):

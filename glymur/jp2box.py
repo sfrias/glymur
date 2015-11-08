@@ -104,9 +104,10 @@ class Jp2kBox(object):
         self.box = []
 
     def __repr__(self):
-        msg = "glymur.jp2box.Jp2kBox(box_id='{0}', offset={1}, length={2}, "
-        msg += "longname='{3}')"
-        msg = msg.format(self.box_id, self.offset, self.length, self.longname)
+        msg = "glymur.jp2box.Jp2kBox(box_id='{id}', offset={offset}, "
+        msg += "length={length}, longname='{longname}')"
+        msg = msg.format(id=self.box_id, offset=self.offset,
+                         length=self.length, longname=self.longname)
         return msg
 
     def __str__(self):
@@ -3084,7 +3085,7 @@ class XMLBox(Jp2kBox):
         self.offset = offset
 
     def __repr__(self):
-        return "glymur.jp2box.XMLBox(xml={0})".format(self.xml)
+        return "glymur.jp2box.XMLBox(xml={xml})".format(xml=self.xml)
 
     def __str__(self):
         title = Jp2kBox.__str__(self)
@@ -3140,16 +3141,16 @@ class XMLBox(Jp2kBox):
             if decl_start <= -1:
                 # Nope, that's not it.  All is lost.
                 msg = 'A problem was encountered while parsing an XML box:'
-                msg += '\n\n\t"{0}"\n\nNo XML was retrieved.'
-                warnings.warn(msg.format(str(err)))
+                msg += '\n\n\t"{error}"\n\nNo XML was retrieved.'
+                warnings.warn(msg.format(error=str(err)))
                 return XMLBox(xml=None, length=length, offset=offset)
 
             text = read_buffer[decl_start:].decode('utf-8')
 
             # Let the user know that the XML box was problematic.
             msg = 'A UnicodeDecodeError was encountered parsing an XML box at '
-            msg += 'byte position {0} ({1}), but the XML was still recovered.'
-            msg = msg.format(offset, err.reason)
+            msg += 'byte position {offset} ({reason}), but the XML was still recovered.'
+            msg = msg.format(offset=offset, reason=err.reason)
             warnings.warn(msg, UserWarning)
 
         # Strip out any trailing nulls, as they can foul up XML parsing.
@@ -3159,7 +3160,7 @@ class XMLBox(Jp2kBox):
         if u'\ufeff' in text:
             msg = 'An illegal BOM (byte order marker) was detected and '
             msg += 'removed from the XML contents in the box starting at byte '
-            msg += 'offset {0}'.format(offset)
+            msg += 'offset {offset}'.format(offset=offset)
             warnings.warn(msg)
             text = text.replace(u'\ufeff', '')
 
@@ -3172,8 +3173,8 @@ class XMLBox(Jp2kBox):
             xml = ET.ElementTree(elt)
         except ET.ParseError as err:
             msg = 'A problem was encountered while parsing an XML box:'
-            msg += '\n\n\t"{0}"\n\nNo XML was retrieved.'
-            msg = msg.format(str(err))
+            msg += '\n\n\t"{reason}"\n\nNo XML was retrieved.'
+            msg = msg.format(reason=str(err))
             warnings.warn(msg, UserWarning)
             xml = None
 
@@ -3216,7 +3217,7 @@ class UUIDListBox(Jp2kBox):
 
         lst = []
         for j, uuid_item in enumerate(self.ulst):
-            text = 'UUID[{0}]:  {1}'.format(j, uuid_item)
+            text = 'UUID[{item_no}]:  {uuid}'.format(item_no=j, uuid=uuid_item)
             lst.append(text)
         body = '\n'.join(lst)
         body = self._indent(body)
@@ -3381,8 +3382,8 @@ class DataEntryURLBox(Jp2kBox):
         fptr.write(url)
 
     def __repr__(self):
-        msg = "glymur.jp2box.DataEntryURLBox({0}, {1}, '{2}')"
-        msg = msg.format(self.version, self.flag, self.url)
+        msg = "glymur.jp2box.DataEntryURLBox({version}, {flag}, '{url}')"
+        msg = msg.format(version=self.version, flag=self.flag, url=self.url)
         return msg
 
     def __str__(self):
@@ -3390,13 +3391,15 @@ class DataEntryURLBox(Jp2kBox):
         if _printoptions['short'] is True:
             return title
 
-        lst = ['Version:  {0}',
-               'Flag:  {1} {2} {3}',
-               'URL:  "{4}"']
+        lst = ['Version:  {version}',
+               'Flag:  {flag0} {flag1} {flag2}',
+               'URL:  "{url}"']
         body = '\n'.join(lst)
-        body = body.format(self.version,
-                           self.flag[0], self.flag[1], self.flag[2],
-                           self.url)
+        body = body.format(version=self.version,
+                           flag0=self.flag[0],
+                           flag1=self.flag[1],
+                           flag2=self.flag[2],
+                           url=self.url)
         body = self._indent(body)
 
         text = '\n'.join([title, body])

@@ -1092,7 +1092,6 @@ class TestPrinting(unittest.TestCase):
         2.7, 3.3, 3.4, and 3.5 all print ordered dicts differently
         Original file tested was input/nonregression/text_GBR.jp2.
         """
-        self.maxDiff = None
         fp = BytesIO()
         fp.write(b'\x00' * 179)
 

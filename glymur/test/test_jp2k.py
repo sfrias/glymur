@@ -1,7 +1,9 @@
 """
 Tests for general glymur functionality.
 """
+import datetime
 import doctest
+from io import BytesIO
 import os
 import re
 import struct
@@ -26,7 +28,7 @@ from glymur.jp2box import (
     CompatibilityListItemWarning, FileTypeBrandWarning, UnrecognizedBoxWarning,
     ExtraBytesAtEndOfFileWarning, UnrecognizedColourspaceWarning
 )
-from glymur.core import COLOR, RED, GREEN, BLUE
+from glymur.core import COLOR, RED, GREEN, BLUE, RESTRICTED_ICC_PROFILE
 from glymur.codestream import RSizWarning
 from glymur.jp2box import InvalidApproximationWarning
 from glymur.version import openjpeg_version
@@ -785,6 +787,62 @@ class TestJp2k(unittest.TestCase):
             self.assertEqual(codestream.segment[-2].marker_id, 'SOD')
             self.assertEqual(codestream.segment[-1].marker_id, 'EOC')
 
+    def test_basic_icc_profile(self):
+        """
+        basic ICC profile
+
+        Original file tested was input/conformance/file5.jp2
+        """
+        fp = BytesIO()
+
+        # Write the colr box header.
+        buffer = struct.pack('>I4s', 557, b'colr')
+        buffer += struct.pack('>BBB', RESTRICTED_ICC_PROFILE, 2, 1)
+
+        buffer += struct.pack('>IIBB', 546, 0, 2, 32)
+        buffer += b'\x00' * 2 + b'scnr' + b'RGB ' + b'XYZ '
+        # Need a date in bytes 24:36
+        buffer += struct.pack('>HHHHHH', 2001, 8, 30, 13, 32, 37)
+        buffer += 'acsp'.encode('utf-8')
+        buffer += b'\x00\x00\x00\x00'
+        buffer += b'\x00\x00\x00\x01'  # platform
+        buffer += 'KODA'.encode('utf-8')  # 48 - 52
+        buffer += 'ROMM'.encode('utf-8')  # Device Model
+        buffer += b'\x00' * 12
+        buffer += struct.pack('>III', 63190, 65536, 54061)  # 68 - 80
+        buffer += 'JPEG'.encode('utf-8')  # 80 - 84
+        buffer += b'\x00' * 44
+        fp.write(buffer)
+        fp.seek(8)
+
+        box = glymur.jp2box.ColourSpecificationBox.parse(fp, 0, 557)
+        profile = box.icc_profile
+
+        self.assertEqual(profile['Size'], 546)
+        self.assertEqual(profile['Preferred CMM Type'], 0)
+        self.assertEqual(profile['Version'], '2.2.0')
+        self.assertEqual(profile['Device Class'], 'input device profile')
+        self.assertEqual(profile['Color Space'], 'RGB')
+        self.assertEqual(profile['Datetime'],
+                         datetime.datetime(2001, 8, 30, 13, 32, 37))
+        self.assertEqual(profile['File Signature'], 'acsp')
+        self.assertEqual(profile['Platform'], 'unrecognized')
+        self.assertEqual(profile['Flags'],
+                         'embedded, can be used independently')
+
+        self.assertEqual(profile['Device Manufacturer'], 'KODA')
+        self.assertEqual(profile['Device Model'], 'ROMM')
+
+        self.assertEqual(profile['Device Attributes'],
+                         'reflective, glossy, positive media polarity, '
+                         + 'color media')
+        self.assertEqual(profile['Rendering Intent'], 'perceptual')
+
+        np.testing.assert_almost_equal(profile['Illuminant'],
+                                       (0.964203, 1.000000, 0.824905),
+                                       decimal=6)
+
+        self.assertEqual(profile['Creator'], 'JPEG')
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

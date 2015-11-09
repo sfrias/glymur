@@ -55,11 +55,3 @@ class TestICC(unittest.TestCase):
                                        decimal=6)
 
         self.assertEqual(profile['Creator'], 'JPEG')
-
-    def test_invalid_profile_header(self):
-        """invalid ICC header data should cause UserWarning"""
-        jfile = opj_data_file('input/nonregression/orb-blue10-lin-jp2.jp2')
-
-        regex = 'ICC profile header is corrupt'
-        with self.assertWarnsRegex(UserWarning, regex):
-            Jp2k(jfile)

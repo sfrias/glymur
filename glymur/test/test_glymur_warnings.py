@@ -26,13 +26,6 @@ from .fixtures import WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG
 class TestWarningsOpj(unittest.TestCase):
     """Test suite for warnings issued by glymur."""
 
-    def test_invalid_compatibility_list_entry(self):
-        """should not error out with invalid compatibility list entry"""
-        filename = opj_data_file('input/nonregression/issue397.jp2')
-        with self.assertWarns(UserWarning):
-            Jp2k(filename)
-        self.assertTrue(True)
-
     def test_exceeded_box_length(self):
         """
         should warn if reading past end of a box
@@ -51,18 +44,6 @@ class TestWarningsOpj(unittest.TestCase):
                            re.VERBOSE)
         with self.assertWarnsRegex(UserWarning, regex):
             Jp2k(infile)
-
-    def test_NR_DEC_issue188_beach_64bitsbox_jp2_41_decode(self):
-        """
-        Has an 'XML ' box instead of 'xml '.  Yes that is pedantic, but it
-        really does deserve a warning.
-        """
-        relpath = 'input/nonregression/issue188_beach_64bitsbox.jp2'
-        jfile = opj_data_file(relpath)
-        pattern = r"""Unrecognized\sbox\s\(b'XML\s'\)\sencountered."""
-        regex = re.compile(pattern, re.VERBOSE)
-        with self.assertWarnsRegex(UserWarning, regex):
-            Jp2k(jfile)
 
     def test_NR_gdal_fuzzer_unchecked_numresolutions_dump(self):
         """
@@ -170,6 +151,35 @@ class TestWarnings(unittest.TestCase):
 
     def setUp(self):
         self.jp2file = glymur.data.nemo()
+
+    def test_NR_DEC_issue188_beach_64bitsbox_jp2_41_decode(self):
+        """
+        Has an 'XML ' box instead of 'xml '.  Yes that is pedantic, but it
+        really does deserve a warning.
+
+        Original file tested was nonregression/issue188_beach_64bitsbox.jp2
+
+        The best way to test this really is to tack a new box onto the end of
+        an existing file.
+        """
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.jp2') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+                ofile.write(ifile.read())
+
+                buffer = struct.pack('>I4s', 32, b'XML ')
+                s = "<stuff>goes here</stuff>"
+                buffer += s.encode('utf-8')
+                ofile.write(buffer)
+                ofile.flush()
+
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    Jp2k(ofile.name)
+                assert issubclass(w[-1].category,
+                                  glymur.jp2box.UnrecognizedBoxWarning)
+            else:
+                with self.assertWarns(glymur.jp2box.UnrecognizedBoxWarning):
+                    Jp2k(ofile.name)
 
     def test_truncated_icc_profile(self):
         """

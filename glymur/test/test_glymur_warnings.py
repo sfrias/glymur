@@ -45,21 +45,6 @@ class TestWarningsOpj(unittest.TestCase):
         with self.assertWarnsRegex(UserWarning, regex):
             Jp2k(infile)
 
-    @unittest.skipIf(re.match("1.5|2.0.0", glymur.version.openjpeg_version),
-                     "Test not passing on 1.5.x, not introduced until 2.x")
-    def test_NR_gdal_fuzzer_check_number_of_tiles(self):
-        """
-        Has an impossible tiling setup.
-        """
-        lst = ['input', 'nonregression',
-               'gdal_fuzzer_check_number_of_tiles.jp2']
-        jfile = opj_data_file('/'.join(lst))
-        regex = re.compile(r"""Invalid\snumber\sof\stiles\s
-                               \(\d+\)\.""",
-                           re.VERBOSE)
-        with self.assertWarnsRegex(UserWarning, regex):
-            Jp2k(jfile).get_codestream()
-
     def test_NR_gdal_fuzzer_check_comp_dx_dy_jp2_dump(self):
         """
         Invalid subsampling value.
@@ -138,6 +123,44 @@ class TestWarnings(unittest.TestCase):
 
     def setUp(self):
         self.jp2file = glymur.data.nemo()
+
+    def test_NR_gdal_fuzzer_check_number_of_tiles(self):
+        """
+        Has an impossible tiling setup.
+
+        Original test file was input/nonregression
+                               /gdal_fuzzer_check_number_of_tiles.jp2
+        """
+        fp = BytesIO()
+
+        buffer = struct.pack('>H', 47)  # length
+
+        # kwargs = {'rsiz': 1,
+        #           'xysiz': (20, 16777236),
+        #           'xyosiz': (0, 0),
+        #           'xytsiz': (20, 20),
+        #           'xytosiz': (0, 0),
+        #           'Csiz': 3,
+        #           'bitdepth': (8, 8, 8),
+        #           'signed':  (False, False, False),
+        #           'xyrsiz': ((1, 1, 1), (1, 1, 1)),
+        #           'length': 47,
+        #           'offset': 2}
+        buffer += struct.pack('>HIIIIIIIIH', 1, 20, 16777236, 0, 0, 20, 20,
+                              0, 0, 3)
+        buffer += struct.pack('>BBBBBBBBB', 7, 1, 1, 7, 1, 1, 7, 1, 1)
+        fp.write(buffer)
+        fp.seek(0)
+
+        
+        exp_warning = glymur.codestream.InvalidNumberOfTilesWarning
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                segment = glymur.codestream.Codestream._parse_siz_segment(fp)
+            assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                segment = glymur.codestream.Codestream._parse_siz_segment(fp)
 
     def test_NR_gdal_fuzzer_unchecked_numresolutions_dump(self):
         """

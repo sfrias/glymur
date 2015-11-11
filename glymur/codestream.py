@@ -63,6 +63,12 @@ class InvalidNumberOfResolutionsWarning(UserWarning):
     """
     pass
 
+class InvalidNumberOfTilesWarning(UserWarning):
+    """
+    The number of tiles should not exceed 65535.
+    """
+    pass
+
 class RSizWarning(UserWarning):
     """
     The profile should be in the range of 0 through 4.
@@ -92,6 +98,7 @@ class Codestream(object):
        15444-1:2004 - Information technology -- JPEG 2000 image coding system:
        Core coding system
     """
+    _csiz = -1
     def __init__(self, fptr, length, header_only=True):
         """
         Parameters
@@ -168,7 +175,7 @@ class Codestream(object):
 
         # Number of components.  Must be kept track of for the processing of
         # many segments.
-        self._csiz = -1
+        # self._csiz = -1
 
         # Do we parse the tile part bit stream or not?
         self._parse_tpart_flag = False
@@ -568,7 +575,8 @@ class Codestream(object):
 
         return PPTsegment(zppt, ippt, length, offset)
 
-    def _parse_qcc_segment(self, fptr):
+    @classmethod
+    def _parse_qcc_segment(cls, fptr):
         """Parse the QCC segment.
 
         Parameters
@@ -587,17 +595,17 @@ class Codestream(object):
         length, = struct.unpack('>H', read_buffer)
 
         read_buffer = fptr.read(length - 2)
-        if self._csiz > 256:
+        if cls._csiz > 256:
             fmt = '>HB'
             mantissa_exponent_offset = 3
         else:
             fmt = '>BB'
             mantissa_exponent_offset = 2
         cqcc, sqcc = struct.unpack_from(fmt, read_buffer)
-        if cqcc >= self._csiz:
+        if cqcc >= cls._csiz:
             msg = "Invalid component number ({invalid_comp_no}), "
             msg += "number of components is only {valid_comp_no}."
-            msg = msg.format(invalid_comp_no=cqcc, valid_comp_no=self._csiz)
+            msg = msg.format(invalid_comp_no=cqcc, valid_comp_no=cls._csiz)
             warnings.warn(msg)
 
         spqcc = read_buffer[mantissa_exponent_offset:]
@@ -625,7 +633,8 @@ class Codestream(object):
 
         return QCDsegment(sqcd, spqcd, length, offset)
 
-    def _parse_rgn_segment(self, fptr):
+    @classmethod
+    def _parse_rgn_segment(cls, fptr):
         """Parse the RGN segment.
 
         Parameters
@@ -643,7 +652,7 @@ class Codestream(object):
         read_buffer = fptr.read(2)
         length, = struct.unpack('>H', read_buffer)
 
-        if self._csiz < 257:
+        if cls._csiz < 257:
             read_buffer = fptr.read(3)
             data = struct.unpack('>BBB', read_buffer)
         else:
@@ -657,7 +666,8 @@ class Codestream(object):
 
         return RGNsegment(crgn, srgn, sprgn, length, offset)
 
-    def _parse_siz_segment(self, fptr):
+    @classmethod
+    def _parse_siz_segment(cls, fptr):
         """Parse the SIZ segment.
 
         Parameters
@@ -714,25 +724,28 @@ class Codestream(object):
         else:
             numtiles = math.ceil(num_tiles_x) * math.ceil(num_tiles_y)
             if numtiles > 65535:
-                msg = "Invalid number of tiles ({0}).".format(numtiles)
-                warnings.warn(msg)
+                msg = "Invalid number of tiles: ({numtiles})."
+                msg = msg.format(numtiles=numtiles)
+                warnings.warn(msg, InvalidNumberOfTilesWarning)
 
-        kwargs = {'rsiz': rsiz,
-                  'xysiz': xysiz,
-                  'xyosiz': xyosiz,
-                  'xytsiz': xytsiz,
-                  'xytosiz': xytosiz,
-                  'Csiz': Csiz,
-                  'bitdepth': bitdepth,
-                  'signed':  signed,
-                  'xyrsiz': (xrsiz, yrsiz),
-                  'length': length,
-                  'offset': offset}
+        kwargs = {
+            'rsiz': rsiz,
+            'xysiz': xysiz,
+            'xyosiz': xyosiz,
+            'xytsiz': xytsiz,
+            'xytosiz': xytosiz,
+            'Csiz': Csiz,
+            'bitdepth': bitdepth,
+            'signed':  signed,
+            'xyrsiz': (xrsiz, yrsiz),
+            'length': length,
+            'offset': offset
+        }
         segment = SIZsegment(**kwargs)
 
         # Need to keep track of the number of components from SIZ for
         # other markers.
-        self._csiz = Csiz
+        cls._csiz = Csiz
 
         return segment
 

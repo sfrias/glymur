@@ -1192,6 +1192,7 @@ class TestJp2dump(unittest.TestCase):
 
     def test_jp2_codestream_2(self):
         """Verify dumping with -c 2, print entire jp2 jacket, codestream."""
+        self.maxDiff = None
         actual = self.run_jp2dump(['', '-c', '2', self.jp2file])
         expected = fixtures.nemo
         self.assertEqual(actual, expected)

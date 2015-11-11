@@ -83,6 +83,13 @@ class UnrecognizedBoxWarning(UserWarning):
     pass
 
 
+class UnrecoverableBoxParsingWarning(UserWarning):
+    """
+    Issue this warning if a box of a superbox errors out when parsing.
+    """
+    pass
+
+
 class Jp2kBox(object):
     """Superclass for JPEG 2000 boxes.
 
@@ -222,10 +229,12 @@ class Jp2kBox(object):
             box = parser(fptr, start, num_bytes)
         except ValueError as err:
             msg = "Encountered an unrecoverable ValueError while parsing a "
-            msg += "{0} box at byte offset {1}.  The original error message "
-            msg += "was \"{2}\""
-            msg = msg.format(_BOX_WITH_ID[box_id].longname, start, str(err))
-            warnings.warn(msg, UserWarning)
+            msg += "{box_id} box at byte offset {offset}.  The original error "
+            msg += "message was \"{original_error_message}\""
+            msg = msg.format(box_id=_BOX_WITH_ID[box_id].longname,
+                             offset=start, 
+                             original_error_message=str(err))
+            warnings.warn(msg, UnrecoverableBoxParsingWarning)
             box = UnknownBox(box_id.decode('utf-8'),
                              length=num_bytes,
                              offset=start, longname='Unknown')

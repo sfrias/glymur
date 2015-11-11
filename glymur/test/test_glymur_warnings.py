@@ -26,25 +26,6 @@ from .fixtures import WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG
 class TestWarningsOpj(unittest.TestCase):
     """Test suite for warnings issued by glymur."""
 
-    def test_exceeded_box_length(self):
-        """
-        should warn if reading past end of a box
-
-        Verify that a warning is issued if we read past the end of a box
-        This file has a palette (pclr) box whose length is impossibly
-        short.
-        """
-        infile = os.path.join(OPJ_DATA_ROOT,
-                              'input/nonregression/mem-b2ace68c-1381.jp2')
-        regex = re.compile(r'''Encountered\san\sunrecoverable\sValueError\s
-                               while\sparsing\sa\sPalette\sbox\sat\sbyte\s
-                               offset\s\d+\.\s+The\soriginal\serror\smessage\s
-                               was\s"total\ssize\sof\snew\sarray\smust\sbe\s
-                               unchanged"''',
-                           re.VERBOSE)
-        with self.assertWarnsRegex(UserWarning, regex):
-            Jp2k(infile)
-
     def test_NR_gdal_fuzzer_check_comp_dx_dy_jp2_dump(self):
         """
         Invalid subsampling value.
@@ -123,6 +104,38 @@ class TestWarnings(unittest.TestCase):
 
     def setUp(self):
         self.jp2file = glymur.data.nemo()
+        self.jpxfile = glymur.data.jpxfile()
+
+    def test_read_past_end_of_box(self):
+        """
+        should warn if reading past end of a box
+
+        Verify that a warning is issued if we read past the end of a box
+        This file has a palette (pclr) box whose length is short.
+
+        The original file tested was input/nonregression/mem-b2ace68c-1381.jp2
+        """
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.jp2') as ofile:
+            with open(self.jpxfile, 'rb') as ifile:
+                ofile.write(ifile.read(93))
+
+                # Rewrite the ncols, nrows portion.  Increase the number of
+                # rows.  This causes python to think there are more rows
+                # than there actually are when resizing the palette.
+                buffer = struct.pack('>HB', 257, 3)
+                ofile.write(buffer)
+
+                ifile.seek(96)
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            exp_warning = glymur.jp2box.UnrecoverableBoxParsingWarning
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    Jp2k(ofile.name)
+            else:
+                with self.assertWarns(exp_warning):
+                    Jp2k(ofile.name)
 
     def test_NR_gdal_fuzzer_check_number_of_tiles(self):
         """

@@ -4,16 +4,6 @@ The module contains classes used to store information parsed from JPEG 2000
 codestreams.
 """
 
-# The number of lines in the module is long and that's ok.  It would not help
-# matters to move anything out to another file.
-
-# "Too many instance attributes", "Too many arguments"
-# Some segments just have a lot of information.
-# It doesn't make sense to subclass just for that.
-
-# "Too few public methods"  Some segments don't define any new methods from
-# the base Segment class.
-
 import math
 import struct
 import sys
@@ -66,6 +56,12 @@ for _marker in range(0xff4f, 0xff70):
 for _marker in range(0xff90, 0xff94):
     _VALID_MARKERS.append(_marker)
 
+
+class InvalidNumberOfResolutionsWarning(UserWarning):
+    """
+    The number of resolutions should not exceed J2K_MAXRLVLS.
+    """
+    pass
 
 class RSizWarning(UserWarning):
     """
@@ -389,13 +385,13 @@ class Codestream(object):
         spcod = read_buffer[1:]
         spcod = np.frombuffer(spcod, dtype=np.uint8)
         if spcod[0] not in [LRCP, RLCP, RPCL, PCRL, CPRL]:
-            msg = "Invalid progression order in COD segment: {0}."
-            warnings.warn(msg.format(spcod[0]))
+            msg = "Invalid progression order in COD segment: {prog_order}."
+            warnings.warn(msg.format(prog_order=spcod[0]))
 
         if spcod[8] not in [WAVELET_XFORM_9X7_IRREVERSIBLE,
                             WAVELET_XFORM_5X3_REVERSIBLE]:
-            msg = "Invalid wavelet transform in COD segment: {0}."
-            warnings.warn(msg.format(spcod[8]))
+            msg = "Invalid wavelet transform in COD segment: {xform}."
+            warnings.warn(msg.format(xform=spcod[8]))
 
         sop = (scod & 2) > 0
         eph = (scod & 4) > 0
@@ -599,9 +595,9 @@ class Codestream(object):
             mantissa_exponent_offset = 2
         cqcc, sqcc = struct.unpack_from(fmt, read_buffer)
         if cqcc >= self._csiz:
-            msg = "Invalid component number ({0}), "
-            msg += "number of components is only {1}."
-            msg = msg.format(cqcc, self._csiz)
+            msg = "Invalid component number ({invalid_comp_no}), "
+            msg += "number of components is only {valid_comp_no}."
+            msg = msg.format(invalid_comp_no=cqcc, valid_comp_no=self._csiz)
             warnings.warn(msg)
 
         spqcc = read_buffer[mantissa_exponent_offset:]
@@ -684,7 +680,7 @@ class Codestream(object):
 
         rsiz = data[0]
         if rsiz not in _KNOWN_PROFILES:
-            msg = "Invalid profile: (Rsiz={0}).".format(rsiz)
+            msg = "Invalid profile: (Rsiz={rsiz}).".format(rsiz=rsiz)
             warnings.warn(msg, RSizWarning)
 
         xysiz = (data[1], data[2])
@@ -705,9 +701,9 @@ class Codestream(object):
 
         for j, subsampling in enumerate(zip(xrsiz, yrsiz)):
             if 0 in subsampling:
-                msg = "Invalid subsampling value for component {0}: "
-                msg += "dx={1}, dy={2}."
-                msg = msg.format(j, subsampling[0], subsampling[1])
+                msg = ("Invalid subsampling value for component {comp}: "
+                       "dx={dx}, dy={dy}.")
+                msg = msg.format(comp=j, dx=subsampling[0], dy=subsampling[1])
                 warnings.warn(msg)
 
         try:
@@ -881,10 +877,10 @@ class Segment(object):
         self.data = data
 
     def __str__(self):
-        msg = '{0} marker segment @ ({1}, {2})'.format(self.marker_id,
-                                                       self.offset,
-                                                       self.length)
-        return msg
+        msg = '{marker_id} marker segment @ ({offset}, {length})'
+        return msg.format(marker_id=self.marker_id,
+                          length=self.length,
+                          offset=self.offset)
 
 
 class COCsegment(Segment):
@@ -934,22 +930,19 @@ class COCsegment(Segment):
     def __str__(self):
         msg = Segment.__str__(self)
 
-        msg += '\n    Associated component:  {0}'.format(self.ccoc)
-
-        msg += '\n    Coding style for this component:  '
-        if self.scoc == 0:
-            msg += 'Entropy coder, PARTITION = 0'
-        elif self.scoc & 0x01:
-            msg += 'Entropy coder, PARTITION = 1'
-
-        msg += '\n    Coding style parameters:'
-        msg += '\n        Number of resolutions:  {0}'
-        msg += '\n        Code block height, width:  ({1} x {2})'
-        msg += '\n        Wavelet transform:  {3}'
-        msg = msg.format(self.spcoc[0] + 1,
-                         int(self.code_block_size[0]),
-                         int(self.code_block_size[1]),
-                         _WAVELET_TRANSFORM_DISPLAY[self.spcoc[4]])
+        msg += ('\n    Associated component:  {assoc_comp}'
+                '\n    Coding style for this component:  '
+                'Entropy coder, PARTITION = {partition}'
+                '\n    Coding style parameters:'
+                '\n        Number of resolutions:  {num_res}'
+                '\n        Code block height, width:  ({cblh} x {cblw})'
+                '\n        Wavelet transform:  {xform}')
+        msg = msg.format(assoc_comp=self.ccoc,
+                         partition=0 if self.scoc == 0 else 1,
+                         num_res=self.spcoc[0] + 1,
+                         cblh=int(self.code_block_size[0]),
+                         cblw=int(self.code_block_size[1]),
+                         xform=_WAVELET_TRANSFORM_DISPLAY[self.spcoc[4]])
 
         msg += '\n        '
         msg += _context_string(self.spcoc[3])
@@ -1005,9 +998,9 @@ class CODsegment(Segment):
         self._numresolutions = params[3]
 
         if params[3] > opj2.J2K_MAXRLVLS:
-            msg = "Invalid number of resolutions ({0})."
+            msg = "Invalid number of resolutions: ({0})."
             msg = msg.format(params[3] + 1)
-            warnings.warn(msg)
+            warnings.warn(msg, InvalidNumberOfResolutionsWarning)
 
         cblk_width = 4 * math.pow(2, params[4])
         cblk_height = 4 * math.pow(2, params[5])
@@ -1023,12 +1016,12 @@ class CODsegment(Segment):
         msg = Segment.__str__(self)
 
         msg += '\n    Coding style:'
-        msg += '\n        Entropy coder, {0} partitions'
-        msg += '\n        SOP marker segments:  {1}'
-        msg += '\n        EPH marker segments:  {2}'
-        msg = msg.format('with' if (self.scod & 1) else 'without',
-                         ((self.scod & 2) > 0),
-                         ((self.scod & 4) > 0))
+        msg += '\n        Entropy coder, {with_without} partitions'
+        msg += '\n        SOP marker segments:  {sop}'
+        msg += '\n        EPH marker segments:  {eph}'
+        msg = msg.format(with_without='with' if (self.scod & 1) else 'without',
+                         sop=((self.scod & 2) > 0),
+                         eph=((self.scod & 4) > 0))
 
         if self.spcod[3] == 0:
             mct = 'no transform specified'
@@ -1062,7 +1055,7 @@ class CODsegment(Segment):
             msg += 'default, 2^15 x 2^15'
         else:
             for pps in self.precinct_size:
-                msg += '({0}, {1})'.format(pps[0], pps[1])
+                msg += '({ppsx}, {ppsy})'.format(ppsx=pps[0], ppsy=pps[1])
 
         msg += '\n        '
         msg += _context_string(self.spcod[7])
@@ -1105,11 +1098,10 @@ class CMEsegment(Segment):
         msg = Segment.__str__(self) + '\n'
         if self.rcme == 1:
             # latin-1 string
-            msg += '    "{0}"'
-            msg = msg.format(self.ccme.decode('latin-1'))
+            msg += '    "{ccme}"'.format(ccme=self.ccme.decode('latin-1'))
         else:
-            msg += "    binary data (rcme = {0}):  {1} bytes"
-            msg = msg.format(self.rcme, len(self.ccme))
+            msg += "    binary data (rcme = {rcme}):  {nbytes} bytes"
+            msg = msg.format(rcme=self.rcme, nbytes=len(self.ccme))
         return msg
 
 

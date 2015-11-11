@@ -45,19 +45,6 @@ class TestWarningsOpj(unittest.TestCase):
         with self.assertWarnsRegex(UserWarning, regex):
             Jp2k(infile)
 
-    def test_NR_gdal_fuzzer_unchecked_numresolutions_dump(self):
-        """
-        Has an invalid number of resolutions.
-        """
-        lst = ['input', 'nonregression',
-               'gdal_fuzzer_unchecked_numresolutions.jp2']
-        jfile = opj_data_file('/'.join(lst))
-        regex = re.compile(r"""Invalid\snumber\sof\sresolutions\s
-                               \(\d+\)\.""",
-                           re.VERBOSE)
-        with self.assertWarnsRegex(UserWarning, regex):
-            Jp2k(jfile).get_codestream()
-
     @unittest.skipIf(re.match("1.5|2.0.0", glymur.version.openjpeg_version),
                      "Test not passing on 1.5.x, not introduced until 2.x")
     def test_NR_gdal_fuzzer_check_number_of_tiles(self):
@@ -151,6 +138,24 @@ class TestWarnings(unittest.TestCase):
 
     def setUp(self):
         self.jp2file = glymur.data.nemo()
+
+    def test_NR_gdal_fuzzer_unchecked_numresolutions_dump(self):
+        """
+        Has an invalid number of resolutions.
+
+        Original test file was input/nonregression/
+                               gdal_fuzzer_unchecked_numresolutions.jp2
+        """
+        spcod = struct.pack('>BHBBBBBB', 0, 1, 1, 64, 3, 3, 0, 0)
+        spcod = bytearray(spcod)
+        exp_warning = glymur.codestream.InvalidNumberOfResolutionsWarning
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                segment = glymur.codestream.CODsegment(0, spcod, 12, 174)
+            assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                segment = glymur.codestream.CODsegment(0, spcod, 12, 174)
 
     def test_NR_DEC_issue188_beach_64bitsbox_jp2_41_decode(self):
         """

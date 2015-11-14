@@ -151,13 +151,15 @@ class TestPrinting(unittest.TestCase):
 
         Original test file was 2977.pdf.asan.67.2198.jp2
         """
+        self.maxDiff = None
         spcod = struct.pack('>BHBBBBBB', 33, 1, 1, 5, 3, 3, 0, 0)
         spcod = bytearray(spcod)
         segment = glymur.codestream.CODsegment(0, spcod, 12, 174)
         with patch('sys.stdout', new=StringIO()) as stdout:
             print(segment)
             actual = stdout.getvalue().strip()
-        self.assertEqual(actual, fixtures.issue_186_progression_order)
+        expected = fixtures.issue_186_progression_order
+        self.assertEqual(actual, expected)
 
     def test_bad_wavelet_transform(self):
         """

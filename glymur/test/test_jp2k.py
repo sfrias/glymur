@@ -1281,6 +1281,8 @@ class TestParsing(unittest.TestCase):
             input/nonregression/edf_c2_1002767.jp2'
 
         It had an RSIZ value of 32, so that's what we use here.
+        
+        Issue196
         """
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
             with open(self.jp2file, 'rb') as ifile:

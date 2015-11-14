@@ -69,6 +69,24 @@ class InvalidNumberOfTilesWarning(UserWarning):
     """
     pass
 
+class InvalidQCCComponentNumber(UserWarning):
+    """
+    The component number parsed from a QCC box must validate against Csiz.
+    """
+    pass
+
+class InvalidSubsamplingWarning(UserWarning):
+    """
+    The subsampling values must be > 0.
+    """
+    pass
+
+class InvalidWaveletTransformWarning(UserWarning):
+    """
+    The wavelet transform must be either the 5x3 or 9x7.
+    """
+    pass
+
 class RSizWarning(UserWarning):
     """
     The profile should be in the range of 0 through 4.
@@ -369,7 +387,8 @@ class Codestream(object):
 
         return COCsegment(ccoc, scoc, spcoc, length, offset)
 
-    def _parse_cod_segment(self, fptr):
+    @classmethod
+    def _parse_cod_segment(cls, fptr):
         """Parse the COD segment.
 
         Parameters
@@ -398,15 +417,16 @@ class Codestream(object):
         if spcod[8] not in [WAVELET_XFORM_9X7_IRREVERSIBLE,
                             WAVELET_XFORM_5X3_REVERSIBLE]:
             msg = "Invalid wavelet transform in COD segment: {xform}."
-            warnings.warn(msg.format(xform=spcod[8]))
+            msg = msg.format(xform=spcod[8])
+            warnings.warn(msg, InvalidWaveletTransformWarning)
 
         sop = (scod & 2) > 0
         eph = (scod & 4) > 0
 
         if sop or eph:
-            self._parse_tpart_flag = True
+            cls._parse_tpart_flag = True
         else:
-            self._parse_tpart_flag = False
+            cls._parse_tpart_flag = False
 
         return CODsegment(scod, spcod, length, offset)
 
@@ -603,10 +623,10 @@ class Codestream(object):
             mantissa_exponent_offset = 2
         cqcc, sqcc = struct.unpack_from(fmt, read_buffer)
         if cqcc >= cls._csiz:
-            msg = "Invalid component number ({invalid_comp_no}), "
-            msg += "number of components is only {valid_comp_no}."
+            msg = ("Invalid QCC component number ({invalid_comp_no}), "
+                   "the actual number of components is only {valid_comp_no}.")
             msg = msg.format(invalid_comp_no=cqcc, valid_comp_no=cls._csiz)
-            warnings.warn(msg)
+            warnings.warn(msg, InvalidQCCComponentNumber)
 
         spqcc = read_buffer[mantissa_exponent_offset:]
 
@@ -714,7 +734,7 @@ class Codestream(object):
                 msg = ("Invalid subsampling value for component {comp}: "
                        "dx={dx}, dy={dy}.")
                 msg = msg.format(comp=j, dx=subsampling[0], dy=subsampling[1])
-                warnings.warn(msg)
+                warnings.warn(msg, InvalidSubsamplingWarning)
 
         try:
             num_tiles_x = (xysiz[0] - xyosiz[0]) / (xytsiz[0] - xytosiz[0])
@@ -1028,13 +1048,26 @@ class CODsegment(Segment):
     def __str__(self):
         msg = Segment.__str__(self)
 
-        msg += '\n    Coding style:'
-        msg += '\n        Entropy coder, {with_without} partitions'
-        msg += '\n        SOP marker segments:  {sop}'
-        msg += '\n        EPH marker segments:  {eph}'
-        msg = msg.format(with_without='with' if (self.scod & 1) else 'without',
-                         sop=((self.scod & 2) > 0),
-                         eph=((self.scod & 4) > 0))
+        msg += '\n'
+        msg += ('    Coding style:\n'
+                '        Entropy coder, {with_without} partitions\n'
+                '        SOP marker segments:  {sop}\n'
+                '        EPH marker segments:  {eph}\n'
+                '    Coding style parameters:\n'
+                '        Progression order:  {prog}\n'
+                '        Number of layers:  {num_layers}\n'
+                '        Multiple component transformation usage:  {mct}\n'
+                '        Number of resolutions:  {num_resolutions}\n'
+                '        Code block height, width:  ({cbh} x {cbw})\n'
+                '        Wavelet transform:  {xform}\n'
+                '        Precinct size:  {precinct_size}\n'
+                '        {code_block_context}')
+
+        if self.precinct_size is None:
+            precinct_size = 'default, 2^15 x 2^15'
+        else:
+            for pps in self.precinct_size:
+                precinct_size = '({ppsx}, {ppsy})'.format(ppsx=pps[0], ppsy=pps[1])
 
         if self.spcod[3] == 0:
             mct = 'no transform specified'
@@ -1045,33 +1078,18 @@ class CODsegment(Segment):
         else:
             mct = 'unknown'
 
-        msg += '\n    '
-        lines = ['Coding style parameters:',
-                 '    Progression order:  {prog}',
-                 '    Number of layers:  {num_layers}',
-                 '    Multiple component transformation usage:  {mct}',
-                 '    Number of resolutions:  {num_resolutions}',
-                 '    Code block height, width:  ({cbh} x {cbw})',
-                 '    Wavelet transform:  {xform}']
-        msg += '\n    '.join(lines)
-
-        msg = msg.format(prog=_PROGRESSION_ORDER_DISPLAY[self.spcod[0]],
+        msg = msg.format(with_without='with' if (self.scod & 1) else 'without',
+                         sop=((self.scod & 2) > 0),
+                         eph=((self.scod & 4) > 0),
+                         prog=_PROGRESSION_ORDER_DISPLAY[self.spcod[0]],
                          num_layers=self.layers,
                          mct=mct,
                          num_resolutions=self.spcod[4] + 1,
                          cbh=int(self.code_block_size[0]),
                          cbw=int(self.code_block_size[1]),
-                         xform=_WAVELET_TRANSFORM_DISPLAY[self.spcod[8]])
-
-        msg += '\n        Precinct size:  '
-        if self.precinct_size is None:
-            msg += 'default, 2^15 x 2^15'
-        else:
-            for pps in self.precinct_size:
-                msg += '({ppsx}, {ppsy})'.format(ppsx=pps[0], ppsy=pps[1])
-
-        msg += '\n        '
-        msg += _context_string(self.spcod[7])
+                         xform=_WAVELET_TRANSFORM_DISPLAY[self.spcod[8]],
+                         precinct_size=precinct_size,
+                         code_block_context=_context_string(self.spcod[7]))
 
         return msg
 

@@ -26,41 +26,6 @@ from .fixtures import WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG
 class TestWarningsOpj(unittest.TestCase):
     """Test suite for warnings issued by glymur."""
 
-    def test_NR_gdal_fuzzer_check_comp_dx_dy_jp2_dump(self):
-        """
-        Invalid subsampling value.
-        """
-        lst = ['input', 'nonregression', 'gdal_fuzzer_check_comp_dx_dy.jp2']
-        jfile = opj_data_file('/'.join(lst))
-        regex = re.compile(r"""Invalid\ssubsampling\svalue\sfor\scomponent\s
-                               \d+:\s+
-                               dx=\d+,\s*dy=\d+""",
-                           re.VERBOSE)
-        with self.assertWarnsRegex(UserWarning, regex):
-            Jp2k(jfile).get_codestream()
-
-    def test_NR_gdal_fuzzer_assert_in_opj_j2k_read_SQcd_SQcc_patch_jp2(self):
-        lst = ['input', 'nonregression',
-               'gdal_fuzzer_assert_in_opj_j2k_read_SQcd_SQcc.patch.jp2']
-        jfile = opj_data_file('/'.join(lst))
-        regex = re.compile(r"""Invalid\scomponent\snumber\s\(\d+\),\s
-                               number\sof\scomponents\sis\sonly\s\d+""",
-                           re.VERBOSE)
-        with self.assertWarnsRegex(UserWarning, regex):
-            Jp2k(jfile).get_codestream()
-
-    def test_bad_rsiz(self):
-        """Should warn if RSIZ is bad.  Issue196"""
-        filename = opj_data_file('input/nonregression/edf_c2_1002767.jp2')
-        with self.assertWarnsRegex(UserWarning, 'Invalid profile'):
-            Jp2k(filename).get_codestream()
-
-    def test_bad_wavelet_transform(self):
-        """Should warn if wavelet transform is bad.  Issue195"""
-        filename = opj_data_file('input/nonregression/edf_c2_10025.jp2')
-        with self.assertWarnsRegex(UserWarning, 'Invalid wavelet transform'):
-            Jp2k(filename).get_codestream()
-
     def test_invalid_progression_order(self):
         """Should still be able to parse even if prog order is invalid."""
         jfile = opj_data_file('input/nonregression/2977.pdf.asan.67.2198.jp2')
@@ -105,6 +70,87 @@ class TestWarnings(unittest.TestCase):
     def setUp(self):
         self.jp2file = glymur.data.nemo()
         self.jpxfile = glymur.data.jpxfile()
+
+    def test_bad_wavelet_transform(self):
+        """
+        Should warn if wavelet transform is bad.  Issue195
+
+        Original file tested was input/nonregression/edf_c2_10025.jp2
+        """
+        fp = BytesIO()
+        buffer = struct.pack('>HBHBBBBBBB', 12, 0, 1, 1, 1, 3, 3, 0, 0, 10)
+        fp.write(buffer)
+        fp.seek(0)
+
+        exp_warning = glymur.codestream.InvalidWaveletTransformWarning
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                segment = glymur.codestream.Codestream._parse_cod_segment(fp)
+            assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                segment = glymur.codestream.Codestream._parse_cod_segment(fp)
+
+
+    def test_NR_gdal_fuzzer_assert_in_opj_j2k_read_SQcd_SQcc_patch_jp2(self):
+        """
+        validate the QCC component number against Csiz
+
+        The original test file was
+        gdal_fuzzer_assert_in_opj_j2k_read_SQcd_SQcc.patch.jp2
+        """
+        fp = BytesIO()
+
+        buffer = struct.pack('>HBB', 4, 64, 64)
+        fp.write(buffer)
+        fp.seek(0)
+
+        exp_warning = glymur.codestream.InvalidQCCComponentNumber
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                segment = glymur.codestream.Codestream._parse_qcc_segment(fp)
+            assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                segment = glymur.codestream.Codestream._parse_qcc_segment(fp)
+
+
+    def test_NR_gdal_fuzzer_check_comp_dx_dy_jp2_dump(self):
+        """
+        Invalid subsampling value.
+
+        Original test file was gdal_fuzzer_check_comp_dx_dy.jp2
+        """
+        fp = BytesIO()
+
+        buffer = struct.pack('>H', 47)  # length
+
+        # kwargs = {'rsiz': 1,
+        #           'xysiz': (1000, 1000),
+        #           'xyosiz': (0, 0),
+        #           'xytsiz': (1000, 1000),
+        #           'xytosiz': (0, 0),
+        #           'Csiz': 3,
+        #           'bitdepth': (8, 8, 8),
+        #           'signed':  (False, False, False),
+        #           'xyrsiz': ((1, 1, 1), (1, 1, 1)),
+        #           'length': 47,
+        #           'offset': 2}
+        buffer += struct.pack('>HIIIIIIIIH', 1, 1000, 1000, 0, 0, 1000, 1000,
+                              0, 0, 3)
+        buffer += struct.pack('>BBBBBBBBB', 7, 1, 1, 7, 1, 1, 7, 1, 0)
+        fp.write(buffer)
+        fp.seek(0)
+
+        exp_warning = glymur.codestream.InvalidSubsamplingWarning
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                segment = glymur.codestream.Codestream._parse_siz_segment(fp)
+            assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                segment = glymur.codestream.Codestream._parse_siz_segment(fp)
+
 
     def test_read_past_end_of_box(self):
         """

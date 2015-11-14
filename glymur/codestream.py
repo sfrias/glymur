@@ -69,6 +69,12 @@ class InvalidNumberOfTilesWarning(UserWarning):
     """
     pass
 
+class InvalidProgressionOrderWarning(UserWarning):
+    """
+    Progression order must be one of [LRCP, RLCP, RPCL, PCRL, CPRL]
+    """
+    pass
+
 class InvalidQCCComponentNumber(UserWarning):
     """
     The component number parsed from a QCC box must validate against Csiz.
@@ -412,7 +418,8 @@ class Codestream(object):
         spcod = np.frombuffer(spcod, dtype=np.uint8)
         if spcod[0] not in [LRCP, RLCP, RPCL, PCRL, CPRL]:
             msg = "Invalid progression order in COD segment: {prog_order}."
-            warnings.warn(msg.format(prog_order=spcod[0]))
+            warnings.warn(msg.format(prog_order=spcod[0]),
+                          InvalidProgressionOrderWarning)
 
         if spcod[8] not in [WAVELET_XFORM_9X7_IRREVERSIBLE,
                             WAVELET_XFORM_5X3_REVERSIBLE]:

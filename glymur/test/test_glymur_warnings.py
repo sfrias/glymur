@@ -26,12 +26,6 @@ from .fixtures import WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG
 class TestWarningsOpj(unittest.TestCase):
     """Test suite for warnings issued by glymur."""
 
-    def test_invalid_progression_order(self):
-        """Should still be able to parse even if prog order is invalid."""
-        jfile = opj_data_file('input/nonregression/2977.pdf.asan.67.2198.jp2')
-        with self.assertWarnsRegex(UserWarning, 'Invalid progression order'):
-            Jp2k(jfile).get_codestream()
-
     def test_tile_height_is_zero(self):
         """Zero tile height should not cause an exception."""
         filename = 'input/nonregression/2539.pdf.SIGFPE.706.1712.jp2'
@@ -70,6 +64,27 @@ class TestWarnings(unittest.TestCase):
     def setUp(self):
         self.jp2file = glymur.data.nemo()
         self.jpxfile = glymur.data.jpxfile()
+
+    def test_invalid_progression_order(self):
+        """
+        Should still be able to parse even if prog order is invalid.
+        
+        Original test file was input/nonregression/2977.pdf.asan.67.2198.jp2
+        """
+        fp = BytesIO()
+        buffer = struct.pack('>HBBBBBBBBBB', 12, 3, 33, 1, 1, 3, 3, 0, 0, 1, 1)
+        fp.write(buffer)
+        fp.seek(0)
+
+        exp_warning = glymur.codestream.InvalidProgressionOrderWarning
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                segment = glymur.codestream.Codestream._parse_cod_segment(fp)
+            assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                segment = glymur.codestream.Codestream._parse_cod_segment(fp)
+
 
     def test_bad_wavelet_transform(self):
         """

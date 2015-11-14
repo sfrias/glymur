@@ -264,18 +264,6 @@ class TestBadButRecoverableXmlFile(unittest.TestCase):
 class TestXML_OpjDataRoot(unittest.TestCase):
     """Test suite for XML boxes, requires OPJ_DATA_ROOT."""
 
-    def test_bom(self):
-        """Byte order markers are illegal in UTF-8.  Issue 185"""
-        filename = opj_data_file(os.path.join('input',
-                                              'nonregression',
-                                              'issue171.jp2'))
-        msg = 'An illegal BOM \(byte order marker\) was detected and removed '
-        msg += 'from the XML contents in the box starting at byte offset \d+'
-        with self.assertWarnsRegex(UserWarning, re.compile(msg)):
-            jp2 = Jp2k(filename)
-
-        self.assertIsNotNone(jp2.box[3].xml)
-
     def test_invalid_utf8(self):
         """Bad byte sequence that cannot be parsed."""
         relname = '26ccf3651020967f7778238ef5af08af.SIGFPE.d25.527.jp2'

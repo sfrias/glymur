@@ -23,6 +23,31 @@ class TestSuite(unittest.TestCase):
         self.j2kfile = glymur.data.goodstuff()
         self.jpxfile = glymur.data.jpxfile()
 
+    def test_bom(self):
+        """
+        Byte order markers are illegal in UTF-8.  Issue 185
+
+        Original test file was input/nonregression/issue171.jp2
+        """
+        fptr = BytesIO()
+
+        s = "<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>"
+        s += "<stuff>goes here</stuff>"
+        s += "<?xpacket end='w'?>"
+        data = s.encode('utf-8')
+        fptr.write(data)
+        fptr.seek(0)
+
+        exp_warning = glymur.jp2box.ByteOrderMarkerWarning
+        if sys.hexversion < 0x03000000:
+            pass
+            # with warnings.catch_warnings(record=True) as w:
+            #     glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
+            # assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
+
     @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
     def test_unknown_marker_segment(self):
         """

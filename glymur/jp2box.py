@@ -66,6 +66,13 @@ _EXIF_UUID = UUID(bytes=b'JpgTiffExif->JP2')
 _XMP_UUID = UUID('be7acfcb-97a9-42e8-9c71-999491e3afac')
 
 
+class ByteOrderMarkerWarning(UserWarning):
+    """
+    Byte order markers (BOMs) are illegal in XML content.
+    """
+    pass
+
+
 class ExtraBytesAtEndOfFileWarning(UserWarning):
     """
     Must be either 0 or more than 8 bytes at the end of each box.
@@ -3167,10 +3174,11 @@ class XMLBox(Jp2kBox):
 
         # Remove any byte order markers.
         if u'\ufeff' in text:
-            msg = 'An illegal BOM (byte order marker) was detected and '
-            msg += 'removed from the XML contents in the box starting at byte '
-            msg += 'offset {offset}'.format(offset=offset)
-            warnings.warn(msg)
+            msg = ('An illegal BOM (byte order marker) was detected and '
+                   'removed from the XML contents in the box starting at byte '
+                   'offset {offset}.')
+            msg = msg.format(offset=offset)
+            warnings.warn(msg, ByteOrderMarkerWarning)
             text = text.replace(u'\ufeff', '')
 
         # Remove any encoding declaration.

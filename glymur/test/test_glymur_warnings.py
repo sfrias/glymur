@@ -3,7 +3,6 @@ Test suite for warnings issued by glymur.
 """
 from io import BytesIO
 import os
-import re
 import struct
 import sys
 import tempfile
@@ -16,34 +15,27 @@ from glymur.jp2k import InvalidJP2ColourspaceMethodWarning
 from glymur.jp2box import InvalidColourspaceMethod
 from glymur.jp2box import InvalidICCProfileLengthWarning
 
-from .fixtures import opj_data_file, OPJ_DATA_ROOT
-from .fixtures import WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG
 
+class TestSuite(unittest.TestCase):
 
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-@unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-class TestWarningsOpj(unittest.TestCase):
-    """Test suite for warnings issued by glymur."""
-
-    def test_tile_height_is_zero(self):
-        """Zero tile height should not cause an exception."""
-        filename = 'input/nonregression/2539.pdf.SIGFPE.706.1712.jp2'
-        filename = opj_data_file(filename)
-        with self.assertWarnsRegex(UserWarning, 'Invalid tile dimensions'):
-            Jp2k(filename).get_codestream()
+    def setUp(self):
+        self.jp2file = glymur.data.nemo()
+        self.j2kfile = glymur.data.goodstuff()
+        self.jpxfile = glymur.data.jpxfile()
 
     @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
     def test_unknown_marker_segment(self):
-        """Should warn for an unknown marker."""
-        # Let's inject a marker segment whose marker does not appear to
-        # be valid.  We still parse the file, but warn about the offending
-        # marker.
-        filename = os.path.join(OPJ_DATA_ROOT, 'input/conformance/p0_01.j2k')
+        """
+        Should warn for an unknown marker.
+
+        Let's inject a marker segment whose marker does not appear to
+        be valid.  We still parse the file, but warn about the offending
+        marker.
+        """
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with open(filename, 'rb') as ifile:
+            with open(self.j2kfile, 'rb') as ifile:
                 # Everything up until the first QCD marker.
-                read_buffer = ifile.read(45)
+                read_buffer = ifile.read(65)
                 tfile.write(read_buffer)
 
                 # Write the new marker segment, 0xff79 = 65401
@@ -55,20 +47,55 @@ class TestWarningsOpj(unittest.TestCase):
                 tfile.write(read_buffer)
                 tfile.flush()
 
-                with self.assertWarnsRegex(UserWarning, 'Unrecognized marker'):
+            exp_warning = glymur.codestream.UnrecognizedMarkerWarning
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    Jp2k(tfile.name).get_codestream()
+                assert issubclass(w[-1].category, exp_warning)
+            else:
+                with self.assertWarns(exp_warning):
                     Jp2k(tfile.name).get_codestream()
 
+    def test_tile_height_is_zero(self):
+        """
+        Zero tile height should not cause an exception.
 
-class TestWarnings(unittest.TestCase):
+        Original test file was input/nonregression/2539.pdf.SIGFPE.706.1712.jp2
+        """
+        fp = BytesIO()
 
-    def setUp(self):
-        self.jp2file = glymur.data.nemo()
-        self.jpxfile = glymur.data.jpxfile()
+        buffer = struct.pack('>H', 47)  # length
+
+        # kwargs = {'rsiz': 1,
+        #           'xysiz': (1000, 1000),
+        #           'xyosiz': (0, 0),
+        #           'xytsiz': (0, 1000),
+        #           'xytosiz': (0, 0),
+        #           'Csiz': 3,
+        #           'bitdepth': (8, 8, 8),
+        #           'signed':  (False, False, False),
+        #           'xyrsiz': ((1, 1, 1), (1, 1, 1)),
+        #           'length': 47,
+        #           'offset': 2}
+        buffer += struct.pack('>HIIIIIIIIH', 1, 1000, 1000, 0, 0, 0, 1000,
+                              0, 0, 3)
+        buffer += struct.pack('>BBBBBBBBB', 7, 1, 1, 7, 1, 1, 7, 1, 1)
+        fp.write(buffer)
+        fp.seek(0)
+
+        exp_warning = glymur.codestream.InvalidTileSpecificationWarning
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                glymur.codestream.Codestream._parse_siz_segment(fp)
+            assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                glymur.codestream.Codestream._parse_siz_segment(fp)
 
     def test_invalid_progression_order(self):
         """
         Should still be able to parse even if prog order is invalid.
-        
+
         Original test file was input/nonregression/2977.pdf.asan.67.2198.jp2
         """
         fp = BytesIO()
@@ -79,12 +106,11 @@ class TestWarnings(unittest.TestCase):
         exp_warning = glymur.codestream.InvalidProgressionOrderWarning
         if sys.hexversion < 0x03000000:
             with warnings.catch_warnings(record=True) as w:
-                segment = glymur.codestream.Codestream._parse_cod_segment(fp)
+                glymur.codestream.Codestream._parse_cod_segment(fp)
             assert issubclass(w[-1].category, exp_warning)
         else:
             with self.assertWarns(exp_warning):
-                segment = glymur.codestream.Codestream._parse_cod_segment(fp)
-
+                glymur.codestream.Codestream._parse_cod_segment(fp)
 
     def test_bad_wavelet_transform(self):
         """
@@ -100,12 +126,11 @@ class TestWarnings(unittest.TestCase):
         exp_warning = glymur.codestream.InvalidWaveletTransformWarning
         if sys.hexversion < 0x03000000:
             with warnings.catch_warnings(record=True) as w:
-                segment = glymur.codestream.Codestream._parse_cod_segment(fp)
+                glymur.codestream.Codestream._parse_cod_segment(fp)
             assert issubclass(w[-1].category, exp_warning)
         else:
             with self.assertWarns(exp_warning):
-                segment = glymur.codestream.Codestream._parse_cod_segment(fp)
-
+                glymur.codestream.Codestream._parse_cod_segment(fp)
 
     def test_NR_gdal_fuzzer_assert_in_opj_j2k_read_SQcd_SQcc_patch_jp2(self):
         """
@@ -123,12 +148,11 @@ class TestWarnings(unittest.TestCase):
         exp_warning = glymur.codestream.InvalidQCCComponentNumber
         if sys.hexversion < 0x03000000:
             with warnings.catch_warnings(record=True) as w:
-                segment = glymur.codestream.Codestream._parse_qcc_segment(fp)
+                glymur.codestream.Codestream._parse_qcc_segment(fp)
             assert issubclass(w[-1].category, exp_warning)
         else:
             with self.assertWarns(exp_warning):
-                segment = glymur.codestream.Codestream._parse_qcc_segment(fp)
-
+                glymur.codestream.Codestream._parse_qcc_segment(fp)
 
     def test_NR_gdal_fuzzer_check_comp_dx_dy_jp2_dump(self):
         """
@@ -160,12 +184,11 @@ class TestWarnings(unittest.TestCase):
         exp_warning = glymur.codestream.InvalidSubsamplingWarning
         if sys.hexversion < 0x03000000:
             with warnings.catch_warnings(record=True) as w:
-                segment = glymur.codestream.Codestream._parse_siz_segment(fp)
+                glymur.codestream.Codestream._parse_siz_segment(fp)
             assert issubclass(w[-1].category, exp_warning)
         else:
             with self.assertWarns(exp_warning):
-                segment = glymur.codestream.Codestream._parse_siz_segment(fp)
-
+                glymur.codestream.Codestream._parse_siz_segment(fp)
 
     def test_read_past_end_of_box(self):
         """
@@ -194,6 +217,7 @@ class TestWarnings(unittest.TestCase):
             if sys.hexversion < 0x03000000:
                 with warnings.catch_warnings(record=True) as w:
                     Jp2k(ofile.name)
+                assert issubclass(w[-1].category, exp_warning)
             else:
                 with self.assertWarns(exp_warning):
                     Jp2k(ofile.name)
@@ -226,15 +250,14 @@ class TestWarnings(unittest.TestCase):
         fp.write(buffer)
         fp.seek(0)
 
-        
         exp_warning = glymur.codestream.InvalidNumberOfTilesWarning
         if sys.hexversion < 0x03000000:
             with warnings.catch_warnings(record=True) as w:
-                segment = glymur.codestream.Codestream._parse_siz_segment(fp)
+                glymur.codestream.Codestream._parse_siz_segment(fp)
             assert issubclass(w[-1].category, exp_warning)
         else:
             with self.assertWarns(exp_warning):
-                segment = glymur.codestream.Codestream._parse_siz_segment(fp)
+                glymur.codestream.Codestream._parse_siz_segment(fp)
 
     def test_NR_gdal_fuzzer_unchecked_numresolutions_dump(self):
         """
@@ -248,11 +271,11 @@ class TestWarnings(unittest.TestCase):
         exp_warning = glymur.codestream.InvalidNumberOfResolutionsWarning
         if sys.hexversion < 0x03000000:
             with warnings.catch_warnings(record=True) as w:
-                segment = glymur.codestream.CODsegment(0, spcod, 12, 174)
+                glymur.codestream.CODsegment(0, spcod, 12, 174)
             assert issubclass(w[-1].category, exp_warning)
         else:
             with self.assertWarns(exp_warning):
-                segment = glymur.codestream.CODsegment(0, spcod, 12, 174)
+                glymur.codestream.CODsegment(0, spcod, 12, 174)
 
     def test_NR_DEC_issue188_beach_64bitsbox_jp2_41_decode(self):
         """
@@ -299,18 +322,18 @@ class TestWarnings(unittest.TestCase):
         # Need a date in bytes 24:36
         buffer += struct.pack('>HHHHHH', 1966, 2, 15, 0, 0, 0)
         obj.write(buffer)
-        obj.seek(74) 
+        obj.seek(74)
 
         # Should be able to read the colr box now
         if sys.hexversion < 0x03000000:
             with warnings.catch_warnings(record=True) as w:
-                box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 47)
+                glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 47)
                 assert issubclass(w[-1].category,
                                   InvalidICCProfileLengthWarning)
         else:
             with self.assertWarns(InvalidICCProfileLengthWarning):
-                box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 47)
-        
+                glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 47)
+
     def test_invalid_colour_specification_method(self):
         """
         should not error out with invalid colour specification method
@@ -328,17 +351,17 @@ class TestWarnings(unittest.TestCase):
         buffer += struct.pack('>HHHHHH', 1966, 2, 15, 0, 0, 0)
         buffer += b'\x00' * 92
         obj.write(buffer)
-        obj.seek(74) 
+        obj.seek(74)
 
         # Should be able to read the colr box now
         if sys.hexversion < 0x03000000:
             with warnings.catch_warnings(record=True) as w:
-                box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 143)
+                glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 143)
                 assert issubclass(w[-1].category, InvalidColourspaceMethod)
         else:
             with self.assertWarns(glymur.jp2box.InvalidColourspaceMethod):
-                box = glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 143)
-        
+                glymur.jp2box.ColourSpecificationBox.parse(obj, 66, 143)
+
     def test_bad_color_space_specification(self):
         """
         Verify that a warning is issued if the color space method is invalid.

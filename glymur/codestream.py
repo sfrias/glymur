@@ -63,11 +63,13 @@ class InvalidNumberOfResolutionsWarning(UserWarning):
     """
     pass
 
+
 class InvalidNumberOfTilesWarning(UserWarning):
     """
     The number of tiles should not exceed 65535.
     """
     pass
+
 
 class InvalidProgressionOrderWarning(UserWarning):
     """
@@ -75,11 +77,13 @@ class InvalidProgressionOrderWarning(UserWarning):
     """
     pass
 
+
 class InvalidQCCComponentNumber(UserWarning):
     """
     The component number parsed from a QCC box must validate against Csiz.
     """
     pass
+
 
 class InvalidSubsamplingWarning(UserWarning):
     """
@@ -87,17 +91,36 @@ class InvalidSubsamplingWarning(UserWarning):
     """
     pass
 
+
+class InvalidTileSpecificationWarning(UserWarning):
+    """
+    Warning in case of an invalid tile specification.
+
+    Possibilities include
+    """
+    pass
+
+
 class InvalidWaveletTransformWarning(UserWarning):
     """
     The wavelet transform must be either the 5x3 or 9x7.
     """
     pass
 
+
 class RSizWarning(UserWarning):
     """
     The profile should be in the range of 0 through 4.
     """
     pass
+
+
+class UnrecognizedMarkerWarning(UserWarning):
+    """
+    Warn if an unrecognized marker is encountered in the codestream.
+    """
+    pass
+
 
 class Codestream(object):
     """Container for codestream information.
@@ -123,6 +146,7 @@ class Codestream(object):
        Core coding system
     """
     _csiz = -1
+
     def __init__(self, fptr, length, header_only=True):
         """
         Parameters
@@ -253,8 +277,9 @@ class Codestream(object):
     def _parse_unrecognized_segment(self, fptr):
         """Looks like a valid marker, but not sure from reading the specs.
         """
-        msg = "Unrecognized marker id:  0x{0:x}".format(self._marker_id)
-        warnings.warn(msg)
+        msg = "Unrecognized marker id:  0x{marker_id:x}"
+        msg = msg.format(marker_id=self._marker_id)
+        warnings.warn(msg, UnrecognizedMarkerWarning)
         cpos = fptr.tell()
         read_buffer = fptr.read(2)
         next_item, = struct.unpack('>H', read_buffer)
@@ -747,7 +772,14 @@ class Codestream(object):
             num_tiles_x = (xysiz[0] - xyosiz[0]) / (xytsiz[0] - xytosiz[0])
             num_tiles_y = (xysiz[1] - xyosiz[1]) / (xytsiz[1] - xytosiz[1])
         except ZeroDivisionError:
-            warnings.warn("Invalid tile dimensions.")
+            msg = ("Invalid tile specification:  "
+                   "size of {num_tile_rows} x {num_tile_cols}, "
+                   "offset of {row_offset} x {col_offset}")
+            msg = msg.format(num_tile_rows=xytsiz[1],
+                             num_tile_cols=xysiz[0],
+                             row_offset=xytosiz[1],
+                             col_offset=xytosiz[0])
+            warnings.warn(msg, InvalidTileSpecificationWarning)
         else:
             numtiles = math.ceil(num_tiles_x) * math.ceil(num_tiles_y)
             if numtiles > 65535:

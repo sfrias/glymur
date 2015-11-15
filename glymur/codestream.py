@@ -147,6 +147,9 @@ class Codestream(object):
     """
     _csiz = -1
 
+    # Do we parse the tile part bit stream or not?
+    _parse_tpart_flag = False
+
     def __init__(self, fptr, length, header_only=True):
         """
         Parameters
@@ -226,7 +229,7 @@ class Codestream(object):
         # self._csiz = -1
 
         # Do we parse the tile part bit stream or not?
-        self._parse_tpart_flag = False
+        # self._parse_tpart_flag = False
 
         self.segment = []
 

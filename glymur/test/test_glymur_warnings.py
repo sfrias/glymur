@@ -23,6 +23,31 @@ class TestSuite(unittest.TestCase):
         self.j2kfile = glymur.data.goodstuff()
         self.jpxfile = glymur.data.jpxfile()
 
+    def test_unrecoverable_xml(self):
+        """
+        Bad byte sequence in XML that cannot be parsed.
+
+        Original test file was
+        26ccf3651020967f7778238ef5af08af.SIGFPE.d25.527.jp2
+        """
+        fptr = BytesIO()
+
+        payload = b'\xees'
+        fptr.write(payload)
+        fptr.seek(0)
+
+        exp_warning = glymur.jp2box.UnrecoverableXMLWarning
+        if sys.hexversion < 0x03000000:
+            pass
+            with warnings.catch_warnings(record=True) as w:
+                box = glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(payload))
+            assert issubclass(w[-1].category, exp_warning)
+        else:
+            with self.assertWarns(exp_warning):
+                box = glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(payload))
+
+        self.assertIsNone(box.xml)
+
     def test_bom(self):
         """
         Byte order markers are illegal in UTF-8.  Issue 185

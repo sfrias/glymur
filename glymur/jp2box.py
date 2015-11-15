@@ -97,6 +97,13 @@ class UnrecoverableBoxParsingWarning(UserWarning):
     pass
 
 
+class UnrecoverableXMLWarning(UserWarning):
+    """
+    Issue this warning when no valid XML was recovered from an XML box.
+    """
+    pass
+
+
 class Jp2kBox(object):
     """Superclass for JPEG 2000 boxes.
 
@@ -3158,7 +3165,8 @@ class XMLBox(Jp2kBox):
                 # Nope, that's not it.  All is lost.
                 msg = 'A problem was encountered while parsing an XML box:'
                 msg += '\n\n\t"{error}"\n\nNo XML was retrieved.'
-                warnings.warn(msg.format(error=str(err)))
+                warnings.warn(msg.format(error=str(err)),
+                              UnrecoverableXMLWarning)
                 return XMLBox(xml=None, length=length, offset=offset)
 
             text = read_buffer[decl_start:].decode('utf-8')

@@ -6,6 +6,7 @@ import os
 import re
 import tempfile
 import unittest
+import warnings
 
 import numpy as np
 try:
@@ -42,20 +43,6 @@ class TestSuiteNegativeRead(unittest.TestCase):
         jp2k = Jp2k(jfile)
         jp2k.get_codestream(header_only=False)
         self.assertTrue(True)
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    def test_nr_illegalclrtransform(self):
-        """EOC marker is bad"""
-        relpath = 'input/nonregression/illegalcolortransform.j2k'
-        jfile = opj_data_file(relpath)
-        jp2k = Jp2k(jfile)
-        with self.assertWarns(UserWarning):
-            codestream = jp2k.get_codestream(header_only=False)
-
-        # Verify that the last segment returned in the codestream is SOD,
-        # not EOC.  Codestream parsing should stop when we try to jump to
-        # the end of SOT.
-        self.assertEqual(codestream.segment[-1].marker_id, 'SOD')
 
     def test_nr_cannotreadwnosizeknown(self):
         """not sure exactly what is wrong with this file"""

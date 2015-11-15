@@ -23,6 +23,41 @@ class TestSuite(unittest.TestCase):
         self.j2kfile = glymur.data.goodstuff()
         self.jpxfile = glymur.data.jpxfile()
 
+    def test_unrecognized_marker(self):
+        """
+        EOC marker is not retrieved because there is an unrecognized marker
+
+        Original file tested was input/nonregression/illegalcolortransform.j2k
+        """
+        exp_warning = glymur.codestream.UnrecognizedMarkerWarning
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with open(self.j2kfile, 'rb') as ifile:
+                # Everything up until the SOT marker.
+                read_buffer = ifile.read(98)
+                tfile.write(read_buffer)
+
+                # Write the bad marker 0xd900
+                read_buffer = struct.pack('>H', 0xd900)
+                tfile.write(read_buffer)
+
+                # Get the rest of the input file.
+                read_buffer = ifile.read()
+                tfile.write(read_buffer)
+                tfile.flush()
+
+            exp_warning = glymur.codestream.UnrecognizedMarkerWarning
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    c = Jp2k(tfile.name).get_codestream(header_only=False)
+                assert issubclass(w[-1].category, exp_warning)
+            else:
+                with self.assertWarns(exp_warning):
+                    c = Jp2k(tfile.name).get_codestream(header_only=False)
+
+        # Verify that the last segment returned in the codestream is SOT,
+        # not EOC.  It was after SOT that the invalid marker was inserted.
+        self.assertEqual(c.segment[-1].marker_id, 'SOT')
+
     def test_unrecoverable_xml(self):
         """
         Bad byte sequence in XML that cannot be parsed.

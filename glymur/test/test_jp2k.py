@@ -870,6 +870,17 @@ class TestJp2k_write(unittest.TestCase):
         os.unlink(cls.single_channel_j2k.name)
         os.unlink(cls.single_channel_jp2.name)
 
+    def test_cinema2K_bad_frame_rate(self):
+        """
+        Cinema2k frame rate must be either 24 or 48.
+
+        Original test input file was
+        input/nonregression/X_5_2K_24_235_CBR_STEM24_000.tif
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=self.j2k_data, cinema2k=36)
+
     def test_irreversible(self):
         """
         Verify that the Irreversible option works

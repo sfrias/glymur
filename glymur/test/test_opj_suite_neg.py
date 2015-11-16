@@ -44,14 +44,6 @@ class TestSuiteNegativeRead(unittest.TestCase):
         jp2k.get_codestream(header_only=False)
         self.assertTrue(True)
 
-    def test_nr_cannotreadwnosizeknown(self):
-        """not sure exactly what is wrong with this file"""
-        relpath = 'input/nonregression/Cannotreaddatawithnosizeknown.j2k'
-        jfile = opj_data_file(relpath)
-        jp2k = Jp2k(jfile)
-        jp2k.get_codestream(header_only=False)
-        self.assertTrue(True)
-
 
 @unittest.skipIf(re.match("1.5|2", glymur.version.openjpeg_version) is None,
                  "Must have openjpeg 1.5 or higher to run")

@@ -870,6 +870,31 @@ class TestJp2k_write(unittest.TestCase):
         os.unlink(cls.single_channel_j2k.name)
         os.unlink(cls.single_channel_jp2.name)
 
+    def test_cblk_size_precinct_size(self):
+        """
+        code block sizes should never exceed half that of precinct size.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=self.j2k_data,
+                     cbsize=(64, 64), psizes=[(64, 64)])
+
+    def test_cblk_size_not_power_of_two(self):
+        """
+        code block sizes should be powers of two.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=self.j2k_data, cbsize=(13, 12))
+
+    def test_precinct_size_not_p2(self):
+        """
+        precinct sizes should be powers of two.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            with self.assertRaises(glymur.jp2k.BadPrecinctDimensionsError):
+                Jp2k(tfile.name, data=self.j2k_data, psizes=[(173, 173)])
+
     def test_code_block_dimensions(self):
         """
         don't allow extreme codeblock sizes

@@ -604,9 +604,9 @@ class Jp2k(Jp2kBox):
                 raise IOError(msg)
             if ((math.log(height, 2) != math.floor(math.log(height, 2)) or
                  math.log(width, 2) != math.floor(math.log(width, 2)))):
-                msg = "Bad code block size ({0}, {1}), "
-                msg += "must be powers of 2."
-                raise IOError(msg.format(height, width))
+                msg = ("Bad code block dimensions ({height} x {width}).  "
+                       "Code block dimensions must be powers of 2.")
+                raise IOError(msg.format(height=height, width=width))
 
     def _validate_precinct_size(self, cparams):
         """
@@ -627,14 +627,19 @@ class Jp2k(Jp2kBox):
                 if j == 0 and code_block_specified:
                     height, width = cparams.cblockh_init, cparams.cblockw_init
                     if height * 2 > prch or width * 2 > prcw:
-                        msg = "Highest Resolution precinct size must be at "
-                        msg += "least twice that of the code block dimensions."
+                        msg = ("Highest resolution precinct size "
+                               "({prch} x {prcw}) must be at least twice that "
+                               "of the code block dimensions "
+                               "({cbh} x {cbw}).")
+                        msg = msg.format(prch=prch, prcw=prcw,
+                                         cbh=height, cbw=width)
                         raise IOError(msg)
                 if ((math.log(prch, 2) != math.floor(math.log(prch, 2)) or
                      math.log(prcw, 2) != math.floor(math.log(prcw, 2)))):
-                    msg = "Bad precinct sizes ({0}, {1}), "
-                    msg += "must be powers of 2."
-                    raise IOError(msg.format(prch, prcw))
+                    msg = ("Bad precinct dimensions ({height} x {width}).  "
+                           "Precinct dimensions must be powers of 2.")
+                    msg = msg.format(height=prch, width=prcw)
+                    raise BadPrecinctDimensionsError(msg)
 
     def _validate_image_rank(self, img_array):
         """
@@ -1955,6 +1960,13 @@ def _default_error_handler(msg, _):
 def _default_info_handler(msg, _):
     """Default info handler callback."""
     print("[INFO] {0}".format(msg.decode('utf-8').rstrip()))
+
+
+class BadPrecinctDimensionsError(IOError):
+    """
+    Precinct dimensions must be powers of two.
+    """
+    pass
 
 
 class InvalidJP2ColourspaceMethodWarning(UserWarning):

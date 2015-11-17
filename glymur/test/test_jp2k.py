@@ -870,6 +870,33 @@ class TestJp2k_write(unittest.TestCase):
         os.unlink(cls.single_channel_j2k.name)
         os.unlink(cls.single_channel_jp2.name)
 
+    def test_code_block_dimensions(self):
+        """
+        don't allow extreme codeblock sizes
+        """
+        # opj_compress doesn't allow the dimensions of a codeblock
+        # to be too small or too big, so neither will we.
+        data = self.j2k_data
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            # opj_compress doesn't allow code block area to exceed 4096.
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=data, cbsize=(256, 256))
+
+            # opj_compress doesn't allow either dimension to be less than 4.
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=data, cbsize=(2048, 2))
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=data, cbsize=(2, 2048))
+
+    def test_psnr_with_cratios(self):
+        """
+        Using psnr with cratios options is not allowed.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=self.j2k_data, psnr=[30, 35, 40],
+                     cratios=[2, 3, 4])    
+
     def test_cinema2K_bad_frame_rate(self):
         """
         Cinema2k frame rate must be either 24 or 48.

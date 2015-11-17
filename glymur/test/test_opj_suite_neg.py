@@ -60,44 +60,6 @@ class TestSuiteNegativeWrite(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @unittest.skipIf(NO_SKIMAGE_FREEIMAGE_SUPPORT,
-                     "Cannot read input image without scikit-image/freeimage")
-    def test_cinema2K_bad_frame_rate(self):
-        """Cinema2k frame rate must be either 24 or 48."""
-        relfile = 'input/nonregression/X_5_2K_24_235_CBR_STEM24_000.tif'
-        infile = opj_data_file(relfile)
-        data = skimage.io.imread(infile)
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
-                Jp2k(tfile.name, data=data, cinema2k=36)
-
-    @unittest.skipIf(NO_READ_BACKEND, NO_READ_BACKEND_MSG)
-    def test_psnr_with_cratios(self):
-        """Using psnr with cratios options is not allowed."""
-        # Not an OpenJPEG test, but close.
-        infile = opj_data_file('input/nonregression/Bretagne1.ppm')
-        data = read_image(infile)
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
-                Jp2k(tfile.name,
-                     data=data, psnr=[30, 35, 40], cratios=[2, 3, 4])
-
-    def test_code_block_dimensions(self):
-        """don't allow extreme codeblock sizes"""
-        # opj_compress doesn't allow the dimensions of a codeblock
-        # to be too small or too big, so neither will we.
-        data = np.zeros((256, 256), dtype=np.uint8)
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            # opj_compress doesn't allow code block area to exceed 4096.
-            with self.assertRaises(IOError):
-                Jp2k(tfile.name, data=data, cbsize=(256, 256))
-
-            # opj_compress doesn't allow either dimension to be less than 4.
-            with self.assertRaises(IOError):
-                Jp2k(tfile.name, data=data, cbsize=(2048, 2))
-            with self.assertRaises(IOError):
-                Jp2k(tfile.name, data=data, cbsize=(2, 2048))
-
     def test_precinct_size_not_p2(self):
         """precinct sizes should be powers of two."""
         ifile = Jp2k(self.j2kfile)

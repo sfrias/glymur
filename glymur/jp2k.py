@@ -594,8 +594,13 @@ class Jp2k(Jp2kBox):
             width = cparams.cblockw_init
             height = cparams.cblockh_init
             if height * width > 4096 or height < 4 or width < 4:
-                msg = "Code block area cannot exceed 4096.  "
-                msg += "Code block height and width must be larger than 4."
+                msg = ("The code block area is specified as "
+                       "{height} x {width} = {area} square pixels.  "
+                       "Code block area cannot exceed 4096 square pixels.  "
+                       "Code block height and width dimensions must be larger "
+                       "than 4 pixels.")
+                msg = msg.format(height=height, width=width,
+                                 area=height * width)
                 raise IOError(msg)
             if ((math.log(height, 2) != math.floor(math.log(height, 2)) or
                  math.log(width, 2) != math.floor(math.log(width, 2)))):

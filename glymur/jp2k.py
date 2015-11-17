@@ -381,7 +381,8 @@ class Jp2k(Jp2kBox):
                       grid_offset, modesw, numres, prog, psizes, sop, subsam)
         if (((cinema2k is not None or cinema4k is not None) and
              (not all([arg is None for arg in other_args])))):
-            msg = "Cannot specify cinema2k/cinema4k along with other options."
+            msg = ("Cannot specify cinema2k/cinema4k along with any other "
+                   "options.")
             raise IOError(msg)
 
         if cratios is not None and psnr is not None:

@@ -78,16 +78,6 @@ class WriteCinema(CinemaBase):
     These tests either roughly correspond with those tests with similar names
     in the OpenJPEG test suite or are closely associated.
     """
-    def test_cinema2K_with_others(self):
-        """Can't specify cinema2k with any other options."""
-        relfile = 'input/nonregression/X_5_2K_24_235_CBR_STEM24_000.tif'
-        infile = opj_data_file(relfile)
-        data = skimage.io.imread(infile)
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
-                Jp2k(tfile.name, data=data,
-                     cinema2k=48, cratios=[200, 100, 50])
-
     def test_cinema4K_with_others(self):
         """Can't specify cinema4k with any other options."""
         relfile = 'input/nonregression/ElephantDream_4K.tif'

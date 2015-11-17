@@ -844,6 +844,7 @@ class TestJp2k(unittest.TestCase):
 
         self.assertEqual(profile['Creator'], 'JPEG')
 
+
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestJp2k_write(unittest.TestCase):
@@ -869,6 +870,19 @@ class TestJp2k_write(unittest.TestCase):
     def tearDownClass(cls):
         os.unlink(cls.single_channel_j2k.name)
         os.unlink(cls.single_channel_jp2.name)
+
+    def test_cinema2K_with_others(self):
+        """
+        Can't specify cinema2k with any other options.
+
+        Original test file was
+        input/nonregression/X_5_2K_24_235_CBR_STEM24_000.tif
+        """
+        data = np.zeros((857, 2048, 3), dtype=np.uint8)
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=data,
+                     cinema2k=48, cratios=[200, 100, 50])
 
     def test_cblk_size_precinct_size(self):
         """
@@ -920,7 +934,7 @@ class TestJp2k_write(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
             with self.assertRaises(IOError):
                 Jp2k(tfile.name, data=self.j2k_data, psnr=[30, 35, 40],
-                     cratios=[2, 3, 4])    
+                     cratios=[2, 3, 4])
 
     def test_cinema2K_bad_frame_rate(self):
         """
@@ -1344,7 +1358,7 @@ class TestParsing(unittest.TestCase):
             input/nonregression/edf_c2_1002767.jp2'
 
         It had an RSIZ value of 32, so that's what we use here.
-        
+
         Issue196
         """
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:

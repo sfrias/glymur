@@ -29,7 +29,7 @@ from glymur.jp2box import (
     ExtraBytesAtEndOfFileWarning, UnrecognizedColourspaceWarning
 )
 from glymur.core import COLOR, RED, GREEN, BLUE, RESTRICTED_ICC_PROFILE
-from glymur.codestream import RSizWarning
+from glymur.codestream import RSizWarning, SIZsegment
 from glymur.jp2box import InvalidApproximationWarning
 from glymur.version import openjpeg_version
 
@@ -845,7 +845,74 @@ class TestJp2k(unittest.TestCase):
         self.assertEqual(profile['Creator'], 'JPEG')
 
 
-@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
+class CinemaBase(fixtures.MetadataBase):
+
+    def verify_cinema_cod(self, cod_segment):
+
+        self.assertFalse(cod_segment.scod & 2)  # no sop
+        self.assertFalse(cod_segment.scod & 4)  # no eph
+        self.assertEqual(cod_segment.spcod[0], glymur.core.CPRL)
+        self.assertEqual(cod_segment.layers, 1)
+        self.assertEqual(cod_segment.spcod[3], 1)  # mct
+        self.assertEqual(cod_segment.spcod[4], 5)  # levels
+        self.assertEqual(tuple(cod_segment.code_block_size), (32, 32))
+
+    def check_cinema4k_codestream(self, codestream, image_size):
+
+        kwargs = {'rsiz': 4, 'xysiz': image_size, 'xyosiz': (0, 0),
+                  'xytsiz': image_size, 'xytosiz': (0, 0),
+                  'bitdepth': (12, 12, 12), 'signed': (False, False, False),
+                  'xyrsiz': [(1, 1, 1), (1, 1, 1)]}
+        self.verifySizSegment(codestream.segment[1], SIZsegment(**kwargs))
+
+        self.verify_cinema_cod(codestream.segment[2])
+
+    def check_cinema2k_codestream(self, codestream, image_size):
+
+        kwargs = {'rsiz': 3, 'xysiz': image_size, 'xyosiz': (0, 0),
+                  'xytsiz': image_size, 'xytosiz': (0, 0),
+                  'bitdepth': (12, 12, 12), 'signed': (False, False, False),
+                  'xyrsiz': [(1, 1, 1), (1, 1, 1)]}
+        self.verifySizSegment(codestream.segment[1], SIZsegment(**kwargs))
+
+        self.verify_cinema_cod(codestream.segment[2])
+
+
+@unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
+@unittest.skipIf(re.match(r'''(1|2.0.0)''',
+                          glymur.version.openjpeg_version) is not None,
+                 "Uses features not supported until 2.0.1")
+class WriteCinema(CinemaBase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.jp2file = glymur.data.nemo()
+        cls.jp2_data = glymur.Jp2k(cls.jp2file)[:]
+
+    def test_NR_ENC_ElephantDream_4K_tif_21_encode(self):
+        """
+        Verify basic cinema4k write
+
+        Original test file is input/nonregression/ElephantDream_4K.tif
+        """
+        # Need to provide the proper size image
+        data = np.concatenate((self.jp2_data, self.jp2_data), axis=0)
+        data = np.concatenate((data, data), axis=1).astype(np.uint16)
+        data = data[:2160, :4096, :]
+
+        exp_warning = glymur.jp2k.OpenJPEGLibraryWarning
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    j = Jp2k(tfile.name, data=data, cinema4k=True)
+                assert issubclass(w[-1].category, exp_warning)
+            else:
+                with self.assertWarns(exp_warning):
+                    j = Jp2k(tfile.name, data=data, cinema4k=True)
+
+            codestream = j.get_codestream()
+            self.check_cinema4k_codestream(codestream, (4096, 2160))
+
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestJp2k_write(unittest.TestCase):
     """Write tests, can be run by versions 1.5+"""
@@ -856,6 +923,7 @@ class TestJp2k_write(unittest.TestCase):
         cls.j2kfile = glymur.data.goodstuff()
 
         cls.j2k_data = glymur.Jp2k(cls.j2kfile)[:]
+        cls.jp2_data = glymur.Jp2k(cls.jp2file)[:]
 
         # Make single channel jp2 and j2k files.
         obj = tempfile.NamedTemporaryFile(delete=False, suffix=".j2k")
@@ -883,6 +951,18 @@ class TestJp2k_write(unittest.TestCase):
             with self.assertRaises(IOError):
                 Jp2k(tfile.name, data=data,
                      cinema2k=48, cratios=[200, 100, 50])
+
+    def test_cinema4K_with_others(self):
+        """
+        Can't specify cinema4k with any other options.
+
+        Original test file was input/nonregression/ElephantDream_4K.tif
+        """
+        data = np.zeros((4096, 2160, 3), dtype=np.uint8)
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=data,
+                     cinema4k=True, cratios=[200, 100, 50])
 
     def test_cblk_size_precinct_size(self):
         """

@@ -64,31 +64,6 @@ class CinemaBase(fixtures.MetadataBase):
         self.verify_cinema_cod(codestream.segment[2])
 
 
-@unittest.skipIf(NO_SKIMAGE_FREEIMAGE_SUPPORT,
-                 "Cannot read input image without scikit-image/freeimage")
-@unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
-@unittest.skipIf(re.match(r'''(1|2.0.0)''',
-                          glymur.version.openjpeg_version) is not None,
-                 "Uses features not supported until 2.0.1")
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-class WriteCinema(CinemaBase):
-    """Tests for writing with openjp2 backend.
-
-    These tests either roughly correspond with those tests with similar names
-    in the OpenJPEG test suite or are closely associated.
-    """
-    def test_cinema4K_with_others(self):
-        """Can't specify cinema4k with any other options."""
-        relfile = 'input/nonregression/ElephantDream_4K.tif'
-        infile = opj_data_file(relfile)
-        data = skimage.io.imread(infile)
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
-                Jp2k(tfile.name, data=data,
-                     cinema4k=True, cratios=[200, 100, 50])
-
-
 @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
 @unittest.skipIf(NO_SKIMAGE_FREEIMAGE_SUPPORT,
                  "Cannot read input image without scikit-image/freeimage")
@@ -105,18 +80,6 @@ class WriteCinemaWarns(CinemaBase):
     in the OpenJPEG test suite or are closely associated.  These tests issue
     warnings.
     """
-    def test_NR_ENC_ElephantDream_4K_tif_21_encode(self):
-        relfile = 'input/nonregression/ElephantDream_4K.tif'
-        infile = opj_data_file(relfile)
-        data = skimage.io.imread(infile)
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            regex = 'OpenJPEG library warning:.*'
-            with self.assertWarnsRegex(UserWarning, re.compile(regex)):
-                j = Jp2k(tfile.name, data=data, cinema4k=True)
-
-            codestream = j.get_codestream()
-            self.check_cinema4k_codestream(codestream, (4096, 2160))
-
     def test_NR_ENC_X_5_2K_24_235_CBR_STEM24_000_tif_19_encode(self):
         relfile = 'input/nonregression/X_5_2K_24_235_CBR_STEM24_000.tif'
         infile = opj_data_file(relfile)

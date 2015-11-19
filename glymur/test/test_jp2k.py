@@ -889,6 +889,56 @@ class WriteCinema(CinemaBase):
         cls.jp2file = glymur.data.nemo()
         cls.jp2_data = glymur.Jp2k(cls.jp2file)[:]
 
+    def test_NR_ENC_X_6_2K_24_FULL_CBR_CIRCLE_000_tif_17_encode(self):
+        """
+        Original test file was
+
+            input/nonregression/X_6_2K_24_FULL_CBR_CIRCLE_000.tif
+
+        """
+        # Need to provide the proper size image
+        data = np.concatenate((self.jp2_data, self.jp2_data), axis=0)
+        data = np.concatenate((data, data), axis=1).astype(np.uint16)
+        data = data[:1080, :2048, :]
+
+        exp_warning = glymur.jp2k.OpenJPEGLibraryWarning
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    j = Jp2k(tfile.name, data=data, cinema2k=24)
+                assert issubclass(w[-1].category, exp_warning)
+            else:
+                with self.assertWarns(exp_warning):
+                    j = Jp2k(tfile.name, data=data, cinema2k=24)
+
+            codestream = j.get_codestream()
+            self.check_cinema2k_codestream(codestream, (2048, 1080))
+
+    def test_NR_ENC_X_6_2K_24_FULL_CBR_CIRCLE_000_tif_20_encode(self):
+        """
+        Original test file was
+
+            input/nonregression/X_6_2K_24_FULL_CBR_CIRCLE_000.tif
+
+        """
+        # Need to provide the proper size image
+        data = np.concatenate((self.jp2_data, self.jp2_data), axis=0)
+        data = np.concatenate((data, data), axis=1).astype(np.uint16)
+        data = data[:1080, :2048, :]
+
+        exp_warning = glymur.jp2k.OpenJPEGLibraryWarning
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    j = Jp2k(tfile.name, data=data, cinema2k=48)
+                assert issubclass(w[-1].category, exp_warning)
+            else:
+                with self.assertWarns(exp_warning):
+                    j = Jp2k(tfile.name, data=data, cinema2k=48)
+
+            codestream = j.get_codestream()
+            self.check_cinema2k_codestream(codestream, (2048, 1080))
+
     def test_NR_ENC_ElephantDream_4K_tif_21_encode(self):
         """
         Verify basic cinema4k write
@@ -914,7 +964,7 @@ class WriteCinema(CinemaBase):
             self.check_cinema4k_codestream(codestream, (4096, 2160))
 
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
-class TestJp2k_write(unittest.TestCase):
+class TestJp2k_write(fixtures.MetadataBase):
     """Write tests, can be run by versions 1.5+"""
 
     @classmethod
@@ -938,6 +988,461 @@ class TestJp2k_write(unittest.TestCase):
     def tearDownClass(cls):
         os.unlink(cls.single_channel_j2k.name)
         os.unlink(cls.single_channel_jp2.name)
+
+    def test_NR_ENC_Bretagne1_ppm_2_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Bretagne1.ppm
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=self.jp2_data,
+                     psnr=[30, 35, 40], numres=2)
+
+            codestream = j.get_codestream()
+
+        # COD: Coding style default
+        self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+        self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+        self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+        self.assertEqual(codestream.segment[2].layers, 3)  # layers = 3
+        self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+        self.assertEqual(codestream.segment[2].spcod[4], 1)  # levels
+        self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                         (64, 64))  # cblksz
+        self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                    [False, False, False, False, False, False])
+        self.assertEqual(codestream.segment[2].spcod[8],
+                         glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+        self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+    def test_NR_ENC_Bretagne1_ppm_1_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Bretagne1.ppm
+
+        """
+        data = self.jp2_data
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            # Should be written with 3 layers.
+            j = Jp2k(tfile.name, data=data, cratios=[200, 100, 50])
+            c = j.get_codestream()
+
+        # COD: Coding style default
+        self.assertFalse(c.segment[2].scod & 2)  # no sop
+        self.assertFalse(c.segment[2].scod & 4)  # no eph
+        self.assertEqual(c.segment[2].spcod[0], glymur.core.LRCP)
+        self.assertEqual(c.segment[2].layers, 3)  # layers = 3
+        self.assertEqual(c.segment[2].spcod[3], 1)  # mct
+        self.assertEqual(c.segment[2].spcod[4], 5)  # levels
+        self.assertEqual(tuple(c.segment[2].code_block_size),
+                         (64, 64))  # cblksz
+        self.verify_codeblock_style(c.segment[2].spcod[7],
+                                    [False, False, False, False, False, False])
+        self.assertEqual(c.segment[2].spcod[8],
+                         glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+        self.assertEqual(len(c.segment[2].spcod), 9)
+
+    def test_NR_ENC_Bretagne1_ppm_3_encode(self):
+        """
+        Original file tested was
+        
+            input/nonregression/Bretagne1.ppm
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name,
+                     data=self.jp2_data,
+                     psnr=[30, 35, 40], cbsize=(16, 16), psizes=[(64, 64)])
+
+            codestream = j.get_codestream()
+
+        # COD: Coding style default
+        self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+        self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+        self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+        self.assertEqual(codestream.segment[2].layers, 3)  # layers = 3
+        self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+        self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+        self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                         (16, 16))  # cblksz
+        self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                    [False, False,
+                                     False, False, False, False])
+        self.assertEqual(codestream.segment[2].spcod[8],
+                         glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+        self.assertEqual(codestream.segment[2].precinct_size,
+                         [(2, 2), (4, 4), (8, 8), (16, 16), (32, 32),
+                          (64, 64)])
+
+    def test_NR_ENC_Bretagne2_ppm_4_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Bretagne2.ppm
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name,
+                     data=self.jp2_data,
+                     psizes=[(128, 128)] * 3,
+                     cratios=[100, 20, 2],
+                     tilesize=(480, 640),
+                     cbsize=(32, 32))
+
+            # Should be three layers.
+            codestream = j.get_codestream()
+
+            # RSIZ
+            self.assertEqual(codestream.segment[1].xtsiz, 640)
+            self.assertEqual(codestream.segment[1].ytsiz, 480)
+
+            # COD: Coding style default
+            self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+            self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+            self.assertEqual(codestream.segment[2].layers, 3)  # layers = 3
+            self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (32, 32))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, False,
+                                         False, False, False, False])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(codestream.segment[2].precinct_size,
+                             [(16, 16), (32, 32), (64, 64)] + [(128, 128)] * 3)
+
+    def test_NR_ENC_Bretagne2_ppm_5_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Bretagne2.ppm
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=self.jp2_data,
+                     tilesize=(127, 127), prog="PCRL")
+
+            codestream = j.get_codestream()
+
+            # RSIZ
+            self.assertEqual(codestream.segment[1].xtsiz, 127)
+            self.assertEqual(codestream.segment[1].ytsiz, 127)
+
+            # COD: Coding style default
+            self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+            self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.PCRL)
+            self.assertEqual(codestream.segment[2].layers, 1)  # layers = 1
+            self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (64, 64))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, False,
+                                         False, False, False, False])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+    def test_NR_ENC_Bretagne2_ppm_6_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Bretagne2.ppm
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=self.jp2_data, subsam=(2, 2), sop=True)
+
+            codestream = j.get_codestream(header_only=False)
+
+            # RSIZ
+            self.assertEqual(codestream.segment[1].xrsiz, (2, 2, 2))
+            self.assertEqual(codestream.segment[1].yrsiz, (2, 2, 2))
+
+            # COD: Coding style default
+            self.assertTrue(codestream.segment[2].scod & 2)  # sop
+            self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+            self.assertEqual(codestream.segment[2].layers, 1)  # layers = 1
+            self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (64, 64))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, False, False,
+                                         False, False, False])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+            # 18 SOP segments.
+            nsops = [x.nsop for x in codestream.segment
+                     if x.marker_id == 'SOP']
+            self.assertEqual(nsops, list(range(18)))
+
+    def test_NR_ENC_Bretagne2_ppm_7_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Bretagne2.ppm
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=self.jp2_data, modesw=38, eph=True)
+
+            codestream = j.get_codestream(header_only=False)
+
+            # COD: Coding style default
+            self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+            self.assertTrue(codestream.segment[2].scod & 4)  # eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+            self.assertEqual(codestream.segment[2].layers, 1)  # layers = 1
+            self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (64, 64))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, True, True,
+                                         False, False, True])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+            # 18 EPH segments.
+            ephs = [x for x in codestream.segment if x.marker_id == 'EPH']
+            self.assertEqual(len(ephs), 18)
+
+    def test_NR_ENC_Bretagne2_ppm_8_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Bretagne2.ppm
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name,
+                     data=self.jp2_data, grid_offset=[300, 150], cratios=[800])
+
+            codestream = j.get_codestream(header_only=False)
+
+            # RSIZ
+            self.assertEqual(codestream.segment[1].xosiz, 150)
+            self.assertEqual(codestream.segment[1].yosiz, 300)
+
+            # COD: Coding style default
+            self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+            self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+            self.assertEqual(codestream.segment[2].layers, 1)  # layers = 1
+            self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (64, 64))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, False, False,
+                                         False, False, False])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+    def test_NR_ENC_Cevennes1_bmp_9_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Cevennes1.bmp
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=self.jp2_data, cratios=[800])
+
+            codestream = j.get_codestream(header_only=False)
+
+            # COD: Coding style default
+            self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+            self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+            self.assertEqual(codestream.segment[2].layers, 1)  # layers = 1
+            self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (64, 64))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, False, False,
+                                         False, False, False])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+    def test_NR_ENC_Cevennes2_ppm_10_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Cevennes2.ppm
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=self.jp2_data, cratios=[50])
+
+            codestream = j.get_codestream(header_only=False)
+
+            # COD: Coding style default
+            self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+            self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+            self.assertEqual(codestream.segment[2].layers, 1)  # layers = 1
+            self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (64, 64))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, False, False,
+                                         False, False, False])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+    def test_NR_ENC_Rome_bmp_11_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/Rome.bmp
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            jp2 = Jp2k(tfile.name,
+                       data=self.jp2_data,
+                       psnr=[30, 35, 50], prog='LRCP', numres=3)
+
+            ids = [box.box_id for box in jp2.box]
+            self.assertEqual(ids, ['jP  ', 'ftyp', 'jp2h', 'jp2c'])
+
+            ids = [box.box_id for box in jp2.box[2].box]
+            self.assertEqual(ids, ['ihdr', 'colr'])
+
+            # Signature box.  Check for corruption.
+            self.assertEqual(jp2.box[0].signature, (13, 10, 135, 10))
+
+            # File type box.
+            self.assertEqual(jp2.box[1].brand, 'jp2 ')
+            self.assertEqual(jp2.box[1].minor_version, 0)
+            self.assertEqual(jp2.box[1].compatibility_list[0], 'jp2 ')
+
+            # Jp2 Header
+            # Image header
+            self.assertEqual(jp2.box[2].box[0].height, 1456)
+            self.assertEqual(jp2.box[2].box[0].width, 2592)
+            self.assertEqual(jp2.box[2].box[0].num_components, 3)
+            self.assertEqual(jp2.box[2].box[0].bits_per_component, 8)
+            self.assertEqual(jp2.box[2].box[0].signed, False)
+            self.assertEqual(jp2.box[2].box[0].compression, 7)   # wavelet
+            self.assertEqual(jp2.box[2].box[0].colorspace_unknown, False)
+            self.assertEqual(jp2.box[2].box[0].ip_provided, False)
+
+            # Jp2 Header
+            # Colour specification
+            self.assertEqual(jp2.box[2].box[1].method, 1)
+            self.assertEqual(jp2.box[2].box[1].precedence, 0)
+            self.assertEqual(jp2.box[2].box[1].approximation, 0)
+            self.assertIsNone(jp2.box[2].box[1].icc_profile)
+            self.assertEqual(jp2.box[2].box[1].colorspace, glymur.core.SRGB)
+
+            codestream = jp2.box[3].codestream
+
+            kwargs = {'rsiz': 0, 'xysiz': (2592, 1456), 'xyosiz': (0, 0),
+                      'xytsiz': (2592, 1456), 'xytosiz': (0, 0),
+                      'bitdepth': (8, 8, 8), 'signed': (False, False, False),
+                      'xyrsiz': [(1, 1, 1), (1, 1, 1)]}
+            self.verifySizSegment(codestream.segment[1],
+                                  glymur.codestream.SIZsegment(**kwargs))
+
+            # COD: Coding style default
+            self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+            self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+            self.assertEqual(codestream.segment[2].layers, 3)  # layers = 3
+            self.assertEqual(codestream.segment[2].spcod[3], 1)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 2)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (64, 64))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, False, False,
+                                         False, False, False])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+    def test_NR_ENC_random_issue_0005_tif_12_encode(self):
+        """
+        Original file tested was
+
+            input/nonregression/random-issue-0005.tif
+        """
+        data = self.jp2_data[:1024, :1024, 0].astype(np.uint16)
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=data)
+
+            codestream = j.get_codestream(header_only=False)
+
+            kwargs = {'rsiz': 0, 'xysiz': (1024, 1024), 'xyosiz': (0, 0),
+                      'xytsiz': (1024, 1024), 'xytosiz': (0, 0),
+                      'bitdepth': (16,), 'signed': (False,),
+                      'xyrsiz': [(1,), (1,)]}
+            self.verifySizSegment(codestream.segment[1],
+                                  glymur.codestream.SIZsegment(**kwargs))
+
+            # COD: Coding style default
+            self.assertFalse(codestream.segment[2].scod & 2)  # no sop
+            self.assertFalse(codestream.segment[2].scod & 4)  # no eph
+            self.assertEqual(codestream.segment[2].spcod[0], glymur.core.LRCP)
+            self.assertEqual(codestream.segment[2].layers, 1)  # layers = 1
+            self.assertEqual(codestream.segment[2].spcod[3], 0)  # mct
+            self.assertEqual(codestream.segment[2].spcod[4], 5)  # levels
+            self.assertEqual(tuple(codestream.segment[2].code_block_size),
+                             (64, 64))  # cblksz
+            self.verify_codeblock_style(codestream.segment[2].spcod[7],
+                                        [False, False, False,
+                                         False, False, False])
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
+            self.assertEqual(len(codestream.segment[2].spcod), 9)
+
+
+    def test_NR_ENC_issue141_rawl_23_encode(self):
+        """
+        Test irreversible option
+
+        Original file tested was
+
+            input/nonregression/issue141.rawl
+
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            j = Jp2k(tfile.name, data=self.jp2_data, irreversible=True)
+
+            codestream = j.get_codestream()
+            self.assertEqual(codestream.segment[2].spcod[8],
+                             glymur.core.WAVELET_XFORM_9X7_IRREVERSIBLE)
+
+    def test_cinema_mode_with_too_old_version_of_openjpeg(self):
+        """
+        Cinema mode not allowed for anything less than 2.0.1
+
+        Origin file tested was
+        
+            input/nonregression/X_4_2K_24_185_CBR_WB_000.tif
+
+        """
+        data = np.zeros((857, 2048, 3), dtype=np.uint8)
+        versions = ["1.5.0", "2.0.0"]
+        for version in versions:
+            with patch('glymur.version.openjpeg_version', new=version):
+                with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+                    with self.assertRaises(IOError):
+                        Jp2k(tfile.name, data=data, cinema2k=48)
 
     def test_cinema2K_with_others(self):
         """

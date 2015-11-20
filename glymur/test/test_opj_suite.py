@@ -195,14 +195,6 @@ class TestSuiteWarns(MetadataBase):
     def tearDown(self):
         pass
 
-    def test_ETS_JP2_file1(self):
-        jfile = opj_data_file('input/conformance/file1.jp2')
-        with self.assertWarns(UserWarning):
-            # Bad compatibility list item.
-            jp2k = Jp2k(jfile)
-        jpdata = jp2k[:]
-        self.assertEqual(jpdata.shape, (512, 768, 3))
-
     def test_ETS_JP2_file2(self):
         jfile = opj_data_file('input/conformance/file2.jp2')
         with self.assertWarns(UserWarning):
@@ -352,19 +344,6 @@ class TestSuiteWarns(MetadataBase):
         self.assertEqual(c.segment[6].exponent,
                          [8] + [9, 9, 10] * 5)
 
-    def test_NR_DEC_orb_blue_lin_jp2_25_decode(self):
-        jfile = opj_data_file('input/nonregression/orb-blue10-lin-jp2.jp2')
-        with self.assertWarns(UserWarning):
-            # This file has an invalid ICC profile
-            Jp2k(jfile)[:]
-        self.assertTrue(True)
-
-    def test_NR_DEC_orb_blue_win_jp2_26_decode(self):
-        jfile = opj_data_file('input/nonregression/orb-blue10-win-jp2.jp2')
-        with self.assertWarns(UserWarning):
-            Jp2k(jfile)[:]
-        self.assertTrue(True)
-
 
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
@@ -374,13 +353,6 @@ class TestSuiteBands(unittest.TestCase):
     """
     Test the read_bands method.
     """
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_ETS_C1P1_p1_03_j2k(self):
         jfile = opj_data_file('input/conformance/p1_03.j2k')
         jp2k = Jp2k(jfile)
@@ -542,36 +514,6 @@ class TestSuite2point1(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    def test_NR_DEC_text_GBR_jp2_29_decode(self):
-        jfile = opj_data_file('input/nonregression/text_GBR.jp2')
-        with self.assertWarns(UserWarning):
-            # brand is 'jp2 ', but has any icc profile.
-            jp2 = Jp2k(jfile)
-        jp2[:]
-        self.assertTrue(True)
-
-    def test_NR_DEC_kodak_2layers_lrcp_j2c_31_decode(self):
-        jfile = opj_data_file('input/nonregression/kodak_2layers_lrcp.j2c')
-        Jp2k(jfile)[:]
-        self.assertTrue(True)
-
-    def test_NR_DEC_kodak_2layers_lrcp_j2c_32_decode(self):
-        jfile = opj_data_file('input/nonregression/kodak_2layers_lrcp.j2c')
-        Jp2k(jfile)[::4, ::4]
-        self.assertTrue(True)
-
-    def test_NR_DEC_issue104_jpxstream_jp2_33_decode(self):
-        jfile = opj_data_file('input/nonregression/issue104_jpxstream.jp2')
-        Jp2k(jfile)[:]
-        self.assertTrue(True)
-
-    def test_NR_DEC_mem_b2b86b74_2753_jp2_35_decode(self):
-        jfile = opj_data_file('input/nonregression/mem-b2b86b74-2753.jp2')
-        Jp2k(jfile)[:]
-        self.assertTrue(True)
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_NR_DEC_gdal_fuzzer_unchecked_num_resolutions_jp2_36_decode(self):
         f = 'input/nonregression/gdal_fuzzer_unchecked_numresolutions.jp2'
         jfile = opj_data_file(f)

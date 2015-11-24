@@ -362,6 +362,41 @@ class TestSuite(unittest.TestCase):
             with self.assertWarns(exp_warning):
                 glymur.codestream.CODsegment(0, spcod, 12, 174)
 
+    def test_file_pointer_badly_positioned(self):
+        """
+        The file pointer should not be positioned beyond end of superbox
+
+        Make a superbox too long by making a sub box too long.
+
+        Original file tested was nput/nonregression/broken1.jp2
+        """
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.jp2') as ofile:
+            with open(self.jp2file, 'rb') as ifile:
+
+                # Write up to the colr box
+                ofile.write(ifile.read(62))
+
+                # Write a too-long color box
+                buffer = struct.pack('>I4sBBBI',
+                                     4194319, b'colr', 0, 0, 0, 0)
+
+                buffer = struct.pack('>I4s', 32, b'XML ')
+                ofile.write(buffer)
+
+                # Write everything past the colr box.
+                ifile.seek(77)
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            exp_warning = glymur.jp2box.FilePointerPositioningWarning
+            if sys.hexversion < 0x03000000:
+                with warnings.catch_warnings(record=True) as w:
+                    Jp2k(ofile.name)
+                assert issubclass(w[-1].category, exp_warning)
+            else:
+                with self.assertWarns(exp_warning):
+                    Jp2k(ofile.name)
+
     def test_NR_DEC_issue188_beach_64bitsbox_jp2_41_decode(self):
         """
         Has an 'XML ' box instead of 'xml '.  Yes that is pedantic, but it

@@ -1552,6 +1552,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         jp2 = Jp2k(self.single_channel_jp2.name)
         self.assertEqual(jp2.shape, (800, 480))
+        self.assertEqual(jp2.box[2].box[1].colorspace, glymur.core.GREYSCALE)
 
     def test_shape_single_channel_j2k(self):
         """verify shape attribute for single channel J2K file

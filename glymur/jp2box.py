@@ -80,6 +80,13 @@ class ExtraBytesAtEndOfFileWarning(UserWarning):
     pass
 
 
+class FilePointerPositioningWarning(UserWarning):
+    """
+    Issued if positioned past the end of a box.
+    """
+    pass
+
+
 class UnrecognizedBoxWarning(UserWarning):
     """
     If not a JP2 box, then at least must be a JPX box we've heard of.
@@ -314,10 +321,11 @@ class Jp2kBox(object):
             elif fptr.tell() > start + num_bytes:
                 # The box must be invalid somehow, as the file pointer is
                 # positioned past the end of the box.
-                msg = '{0} box may be invalid, the file pointer is positioned '
-                msg += '{1} bytes past the end of the box.'
-                msg = msg.format(box_id, fptr.tell() - (start + num_bytes))
-                warnings.warn(msg)
+                msg = ('{box_id} box may be invalid, the file pointer is '
+                       'positioned {num_bytes} bytes past the end of the box.')
+                msg = msg.format(box_id=box_id,
+                                 num_bytes=fptr.tell() - (start + num_bytes))
+                warnings.warn(msg, FilePointerPositioningWarning)
             fptr.seek(start + num_bytes)
 
             start += num_bytes

@@ -436,6 +436,106 @@ class TestJp2k(unittest.TestCase):
             filename = 'this file does not actually exist on the file system.'
             Jp2k(filename)
 
+    def test_codestream(self):
+        """
+        Verify the markers and segments of a JP2 file codestream.
+        """
+        jp2 = Jp2k(self.jp2file)
+        c = jp2.get_codestream(header_only=False)
+
+        # SOC
+        self.assertEqual(c.segment[0].marker_id, 'SOC')
+
+        # SIZ
+        self.assertEqual(c.segment[1].marker_id, 'SIZ')
+        self.assertEqual(c.segment[1].rsiz, 0)
+        self.assertEqual(c.segment[1].xsiz, 2592)
+        self.assertEqual(c.segment[1].ysiz, 1456)
+        self.assertEqual(c.segment[1].xosiz, 0)
+        self.assertEqual(c.segment[1].yosiz, 0)
+        self.assertEqual(c.segment[1].xtsiz, 2592)
+        self.assertEqual(c.segment[1].ytsiz, 1456)
+        self.assertEqual(c.segment[1].xtosiz, 0)
+        self.assertEqual(c.segment[1].ytosiz, 0)
+        self.assertEqual(c.segment[1].Csiz, 3)
+        self.assertEqual(c.segment[1].bitdepth, (8, 8, 8))
+        self.assertEqual(c.segment[1].signed, (False, False, False))
+        self.assertEqual(c.segment[1].xrsiz, (1, 1, 1))
+        self.assertEqual(c.segment[1].yrsiz, (1, 1, 1))
+
+        self.assertEqual(c.segment[2].marker_id, 'COD')
+        self.assertEqual(c.segment[2].offset, 3282)
+        self.assertEqual(c.segment[2].length, 12)
+        self.assertEqual(c.segment[2].scod, 0)
+        self.assertEqual(c.segment[2].layers, 2)
+        self.assertEqual(c.segment[2].code_block_size, (64.0, 64.0))
+        np.testing.assert_array_equal(c.segment[2].spcod,
+                                      np.array([0, 0, 2, 1, 1, 4, 4, 0, 1]))
+        self.assertIsNone(c.segment[2].precinct_size)
+
+        self.assertEqual(c.segment[3].marker_id, 'QCD')
+        self.assertEqual(c.segment[3].offset, 3296)
+        self.assertEqual(c.segment[3].length, 7)
+        self.assertEqual(c.segment[3].sqcd, 64)
+        self.assertEqual(c.segment[3].mantissa, [0, 0, 0, 0])
+        self.assertEqual(c.segment[3].exponent, [8, 9, 9, 10])
+        self.assertEqual(c.segment[3].guard_bits, 2)
+
+        self.assertEqual(c.segment[4].marker_id, 'CME')
+        self.assertEqual(c.segment[4].rcme, 1)
+        self.assertEqual(c.segment[4].ccme,
+                         b'Created by OpenJPEG version 2.0.0')
+
+        self.assertEqual(c.segment[5].marker_id, 'SOT')
+        self.assertEqual(c.segment[5].offset, 3344)
+        self.assertEqual(c.segment[5].length, 10)
+        self.assertEqual(c.segment[5].isot, 0)
+        self.assertEqual(c.segment[5].psot, 1132173)
+        self.assertEqual(c.segment[5].tpsot, 0)
+        self.assertEqual(c.segment[5].tnsot, 1)
+
+        self.assertEqual(c.segment[6].marker_id, 'COC')
+        self.assertEqual(c.segment[6].offset, 3356)
+        self.assertEqual(c.segment[6].length, 9)
+        self.assertEqual(c.segment[6].ccoc, 1)
+        np.testing.assert_array_equal(c.segment[6].scoc,
+                                      np.array([0]))
+        np.testing.assert_array_equal(c.segment[6].spcoc,
+                                      np.array([1, 4, 4, 0, 1]))
+        self.assertIsNone(c.segment[6].precinct_size)
+
+        self.assertEqual(c.segment[7].marker_id, 'QCC')
+        self.assertEqual(c.segment[7].offset, 3367)
+        self.assertEqual(c.segment[7].length, 8)
+        self.assertEqual(c.segment[7].cqcc, 1)
+        self.assertEqual(c.segment[7].sqcc, 64)
+        self.assertEqual(c.segment[7].mantissa, [0, 0, 0, 0])
+        self.assertEqual(c.segment[7].exponent, [8, 9, 9, 10])
+        self.assertEqual(c.segment[7].guard_bits, 2)
+
+        self.assertEqual(c.segment[8].marker_id, 'COC')
+        self.assertEqual(c.segment[8].offset, 3377)
+        self.assertEqual(c.segment[8].length, 9)
+        self.assertEqual(c.segment[8].ccoc, 2)
+        np.testing.assert_array_equal(c.segment[8].scoc,
+                                      np.array([0]))
+        np.testing.assert_array_equal(c.segment[8].spcoc,
+                                      np.array([1, 4, 4, 0, 1]))
+        self.assertIsNone(c.segment[8].precinct_size)
+
+        self.assertEqual(c.segment[9].marker_id, 'QCC')
+        self.assertEqual(c.segment[9].offset, 3388)
+        self.assertEqual(c.segment[9].length, 8)
+        self.assertEqual(c.segment[9].cqcc, 2)
+        self.assertEqual(c.segment[9].sqcc, 64)
+        self.assertEqual(c.segment[9].mantissa, [0, 0, 0, 0])
+        self.assertEqual(c.segment[9].exponent, [8, 9, 9, 10])
+        self.assertEqual(c.segment[9].guard_bits, 2)
+
+        self.assertEqual(c.segment[10].marker_id, 'SOD')
+
+        self.assertEqual(c.segment[11].marker_id, 'EOC')
+
     def test_jp2_boxes(self):
         """Verify the boxes of a JP2 file.  Basic jp2 test."""
         jp2k = Jp2k(self.jp2file)

@@ -255,9 +255,10 @@ class Codestream(object):
             try:
                 segment = process_marker_segment[self._marker_id](fptr)
             except KeyError:
-                msg = 'Invalid marker id encountered at byte {0:d} '
-                msg += 'in codestream:  "0x{1:x}"'
-                msg = msg.format(self._offset, self._marker_id)
+                msg = ('Invalid marker ID encountered at byte {offset:d} '
+                       'in codestream:  "0x{marker_id:x}"')
+                msg = msg.format(offset=self._offset,
+                                 marker_id=self._marker_id)
                 warnings.warn(msg, UnrecognizedMarkerWarning)
                 break
 

@@ -121,44 +121,17 @@ class TestSuite2point0(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_ETS_C1P0_p0_10_j2k(self):
-        jfile = opj_data_file('input/conformance/p0_10.j2k')
-        jp2k = Jp2k(jfile)
-        jpdata = jp2k[:]
-
-        pgxfile = opj_data_file('baseline/conformance/c1p0_10_0.pgx')
-        pgxdata = read_pgx(pgxfile)
-        np.testing.assert_array_equal(jpdata[:, :, 0], pgxdata)
-
-        pgxfile = opj_data_file('baseline/conformance/c1p0_10_1.pgx')
-        pgxdata = read_pgx(pgxfile)
-        np.testing.assert_array_equal(jpdata[:, :, 1], pgxdata)
-
-        pgxfile = opj_data_file('baseline/conformance/c1p0_10_2.pgx')
-        pgxdata = read_pgx(pgxfile)
-        np.testing.assert_array_equal(jpdata[:, :, 2], pgxdata)
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_NR_DEC_broken2_jp2_5_decode(self):
         """
-        Invalid marker ID on codestream, Null pointer access upon read.
+        Invalid marker ID on codestream
         """
         jfile = opj_data_file('input/nonregression/broken2.jp2')
-        regex = re.compile(r'''Invalid\smarker\sid\sencountered\sat\sbyte\s
-                               \d+\sin\scodestream:\s*"0x[a-fA-F0-9]{4}"''',
-                           re.VERBOSE)
-        with self.assertRaises(IOError):
-            with self.assertWarnsRegex(UserWarning, regex):
+        exp_error = glymur.lib.openjp2.OpenJPEGLibraryError
+        with self.assertRaises(exp_error):
+            with warnings.catch_warnings():
+                # Suppress an UnrecognizedMarkerWarning
+                warnings.simplefilter("ignore")
                 Jp2k(jfile)[:]
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    def test_NR_DEC_broken4_jp2_7_decode(self):
-        jfile = opj_data_file('input/nonregression/broken4.jp2')
-        with self.assertRaises(IOError):
-            with self.assertWarns(UserWarning):
-                # invalid number of subbands, bad marker ID
-                Jp2k(jfile)[:]
-        self.assertTrue(True)
 
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_NR_DEC_kakadu_v4_4_openjpegv2_broken_j2k_16_decode(self):
@@ -189,56 +162,10 @@ class TestSuite2point1(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_NR_DEC_gdal_fuzzer_unchecked_num_resolutions_jp2_36_decode(self):
-        f = 'input/nonregression/gdal_fuzzer_unchecked_numresolutions.jp2'
-        jfile = opj_data_file(f)
-        with self.assertWarns(UserWarning):
-            # Invalid number of resolutions.
-            j = Jp2k(jfile)
-            with self.assertRaises(IOError):
-                j[:]
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    def test_NR_DEC_gdal_fuzzer_check_number_of_tiles_jp2_38_decode(self):
-        relpath = 'input/nonregression/gdal_fuzzer_check_number_of_tiles.jp2'
-        jfile = opj_data_file(relpath)
-        with self.assertWarns(UserWarning):
-            # Invalid number of tiles.
-            j = Jp2k(jfile)
-            with self.assertRaises(IOError):
-                j[:]
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    def test_NR_DEC_gdal_fuzzer_check_comp_dx_dy_jp2_39_decode(self):
-        relpath = 'input/nonregression/gdal_fuzzer_check_comp_dx_dy.jp2'
-        jfile = opj_data_file(relpath)
-        with self.assertWarns(UserWarning):
-            # Invalid subsampling value
-            with self.assertRaises(IOError):
-                Jp2k(jfile)[:]
-
     def test_NR_DEC_file_409752_jp2_40_decode(self):
         jfile = opj_data_file('input/nonregression/file409752.jp2')
         with self.assertRaises(RuntimeError):
             Jp2k(jfile)[:]
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    def test_NR_DEC_p1_04_j2k_57_decode_0p7_backwards_compatibility(self):
-        """
-        0.7.x usage deprecated
-        """
-        jfile = opj_data_file('input/conformance/p1_04.j2k')
-        jp2k = Jp2k(jfile)
-        if sys.hexversion < 0x03000000:
-            with warnings.catch_warnings():
-                # Suppress a warning due to deprecated syntax
-                warnings.simplefilter("ignore")
-                tdata = jp2k.read(tile=63)  # last tile
-        else:
-            with self.assertWarns(DeprecationWarning):
-                tdata = jp2k.read(tile=63)  # last tile
-        odata = jp2k[:]
-        np.testing.assert_array_equal(tdata, odata[896:1024, 896:1024])
 
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_NR_DEC_p1_04_j2k_58_decode_0p7_backwards_compatibility(self):
@@ -256,27 +183,6 @@ class TestSuite2point1(unittest.TestCase):
                 tdata = jp2k.read(tile=63, rlevel=2)  # last tile
         odata = jp2k[::4, ::4]
         np.testing.assert_array_equal(tdata, odata[224:256, 224:256])
-
-    def test_NR_DEC_p1_04_j2k_58_decode(self):
-        jfile = opj_data_file('input/conformance/p1_04.j2k')
-        jp2k = Jp2k(jfile)
-        tdata = jp2k[896:1024:4, 896:1024:4]  # last tile
-        odata = jp2k[::4, ::4]
-        np.testing.assert_array_equal(tdata, odata[224:256, 224:256])
-
-    def test_NR_DEC_p1_04_j2k_59_decode(self):
-        jfile = opj_data_file('input/conformance/p1_04.j2k')
-        jp2k = Jp2k(jfile)
-        tdata = jp2k[128:256, 512:640]  # 2nd row, 5th column
-        odata = jp2k[:]
-        np.testing.assert_array_equal(tdata, odata[128:256, 512:640])
-
-    def test_NR_DEC_p1_04_j2k_60_decode(self):
-        jfile = opj_data_file('input/conformance/p1_04.j2k')
-        jp2k = Jp2k(jfile)
-        tdata = jp2k[128:256:2, 512:640:2]  # 2nd row, 5th column
-        odata = jp2k[::2, ::2]
-        np.testing.assert_array_equal(tdata, odata[64:128, 256:320])
 
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     def test_NR_DEC_jp2_36_decode(self):

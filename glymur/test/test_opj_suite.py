@@ -13,9 +13,7 @@ import numpy as np
 import glymur
 from glymur import Jp2k
 
-from .fixtures import (WARNING_INFRASTRUCTURE_ISSUE,
-                       WARNING_INFRASTRUCTURE_MSG, mse,
-                       OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
+from .fixtures import mse, OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG
 
 try:
     OPJ_DATA_ROOT = os.environ['OPJ_DATA_ROOT']
@@ -230,19 +228,6 @@ class TestSuite(unittest.TestCase):
                 # Suppress an UnrecognizedMarkerWarning
                 warnings.simplefilter("ignore")
                 Jp2k(jfile)[:]
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    def test_NR_DEC_kakadu_v4_4_openjpegv2_broken_j2k_16_decode(self):
-        # This test actually passes in 1.5, but produces unpleasant warning
-        # messages that cannot be turned off?
-        relpath = 'input/nonregression/kakadu_v4-4_openjpegv2_broken.j2k'
-        jfile = opj_data_file(relpath)
-        if glymur.version.openjpeg_version_tuple[0] < 2:
-            with self.assertWarns(UserWarning):
-                # Incorrect warning issued about tile parts.
-                Jp2k(jfile)[:]
-        else:
-            Jp2k(jfile)[:]
 
     @unittest.skipIf(re.match(r'''0|1|2.0.0''',
                               glymur.version.openjpeg_version) is not None,

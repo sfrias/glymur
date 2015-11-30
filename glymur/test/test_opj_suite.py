@@ -14,7 +14,7 @@ import glymur
 from glymur import Jp2k
 
 from .fixtures import (WARNING_INFRASTRUCTURE_ISSUE,
-                       WARNING_INFRASTRUCTURE_MSG,
+                       WARNING_INFRASTRUCTURE_MSG, mse,
                        OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 
 try:

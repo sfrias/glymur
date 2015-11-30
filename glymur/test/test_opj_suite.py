@@ -2,6 +2,7 @@
 The tests defined here roughly correspond to what is in the OpenJPEG test
 suite.
 """
+import os
 import re
 import sys
 import unittest
@@ -11,23 +12,134 @@ import numpy as np
 
 import glymur
 from glymur import Jp2k
-from glymur.jp2box import FileTypeBox, ImageHeaderBox, ColourSpecificationBox
 
-from .fixtures import (OPJ_DATA_ROOT, MetadataBase,
-                       WARNING_INFRASTRUCTURE_ISSUE,
+from .fixtures import (WARNING_INFRASTRUCTURE_ISSUE,
                        WARNING_INFRASTRUCTURE_MSG,
-                       mse, peak_tolerance, read_pgx, opj_data_file,
                        OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 
+try:
+    OPJ_DATA_ROOT = os.environ['OPJ_DATA_ROOT']
+except KeyError:
+    OPJ_DATA_ROOT = None
 
+
+def opj_data_file(relative_file_name):
+    """Compact way of forming a full filename from OpenJPEG's test suite."""
+    jfile = os.path.join(OPJ_DATA_ROOT, relative_file_name)
+    return jfile
+
+
+def peak_tolerance(amat, bmat):
+    """Peak Tolerance"""
+    diff = np.abs(amat.astype(np.double) - bmat.astype(np.double))
+    ptol = diff.max()
+    return ptol
+
+
+def read_pgx(pgx_file):
+    """Helper function for reading the PGX comparison files.
+    """
+    header, pos = read_pgx_header(pgx_file)
+
+    tokens = re.split(r'\s', header)
+
+    if (tokens[1][0] == 'M') and (sys.byteorder == 'little'):
+        swapbytes = True
+    elif (tokens[1][0] == 'L') and (sys.byteorder == 'big'):
+        swapbytes = True
+    else:
+        swapbytes = False
+
+    if (len(tokens) == 6):
+        bitdepth = int(tokens[3])
+        signed = bitdepth < 0
+        if signed:
+            bitdepth = -1 * bitdepth
+        nrows = int(tokens[5])
+        ncols = int(tokens[4])
+    else:
+        bitdepth = int(tokens[2])
+        signed = bitdepth < 0
+        if signed:
+            bitdepth = -1 * bitdepth
+        nrows = int(tokens[4])
+        ncols = int(tokens[3])
+
+    dtype = determine_pgx_datatype(signed, bitdepth)
+
+    shape = [nrows, ncols]
+
+    # Reopen the file in binary mode and seek to the start of the binary
+    # data
+    with open(pgx_file, 'rb') as fptr:
+        fptr.seek(pos)
+        data = np.fromfile(file=fptr, dtype=dtype).reshape(shape)
+
+    return(data.byteswap(swapbytes))
+
+
+def determine_pgx_datatype(signed, bitdepth):
+    """Determine the datatype of the PGX file.
+
+    Parameters
+    ----------
+    signed : bool
+        True if the datatype is signed, false otherwise
+    bitdepth : int
+        How many bits are used to make up an image plane.  Should be 8 or 16.
+    """
+    if signed:
+        if bitdepth <= 8:
+            dtype = np.int8
+        elif bitdepth <= 16:
+            dtype = np.int16
+        else:
+            raise RuntimeError("unhandled bitdepth")
+    else:
+        if bitdepth <= 8:
+            dtype = np.uint8
+        elif bitdepth <= 16:
+            dtype = np.uint16
+        else:
+            raise RuntimeError("unhandled bitdepth")
+
+    return dtype
+
+
+def read_pgx_header(pgx_file):
+    """Open the file in ascii mode (not really) and read the header line.
+    Will look something like
+
+    PG ML + 8 128 128
+    PG%[ \t]%c%c%[ \t+-]%d%[ \t]%d%[ \t]%d"
+    """
+    header = ''
+    with open(pgx_file, 'rb') as fptr:
+        while True:
+            char = fptr.read(1)
+            if char[0] == 10 or char == '\n':
+                pos = fptr.tell()
+                break
+            else:
+                if sys.hexversion < 0x03000000:
+                    header += char
+                else:
+                    header += chr(char[0])
+
+    header = header.rstrip()
+    return header, pos
+
+
+@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(OPJ_DATA_ROOT is None,
                  "OPJ_DATA_ROOT environment variable not set")
 @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] != 2,
                  "Feature not supported in glymur until openjpeg 2.0")
-class TestSuiteBands(unittest.TestCase):
+class TestSuite(unittest.TestCase):
     """
     Test the read_bands method.
     """
+
     def test_ETS_C1P1_p1_03_j2k(self):
         jfile = opj_data_file('input/conformance/p1_03.j2k')
         jp2k = Jp2k(jfile)
@@ -107,20 +219,6 @@ class TestSuiteBands(unittest.TestCase):
         Jp2k(jfile).read_bands()
         self.assertTrue(True)
 
-
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-@unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
-                 "Tests not passing until 2.0")
-class TestSuite2point0(unittest.TestCase):
-    """Runs tests introduced in version 2.0 or that pass only in 2.0"""
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_NR_DEC_broken2_jp2_5_decode(self):
         """
         Invalid marker ID on codestream
@@ -145,53 +243,20 @@ class TestSuite2point0(unittest.TestCase):
                 Jp2k(jfile)[:]
         else:
             Jp2k(jfile)[:]
-        self.assertTrue(True)
 
-
-@unittest.skipIf(OPJ_DATA_ROOT is None,
-                 "OPJ_DATA_ROOT environment variable not set")
-@unittest.skipIf(re.match(r'''0|1|2.0.0''',
-                          glymur.version.openjpeg_version) is not None,
-                 "Only supported in 2.0.1 or higher")
-class TestSuite2point1(unittest.TestCase):
-    """Runs tests introduced in version 2.0+ or that pass only in 2.0+"""
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_NR_DEC_file_409752_jp2_40_decode(self):
-        jfile = opj_data_file('input/nonregression/file409752.jp2')
-        with self.assertRaises(RuntimeError):
-            Jp2k(jfile)[:]
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
+    @unittest.skipIf(re.match(r'''0|1|2.0.0''',
+                              glymur.version.openjpeg_version) is not None,
+                     "Only supported in 2.0.1 or higher")
     def test_NR_DEC_p1_04_j2k_58_decode_0p7_backwards_compatibility(self):
         """
-        0.7.x usage deprecated
+        Test ability to read specified tiles.  Requires 2.0.1 or higher.
+
+        0.7.x read usage deprecated, should use slicing
         """
         jfile = opj_data_file('input/conformance/p1_04.j2k')
         jp2k = Jp2k(jfile)
-        if sys.hexversion < 0x03000000:
-            with warnings.catch_warnings():
-                # Suppress a warning due to deprecated syntax
-                tdata = jp2k.read(tile=63, rlevel=2)  # last tile
-        else:
-            with self.assertWarns(DeprecationWarning):
-                tdata = jp2k.read(tile=63, rlevel=2)  # last tile
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            tdata = jp2k.read(tile=63, rlevel=2)  # last tile
         odata = jp2k[::4, ::4]
         np.testing.assert_array_equal(tdata, odata[224:256, 224:256])
-
-    @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
-    def test_NR_DEC_jp2_36_decode(self):
-        lst = ('input',
-               'nonregression',
-               'gdal_fuzzer_assert_in_opj_j2k_read_SQcd_SQcc.patch.jp2')
-        jfile = opj_data_file('/'.join(lst))
-        with self.assertWarns(UserWarning):
-            # Invalid component number.
-            j = Jp2k(jfile)
-            with self.assertRaises(IOError):
-                j[:]

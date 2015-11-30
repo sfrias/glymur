@@ -352,7 +352,7 @@ class TestJp2k(unittest.TestCase):
                 ofile.flush()
 
             j = Jp2k(ofile.name)
-            with self.assertRaises(RuntimeError):
+            with self.assertRaises(glymur.jp2k.DifferingSubsampleFactorsError):
                 j[:]
 
     def test_shape_jp2(self):

@@ -1159,10 +1159,11 @@ class Jp2k(Jp2kBox):
         dxs = np.array(self.codestream.segment[1].xrsiz)
         dys = np.array(self.codestream.segment[1].yrsiz)
         if np.any(dxs - dxs[0]) or np.any(dys - dys[0]):
-            msg = "Components must all have the same subsampling factors "
-            msg += "to use this method.  Please consider using OPENJP2 and "
-            msg += "the read_bands method instead."
-            raise RuntimeError(msg)
+            msg = ("The read_bands method should be used with the subsampling "
+                   "factors are different. "
+                   "\n\n{siz_segment}")
+            msg = msg.format(siz_segment=str(self.codestream.segment[1]))
+            raise DifferingSubsampleFactorsError(msg)
 
     def _read_openjpeg(self, rlevel=0, verbose=False, area=None):
         """Read a JPEG 2000 image using libopenjpeg.
@@ -1966,6 +1967,13 @@ def _default_info_handler(msg, _):
 class BadPrecinctDimensionsError(IOError):
     """
     Precinct dimensions must be powers of two.
+    """
+    pass
+
+
+class DifferingSubsampleFactorsError(IOError):
+    """
+    The subsample factors must be the same when doing a normal read.
     """
     pass
 

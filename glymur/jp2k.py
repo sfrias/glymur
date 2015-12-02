@@ -1365,9 +1365,10 @@ class Jp2k(Jp2kBox):
                 # -1 is shorthand for the largest rlevel
                 rlevel = max_rlevel
             elif rlevel < -1 or rlevel > max_rlevel:
-                msg = "rlevel must be in the range [-1, {0}] for this image."
-                msg = msg.format(max_rlevel)
-                raise IOError(msg)
+                msg = ("rlevel must be in the range [-1, {max_rlevel}] "
+                       "for this image.")
+                msg = msg.format(max_rlevel=max_rlevel)
+                raise RlevelOutOfRangeError(msg)
 
         dparam.cp_reduce = rlevel
 
@@ -1991,6 +1992,12 @@ class InvalidJP2ColourspaceMethodWarning(UserWarning):
 class OpenJPEGLibraryWarning(UserWarning):
     """
     Warnings emitted by OpenJPEG library
+    """
+    pass
+
+class RlevelOutOfRangeError(IOError):
+    """
+    Issue of decomposition level out of range.
     """
     pass
 

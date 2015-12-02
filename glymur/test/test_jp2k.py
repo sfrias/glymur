@@ -444,7 +444,7 @@ class TestJp2k(unittest.TestCase):
     def test_rlevel_too_high(self):
         """Should error out appropriately if reduce level too high"""
         j = Jp2k(self.jp2file)
-        with self.assertRaises(IOError):
+        with self.assertRaises(glymur.jp2k.RlevelOutOfRangeError):
             j[::64, ::64]
 
     def test_not_jpeg2000(self):

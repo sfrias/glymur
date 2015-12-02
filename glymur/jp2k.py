@@ -287,8 +287,9 @@ class Jp2k(Jp2kBox):
             signature = values[2:]
             if (((box_length != 12) or (box_id != b'jP  ') or
                  (signature != (13, 10, 135, 10)))):
-                msg = '{0} is not a JPEG 2000 file.'.format(self.filename)
-                raise IOError(msg)
+                msg = '{filename} is not a JPEG 2000 file.'
+                msg = msg.format(filename=self.filename)
+                raise NotJPEG2000Error(msg)
 
             # Back up and start again, we know we have a superbox (box of
             # boxes) here.
@@ -1106,9 +1107,10 @@ class Jp2k(Jp2kBox):
             if the proper version of the OpenJPEG library is not available
         """
         if re.match("0|1.[01234]", version.openjpeg_version):
-            raise RuntimeError("You must have at least version 1.5.0 of "
-                               "OpenJPEG installed before you can read "
-                               "JPEG2000 images.")
+            msg = ("You must have at least version 1.5.0 of OpenJPEG "
+                   "installed before you can read JPEG2000 images with "
+                   "glymur.  Your version is {version}")
+            raise RuntimeError(msg.format(version=version.openjpeg_version))
 
         if version.openjpeg_version_tuple[0] < 2:
             img = self._read_openjpeg(**kwargs)
@@ -1430,9 +1432,10 @@ class Jp2k(Jp2kBox):
         >>> components_lst = jp.read_bands(rlevel=1)
         """
         if version.openjpeg_version_tuple[0] < 2:
-            raise RuntimeError("You must have at least version 2.0.0 of "
-                               "OpenJPEG installed before using this "
-                               "functionality.")
+            msg = ("You must have at least version 2.0.0 of OpenJPEG "
+                   "installed before using this method.  Your version of "
+                   "OpenJPEG is {version}.")
+            raise RuntimeError(msg.format(version=version.openjpeg_version))
 
         self.ignore_pclr_cmap_cdef = ignore_pclr_cmap_cdef
         if layer is not None:
@@ -1985,6 +1988,13 @@ class InvalidJP2ColourspaceMethodWarning(UserWarning):
 
     The Colour space method must be either ICC profile or enumerated colour
     space.
+    """
+    pass
+
+
+class NotJPEG2000Error(UserWarning):
+    """
+    If the file is not JPEG2000.
     """
     pass
 

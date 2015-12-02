@@ -450,15 +450,15 @@ class TestJp2k(unittest.TestCase):
     def test_not_jpeg2000(self):
         """Should error out appropriately if not given a JPEG 2000 file."""
         filename = pkg_resources.resource_filename(glymur.__name__, "jp2k.py")
-        with self.assertRaises(IOError):
+        with self.assertRaises(glymur.jp2k.NotJPEG2000Error):
             Jp2k(filename)
 
     def test_file_not_present(self):
         """Should error out if reading from a file that does not exist"""
         # Verify that we error out appropriately if not given an existing file
         # at all.
+        filename = 'this file does not actually exist on the file system.'
         with self.assertRaises(OSError):
-            filename = 'this file does not actually exist on the file system.'
             Jp2k(filename)
 
     def test_codestream(self):
@@ -837,7 +837,9 @@ class TestJp2k(unittest.TestCase):
         self.assertEqual(data.shape, (1024, 1024, 3))
 
     def test_read_without_openjpeg(self):
-        """Don't have openjpeg or openjp2 library?  Must error out."""
+        """
+        Don't have openjpeg or openjp2 library?  Must error out.
+        """
         with patch('glymur.version.openjpeg_version_tuple', new=(0, 0, 0)):
             with patch('glymur.version.openjpeg_version', new='0.0.0'):
                 with self.assertRaises(RuntimeError):
@@ -849,9 +851,12 @@ class TestJp2k(unittest.TestCase):
                     glymur.Jp2k(self.jp2file)[:]
 
     def test_read_bands_without_openjp2(self):
-        """Don't have openjp2 library?  Must error out."""
+        """
+        Don't have openjp2 library?  Must error out.
+        """
         with patch('glymur.version.openjpeg_version_tuple', new=(1, 5, 0)):
             with patch('glymur.version.openjpeg_version', new='1.5.0'):
+                glymur.Jp2k(self.jp2file).read_bands()
                 with self.assertRaises(RuntimeError):
                     glymur.Jp2k(self.jp2file).read_bands()
 

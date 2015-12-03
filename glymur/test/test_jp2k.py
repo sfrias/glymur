@@ -1581,7 +1581,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         data = np.zeros((857, 2048, 3), dtype=np.uint8)
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(glymur.jp2k.CinemaModeSpecificationError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=data,
                      cinema2k=48, cratios=[200, 100, 50])
 
@@ -1593,7 +1593,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         data = np.zeros((4096, 2160, 3), dtype=np.uint8)
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(glymur.jp2k.CinemaModeSpecificationError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=data,
                      cinema4k=True, cratios=[200, 100, 50])
 
@@ -1602,7 +1602,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         code block sizes should never exceed half that of precinct size.
         """
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=self.j2k_data,
                      cbsize=(64, 64), psizes=[(64, 64)])
 
@@ -1611,7 +1611,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         code block sizes should be powers of two.
         """
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=self.j2k_data, cbsize=(13, 12))
 
     def test_precinct_size_not_p2(self):
@@ -1619,7 +1619,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         precinct sizes should be powers of two.
         """
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            with self.assertRaises(glymur.jp2k.BadPrecinctDimensionsError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=self.j2k_data, psizes=[(173, 173)])
 
     def test_code_block_dimensions(self):
@@ -1631,13 +1631,13 @@ class TestJp2k_write(fixtures.MetadataBase):
         data = self.j2k_data
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
             # opj_compress doesn't allow code block area to exceed 4096.
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=data, cbsize=(256, 256))
 
             # opj_compress doesn't allow either dimension to be less than 4.
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=data, cbsize=(2048, 2))
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=data, cbsize=(2, 2048))
 
     def test_psnr_with_cratios(self):

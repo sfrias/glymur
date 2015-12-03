@@ -386,7 +386,7 @@ class Jp2k(Jp2kBox):
              (not all([arg is None for arg in other_args])))):
             msg = ("Cannot specify cinema2k/cinema4k along with any other "
                    "options.")
-            raise CinemaModeSpecificationError(msg)
+            raise OpenJPEGWriteIOError(msg)
 
         if cratios is not None and psnr is not None:
             msg = "Cannot specify cratios and psnr together."
@@ -605,12 +605,13 @@ class Jp2k(Jp2kBox):
                        "than 4 pixels.")
                 msg = msg.format(height=height, width=width,
                                  area=height * width)
-                raise IOError(msg)
+                raise OpenJPEGWriteIOError(msg)
             if ((math.log(height, 2) != math.floor(math.log(height, 2)) or
                  math.log(width, 2) != math.floor(math.log(width, 2)))):
-                msg = ("Bad code block dimensions ({height} x {width}).  "
-                       "Code block dimensions must be powers of 2.")
-                raise IOError(msg.format(height=height, width=width))
+                msg = ("Bad code block size ({height} x {width}).  "
+                       "The dimensions must be powers of 2.")
+                msg = msg.format(height=height, width=width)
+                raise OpenJPEGWriteIOError(msg)
 
     def _validate_precinct_size(self, cparams):
         """
@@ -631,19 +632,19 @@ class Jp2k(Jp2kBox):
                 if j == 0 and code_block_specified:
                     height, width = cparams.cblockh_init, cparams.cblockw_init
                     if height * 2 > prch or width * 2 > prcw:
-                        msg = ("Highest resolution precinct size "
+                        msg = ("The highest resolution precinct size "
                                "({prch} x {prcw}) must be at least twice that "
-                               "of the code block dimensions "
+                               "of the code block size "
                                "({cbh} x {cbw}).")
                         msg = msg.format(prch=prch, prcw=prcw,
                                          cbh=height, cbw=width)
-                        raise IOError(msg)
+                        raise OpenJPEGWriteIOError(msg)
                 if ((math.log(prch, 2) != math.floor(math.log(prch, 2)) or
                      math.log(prcw, 2) != math.floor(math.log(prcw, 2)))):
-                    msg = ("Bad precinct dimensions ({height} x {width}).  "
+                    msg = ("Bad precinct size ({height} x {width}).  "
                            "Precinct dimensions must be powers of 2.")
                     msg = msg.format(height=prch, width=prcw)
-                    raise BadPrecinctDimensionsError(msg)
+                    raise OpenJPEGWriteIOError(msg)
 
     def _validate_image_rank(self, img_array):
         """
@@ -1971,16 +1972,9 @@ def _default_info_handler(msg, _):
     print("[INFO] {0}".format(msg.decode('utf-8').rstrip()))
 
 
-class BadPrecinctDimensionsError(IOError):
+class OpenJPEGWriteIOError(IOError):
     """
-    Precinct dimensions must be powers of two.
-    """
-    pass
-
-
-class CinemaModeSpecificationError(IOError):
-    """
-    Cinema mode (2K or 4K) cannot be specified with other options.
+    Raise if incorrect arguments given when writing.
     """
     pass
 

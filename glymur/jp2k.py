@@ -386,7 +386,7 @@ class Jp2k(Jp2kBox):
              (not all([arg is None for arg in other_args])))):
             msg = ("Cannot specify cinema2k/cinema4k along with any other "
                    "options.")
-            raise IOError(msg)
+            raise CinemaModeSpecificationError(msg)
 
         if cratios is not None and psnr is not None:
             msg = "Cannot specify cratios and psnr together."
@@ -1974,6 +1974,13 @@ def _default_info_handler(msg, _):
 class BadPrecinctDimensionsError(IOError):
     """
     Precinct dimensions must be powers of two.
+    """
+    pass
+
+
+class CinemaModeSpecificationError(IOError):
+    """
+    Cinema mode (2K or 4K) cannot be specified with other options.
     """
     pass
 

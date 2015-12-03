@@ -1581,7 +1581,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         data = np.zeros((857, 2048, 3), dtype=np.uint8)
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.CinemaModeSpecificationError):
                 Jp2k(tfile.name, data=data,
                      cinema2k=48, cratios=[200, 100, 50])
 
@@ -1593,7 +1593,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         data = np.zeros((4096, 2160, 3), dtype=np.uint8)
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.CinemaModeSpecificationError):
                 Jp2k(tfile.name, data=data,
                      cinema4k=True, cratios=[200, 100, 50])
 

@@ -854,10 +854,10 @@ class TestJp2k(unittest.TestCase):
         """
         Don't have openjp2 library?  Must error out.
         """
+        exp_error = glymur.jp2k.OpenJPEGLibraryVersionError
         with patch('glymur.version.openjpeg_version_tuple', new=(1, 5, 0)):
             with patch('glymur.version.openjpeg_version', new='1.5.0'):
-                glymur.Jp2k(self.jp2file).read_bands()
-                with self.assertRaises(RuntimeError):
+                with self.assertRaises(exp_error):
                     glymur.Jp2k(self.jp2file).read_bands()
 
     def test_zero_length_reserved_segment(self):
@@ -1565,10 +1565,11 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         data = np.zeros((857, 2048, 3), dtype=np.uint8)
         versions = ["1.5.0", "2.0.0"]
+        exp_error = glymur.jp2k.OpenJPEGLibraryVersionError
         for version in versions:
             with patch('glymur.version.openjpeg_version', new=version):
                 with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-                    with self.assertRaises(IOError):
+                    with self.assertRaises(exp_error):
                         Jp2k(tfile.name, data=data, cinema2k=48)
 
     def test_cinema2K_with_others(self):

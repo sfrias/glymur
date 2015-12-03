@@ -327,9 +327,11 @@ class Jp2k(Jp2kBox):
             Frames per second, should be either 24 or 48.
         """
         if re.match("1.5|2.0.0", version.openjpeg_version) is not None:
-            msg = "Writing Cinema2K or Cinema4K files is not supported with "
-            msg += 'openjpeg library versions less than 2.0.1.'
-            raise IOError(msg)
+            msg = ("Writing Cinema2K or Cinema4K files is not supported with "
+                   "OpenJPEG library versions less than 2.0.1.  The installed "
+                   "version of OpenJPEG is {version}.")
+            msg = msg.format(version=version.openjpeg_version)
+            raise OpenJPEGLibraryVersionError(msg)
 
         # Cinema modes imply MCT.
         self._cparams.tcp_mct = 1
@@ -1435,7 +1437,8 @@ class Jp2k(Jp2kBox):
             msg = ("You must have at least version 2.0.0 of OpenJPEG "
                    "installed before using this method.  Your version of "
                    "OpenJPEG is {version}.")
-            raise RuntimeError(msg.format(version=version.openjpeg_version))
+            msg = msg.format(version=version.openjpeg_version)
+            raise OpenJPEGLibraryVersionError(msg)
 
         self.ignore_pclr_cmap_cdef = ignore_pclr_cmap_cdef
         if layer is not None:
@@ -1999,11 +2002,19 @@ class NotJPEG2000Error(UserWarning):
     pass
 
 
+class OpenJPEGLibraryVersionError(IOError):
+    """
+    If the library version does not support a feature.
+    """
+    pass
+
+
 class OpenJPEGLibraryWarning(UserWarning):
     """
     Warnings emitted by OpenJPEG library
     """
     pass
+
 
 class RlevelOutOfRangeError(IOError):
     """

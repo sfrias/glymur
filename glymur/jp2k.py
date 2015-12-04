@@ -1382,9 +1382,13 @@ class Jp2k(Jp2kBox):
 
         if area is not None:
             if area[0] < 0 or area[1] < 0 or area[2] <= 0 or area[3] <= 0:
-                msg = "Upper left corner coordinates must be nonnegative and "
-                msg += "lower right corner coordinates must be positive:  {0}"
-                raise IOError(msg.format(area))
+                msg = ("The upper left corner coordinates must be nonnegative "
+                       "and the lower right corner coordinates must be "
+                       "positive.  The specified upper left and lower right "
+                       "coordinates are ({y0}, {x0}) and ({y1}, {x1}).")
+                msg = msg.format(x0=area[1], y0=area[0],
+                                 x1=area[3], y1=area[2])
+                raise IOError(msg)
             dparam.DA_y0 = area[0]
             dparam.DA_x0 = area[1]
             dparam.DA_y1 = area[2]

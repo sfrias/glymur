@@ -1925,8 +1925,8 @@ class TestJp2k_2_0(unittest.TestCase):
     @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
     def test_unrecognized_jp2_clrspace(self):
         """We only allow RGB and GRAYSCALE.  Should error out with others"""
+        data = np.zeros((128, 128, 3), dtype=np.uint8)
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            data = np.zeros((128, 128, 3), dtype=np.uint8)
             with self.assertRaises(IOError):
                 Jp2k(tfile.name, data=data, colorspace='cmyk')
 
@@ -2018,7 +2018,9 @@ class TestJp2k_2_1(unittest.TestCase):
     @unittest.skipIf(WARNING_INFRASTRUCTURE_ISSUE, WARNING_INFRASTRUCTURE_MSG)
     @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
     def test_openjpeg_library_message(self):
-        """Verify the error message produced by the openjpeg library"""
+        """
+        Verify the error message produced by the openjpeg library
+        """
         # This will confirm that the error callback mechanism is working.
         with open(self.jp2file, 'rb') as fptr:
             data = fptr.read()
@@ -2041,17 +2043,8 @@ class TestJp2k_2_1(unittest.TestCase):
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
                     j = Jp2k(tfile.name)
-                    regexp = re.compile(r'''OpenJPEG\slibrary\serror:\s+
-                                            Invalid\svalues\sfor\scomp\s=\s0\s+
-                                            :\sdx=1\sdy=0''', re.VERBOSE)
-                    if sys.hexversion < 0x03020000:
-                        with self.assertRaisesRegexp((IOError, OSError),
-                                                     regexp):
-                            j[::2, ::2]
-                    else:
-                        with self.assertRaisesRegex((IOError, OSError),
-                                                    regexp):
-                            j[::2, ::2]
+                    with self.assertRaises((IOError, OSError)):
+                        j[::2, ::2]
 
 
 class TestParsing(unittest.TestCase):

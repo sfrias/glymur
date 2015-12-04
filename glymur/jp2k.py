@@ -338,7 +338,8 @@ class Jp2k(Jp2kBox):
 
         if cinema_mode == 'cinema2k':
             if fps not in [24, 48]:
-                raise IOError('Cinema2K frame rate must be either 24 or 48.')
+                msg = 'Cinema2K frame rate must be either 24 or 48.'
+                raise OpenJPEGWriteIOError(msg)
 
             if re.match("2.0", version.openjpeg_version) is not None:
                 # 2.0 API
@@ -389,8 +390,8 @@ class Jp2k(Jp2kBox):
             raise OpenJPEGWriteIOError(msg)
 
         if cratios is not None and psnr is not None:
-            msg = "Cannot specify cratios and psnr together."
-            raise IOError(msg)
+            msg = "Cannot specify cratios and psnr options together."
+            raise OpenJPEGWriteIOError(msg)
 
         if version.openjpeg_version_tuple[0] == 1:
             cparams = opj.set_default_encoder_parameters()
@@ -584,7 +585,7 @@ class Jp2k(Jp2kBox):
         if cparams.codec_fmt == opj2.CODEC_J2K and colorspace is not None:
             msg = 'Do not specify a colorspace when writing a raw '
             msg += 'codestream.'
-            raise IOError(msg)
+            raise OpenJPEGWriteIOError(msg)
 
     def _validate_codeblock_size(self, cparams):
         """
@@ -652,7 +653,7 @@ class Jp2k(Jp2kBox):
         """
         if img_array.ndim == 1 or img_array.ndim > 3:
             msg = "{0}D imagery is not allowed.".format(img_array.ndim)
-            raise IOError(msg)
+            raise OpenJPEGWriteIOError(msg)
 
     def _validate_v2_0_0_images(self, img_array):
         """
@@ -719,7 +720,7 @@ class Jp2k(Jp2kBox):
                 raise IOError(msg)
             elif colorspace.lower() == 'rgb' and self.shape[2] < 3:
                 msg = 'RGB colorspace requires at least 3 components.'
-                raise IOError(msg)
+                raise OpenJPEGWriteIOError(msg)
 
             # Turn the colorspace from a string to the enumerated value that
             # the library expects.

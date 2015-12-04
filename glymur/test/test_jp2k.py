@@ -1645,7 +1645,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         Using psnr with cratios options is not allowed.
         """
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=self.j2k_data, psnr=[30, 35, 40],
                      cratios=[2, 3, 4])
 
@@ -1657,7 +1657,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         input/nonregression/X_5_2K_24_235_CBR_STEM24_000.tif
         """
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=self.j2k_data, cinema2k=36)
 
     def test_irreversible(self):
@@ -1692,7 +1692,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         """first precinct size must be >= 2x that of the code block size"""
         data = np.zeros((640, 480), dtype=np.uint8)
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=data,
                      cbsize=(16, 16), psizes=[(16, 16)])
 
@@ -1700,7 +1700,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         """must be power of two"""
         data = np.zeros((640, 480), dtype=np.uint8)
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=data,
                      cbsize=(16, 16), psizes=[(48, 48)])
 
@@ -1744,14 +1744,14 @@ class TestJp2k_write(fixtures.MetadataBase):
     def test_too_many_dimensions(self):
         """OpenJP2 only allows 2D or 3D images."""
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name,
                      data=np.zeros((128, 128, 2, 2), dtype=np.uint8))
 
     def test_2d_rgb(self):
         """RGB must have at least 3 components."""
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name,
                      data=np.zeros((128, 128, 2), dtype=np.uint8),
                      colorspace='rgb')
@@ -1759,7 +1759,7 @@ class TestJp2k_write(fixtures.MetadataBase):
     def test_colorspace_with_j2k(self):
         """Specifying a colorspace with J2K does not make sense"""
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name,
                      data=np.zeros((128, 128, 3), dtype=np.uint8),
                      colorspace='rgb')

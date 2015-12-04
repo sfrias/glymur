@@ -177,9 +177,11 @@ class Jp2k(Jp2kBox):
     @layer.setter
     def layer(self, layer):
         if version.openjpeg_version_tuple[0] < 2:
-            msg = "Layer property not supported unless the version of "
-            msg += "OpenJPEG is 2.0 or higher."
-            raise RuntimeError(msg)
+            msg = ("The layer property not supported unless the OpenJPEG "
+                   "library version is 2.0 or higher.  The installed version "
+                   "is {version}.")
+            msg = msg.format(version=version.openjpeg_version)
+            raise IOError(msg)
         self._layer = layer
 
     @property
@@ -484,7 +486,7 @@ class Jp2k(Jp2kBox):
             if self._colorspace == opj2.CLRSPC_GRAY:
                 msg = "Cannot specify usage of the multi component transform "
                 msg += "if the colorspace is gray."
-                raise IOError(msg)
+                raise OpenJPEGWriteIOError(msg)
             cparams.tcp_mct = 1 if mct else 0
 
         self._validate_compression_params(img_array, cparams, colorspace)
@@ -662,10 +664,10 @@ class Jp2k(Jp2kBox):
         if re.match("2.0.0", version.openjpeg_version) is not None:
             if (((img_array.ndim != 2) and
                  (img_array.shape[2] != 1 and img_array.shape[2] != 3))):
-                msg = "Writing images is restricted to single-channel "
-                msg += "greyscale images or three-channel RGB images when "
-                msg += "the OpenJPEG library version is the official 2.0.0 "
-                msg += "release."
+                msg = ("Writing images is restricted to single-channel "
+                       "greyscale images or three-channel RGB images when "
+                       "the OpenJPEG library version is the official 2.0.0 "
+                       "release.")
                 raise IOError(msg)
 
     def _validate_image_datatype(self, img_array):
@@ -716,8 +718,8 @@ class Jp2k(Jp2kBox):
                 self._colorspace = opj2.CLRSPC_SRGB
         else:
             if colorspace.lower() not in ('rgb', 'grey', 'gray'):
-                msg = 'Invalid colorspace "{0}"'.format(colorspace)
-                raise IOError(msg)
+                msg = 'Invalid colorspace "{0}".'.format(colorspace)
+                raise OpenJPEGWriteIOError(msg)
             elif colorspace.lower() == 'rgb' and self.shape[2] < 3:
                 msg = 'RGB colorspace requires at least 3 components.'
                 raise OpenJPEGWriteIOError(msg)

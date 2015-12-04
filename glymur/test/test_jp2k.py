@@ -1801,9 +1801,9 @@ class TestJp2k_write(fixtures.MetadataBase):
 
     def test_specify_ycc(self):
         """Should reject YCC"""
+        data = np.zeros((128, 128, 3), dtype=np.uint8)
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            with self.assertRaises(IOError):
-                data = np.zeros((128, 128, 3), dtype=np.uint8)
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=data, colorspace='ycc')
 
     def test_write_with_jp2_in_caps(self):
@@ -1828,11 +1828,13 @@ class TestJp2k_write(fixtures.MetadataBase):
             self.assertEqual(codestream.segment[2].mct, 0)  # no mct
 
     def test_write_grayscale_with_mct(self):
-        """MCT usage makes no sense for grayscale images."""
+        """
+        MCT usage makes no sense for grayscale images.
+        """
         j2k = Jp2k(self.j2kfile)
         expdata = j2k[:]
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            with self.assertRaises(IOError):
+            with self.assertRaises(glymur.jp2k.OpenJPEGWriteIOError):
                 Jp2k(tfile.name, data=expdata[:, :, 0], mct=True)
 
     def test_write_cprl(self):
@@ -1874,10 +1876,11 @@ class TestJp2k_1_x(unittest.TestCase):
     def test_layer(self):
         """layer option not allowed for 1.x.
         """
-        with patch('glymur.version.openjpeg_version_tuple', new=(1, 5, 0)):
-            j2k = Jp2k(self.j2kfile)
-            with self.assertRaises(RuntimeError):
-                j2k.layer = 1
+        with patch('glymur.version.openjpeg_version', new="1.5.0"):
+            with patch('glymur.version.openjpeg_version_tuple', new=(1, 5, 0)):
+                j2k = Jp2k(self.j2kfile)
+                with self.assertRaises(IOError):
+                    j2k.layer = 1
 
 
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

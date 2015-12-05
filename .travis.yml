@@ -5,25 +5,19 @@ matrix:
     include:
     - python: 2.7
       env:
-      - JOB_NAME: "27_eldest"
+      - JOB_NAME: "27_openjpeg15"
+      - NUMPY_VERSION=1.10.1
+      - LXML_VERSION=3.4.4
+      - OPJ_LIB=1
+    - python: 2.7
+      env:
+      - JOB_NAME: "27_np172"
       - NUMPY_VERSION=1.7.2
       - LXML_VERSION=3.0.2
       - OPJ_LIB=2
     - python: 2.7
       env:
-      - JOB_NAME: "27_np182"
-      - NUMPY_VERSION=1.8.2
-      - LXML_VERSION=3.4.4
-      - OPJ_LIB=2
-    - python: 2.7
-      env:
-      - JOB_NAME: "27_np192"
-      - NUMPY_VERSION=1.9.2
-      - LXML_VERSION=3.4.4
-      - OPJ_LIB=2
-    - python: 2.7
-      env:
-      - JOB_NAME: "27_np_latest"
+      - JOB_NAME: "27_np110"
       - NUMPY_VERSION=1.10.1
       - LXML_VERSION=3.4.4
       - OPJ_LIB=2
@@ -41,16 +35,10 @@ matrix:
       - OPJ_LIB=2
     - python: 3.5
       env:
-      - JOB_NAME: "35_latest"
+      - JOB_NAME: "35_np110"
       - NUMPY_VERSION=1.10.1
       - LXML_VERSION=3.4.4
       - OPJ_LIB=2
-    - python: 2.7
-      env:
-      - JOB_NAME: "openjpeg15"
-      - NUMPY_VERSION=1.10.1
-      - LXML_VERSION=3.4.4
-      - OPJ_LIB=1
     - python: 3.5
       env:
       - JOB_NAME: "no_openjpeg"

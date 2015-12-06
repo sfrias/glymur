@@ -249,9 +249,9 @@ class Jp2kBox(object):
         try:
             box = parser(fptr, start, num_bytes)
         except ValueError as err:
-            msg = "Encountered an unrecoverable ValueError while parsing a "
-            msg += "{box_id} box at byte offset {offset}.  The original error "
-            msg += "message was \"{original_error_message}\""
+            msg = ("Encountered an unrecoverable ValueError while parsing a "
+                   "{box_id} box at byte offset {offset}.  The original error "
+                   "message was \"{original_error_message}\".")
             msg = msg.format(box_id=_BOX_WITH_ID[box_id].longname,
                              offset=start, 
                              original_error_message=str(err))
@@ -414,7 +414,7 @@ class ColourSpecificationBox(Jp2kBox):
             msg = "Colorspace and icc_profile cannot both be set."
             self._dispatch_validation_error(msg, writing=writing)
         if self.method not in (1, 2, 3, 4):
-            msg = "Invalid colorspace method:  {method}"
+            msg = "Invalid colorspace method:  {method}."
             msg = msg.format(method=self.method)
             if writing:
                 raise IOError(msg)
@@ -550,8 +550,8 @@ class ColourSpecificationBox(Jp2kBox):
             # ICC profile
             colorspace = None
             if (num_bytes - 3) < 128:
-                msg = "ICC profile header is corrupt, length is "
-                msg += "only {0} instead of 128."
+                msg = ("ICC profile header is corrupt, length is "
+                       "only {0} when it should be at least 128.")
                 warnings.warn(msg.format(num_bytes - 3),
                               InvalidICCProfileLengthWarning)
                 icc_profile = None
@@ -3176,8 +3176,8 @@ class XMLBox(Jp2kBox):
             decl_start = read_buffer.find(b'<?xml')
             if decl_start <= -1:
                 # Nope, that's not it.  All is lost.
-                msg = 'A problem was encountered while parsing an XML box:'
-                msg += '\n\n\t"{error}"\n\nNo XML was retrieved.'
+                msg = ('A problem was encountered while parsing an XML box:'
+                       '\n\n\t"{error}"\n\nNo XML was retrieved.')
                 warnings.warn(msg.format(error=str(err)),
                               UnrecoverableXMLWarning)
                 return XMLBox(xml=None, length=length, offset=offset)
@@ -3185,8 +3185,9 @@ class XMLBox(Jp2kBox):
             text = read_buffer[decl_start:].decode('utf-8')
 
             # Let the user know that the XML box was problematic.
-            msg = 'A UnicodeDecodeError was encountered parsing an XML box at '
-            msg += 'byte position {offset} ({reason}), but the XML was still recovered.'
+            msg = ('A UnicodeDecodeError was encountered parsing an XML box '
+                    'at byte position {offset:d} ({reason}), but the XML was '
+                    'still recovered.')
             msg = msg.format(offset=offset, reason=err.reason)
             warnings.warn(msg, UserWarning)
 
@@ -3197,7 +3198,7 @@ class XMLBox(Jp2kBox):
         if u'\ufeff' in text:
             msg = ('An illegal BOM (byte order marker) was detected and '
                    'removed from the XML contents in the box starting at byte '
-                   'offset {offset}.')
+                   'offset {offset:d}.')
             msg = msg.format(offset=offset)
             warnings.warn(msg, ByteOrderMarkerWarning)
             text = text.replace(u'\ufeff', '')

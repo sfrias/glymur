@@ -442,6 +442,7 @@ class TestPrinting(unittest.TestCase):
 
     def test_siz_segment(self):
         """verify printing of SIZ segment"""
+        self.maxDiff = None
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream()
         with patch('sys.stdout', new=StringIO()) as fake_out:
@@ -459,6 +460,7 @@ class TestPrinting(unittest.TestCase):
                '    Vertical, Horizontal Subsampling:  '
                '((1, 1), (1, 1), (1, 1))')
 
+        import ipdb; ipdb.set_trace()
         self.assertEqual(actual, exp)
 
     def test_soc_segment(self):

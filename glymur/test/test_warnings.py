@@ -1,6 +1,7 @@
 """
 Test suite for warnings issued by glymur.
 """
+import codecs
 import imp
 from io import BytesIO
 import os
@@ -92,29 +93,6 @@ class TestSuite(unittest.TestCase):
                 box = glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(payload))
 
         self.assertIsNone(box.xml)
-
-    def test_bom(self):
-        """
-        Byte order markers are illegal in UTF-8.  Issue 185
-
-        Original test file was input/nonregression/issue171.jp2
-        """
-        fptr = BytesIO()
-
-        s = "<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>"
-        s += "<stuff>goes here</stuff>"
-        s += "<?xpacket end='w'?>"
-        data = s.encode('utf-8')
-        fptr.write(data)
-        fptr.seek(0)
-
-        if sys.hexversion < 0x03000000:
-            #with warnings.catch_warnings(record=True) as w:
-                 glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
-            #assert issubclass(w[-1].category, UserWarning)
-        else:
-            with self.assertWarns(UserWarning):
-                glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
 
     @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
     def test_unknown_marker_segment(self):
@@ -1054,5 +1032,31 @@ class TestConfigurationWarnings(unittest.TestCase):
                             imp.reload(glymur.lib.openjp2)
 
 
-if __name__ == "__main__":
-    unittest.main()
+class TestSuiteXML(unittest.TestCase):
+    """
+    This test should be run on both python2 and python3.
+    """
+    def test_bom(self):
+        """
+        Byte order markers are illegal in UTF-8.  Issue 185
+
+        Original test file was input/nonregression/issue171.jp2
+        """
+        fptr = BytesIO()
+
+        s = "<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>"
+        fptr.write("<?xpacket begin='".encode('utf-8'))
+        fptr.write(codecs.BOM_UTF8)
+        fptr.write("' id='W5M0MpCehiHzreSzNTczkc9d'?>".encode('utf-8'))
+        s = "<stuff>goes here</stuff><?xpacket end='w'?>"
+        fptr.write(s.encode('utf-8'))
+        num_bytes = fptr.tell()
+        fptr.seek(0)
+
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                 glymur.jp2box.XMLBox.parse(fptr, 0, 8 + num_bytes)
+            assert issubclass(w[-1].category, UserWarning)
+        else:
+            with self.assertWarns(UserWarning):
+                glymur.jp2box.XMLBox.parse(fptr, 0, 8 + num_bytes)

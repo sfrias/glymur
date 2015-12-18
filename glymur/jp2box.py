@@ -3096,8 +3096,6 @@ class XMLBox(Jp2kBox):
         read_buffer = fptr.read(num_bytes)
 
         if codecs.BOM_UTF8 in read_buffer:
-            # Python2 seems to both not be able to detect this situation and
-            # not care about it.  Python3 does care.
             msg = ('An illegal BOM (byte order marker) was detected and '
                    'removed from the XML contents in the box starting at byte '
                    'offset {offset:d}.')

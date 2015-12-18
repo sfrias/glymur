@@ -109,10 +109,9 @@ class TestSuite(unittest.TestCase):
         fptr.seek(0)
 
         if sys.hexversion < 0x03000000:
-            pass
-            # with warnings.catch_warnings(record=True) as w:
-            #     glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
-            # assert issubclass(w[-1].category, exp_warning)
+            #with warnings.catch_warnings(record=True) as w:
+                 glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
+            #assert issubclass(w[-1].category, UserWarning)
         else:
             with self.assertWarns(UserWarning):
                 glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))

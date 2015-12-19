@@ -1044,12 +1044,12 @@ class TestSuiteXML(unittest.TestCase):
         """
         fptr = BytesIO()
 
-        s = "<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>"
-        fptr.write("<?xpacket begin='".encode('utf-8'))
-        fptr.write(codecs.BOM_UTF8)
-        fptr.write("' id='W5M0MpCehiHzreSzNTczkc9d'?>".encode('utf-8'))
-        s = "<stuff>goes here</stuff><?xpacket end='w'?>"
-        fptr.write(s.encode('utf-8'))
+        buffer = b"<?xpacket begin='" + codecs.BOM_UTF8
+        buffer += b"' id='W5M0MpCehiHzreSzNTczkc9d'?>"
+        buffer += b"<stuff>goes here</stuff>"
+        buffer += b"<?xpacket end='w'?>"
+
+        fptr.write(buffer)
         num_bytes = fptr.tell()
         fptr.seek(0)
 

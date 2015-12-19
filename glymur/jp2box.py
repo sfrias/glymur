@@ -3095,8 +3095,12 @@ class XMLBox(Jp2kBox):
         num_bytes = offset + length - fptr.tell()
         read_buffer = fptr.read(num_bytes)
 
-        if codecs.BOM_UTF8 in read_buffer:
-            msg = ('An illegal BOM (byte order marker) was detected and '
+        if sys.hexversion < 0x03000000 and codecs.BOM_UTF8 in read_buffer:
+            # Python3 with utf-8 handles this just fine.  Actually so does
+            # Python2 right here since we decode using utf-8.  The real
+            # problem comes when __str__ is used on the XML box, and that
+            # is where Python2 falls short because of the ascii codec.
+            msg = ('A BOM (byte order marker) was detected and '
                    'removed from the XML contents in the box starting at byte '
                    'offset {offset:d}.')
             msg = msg.format(offset=offset)

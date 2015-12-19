@@ -996,7 +996,6 @@ class TestSuite(unittest.TestCase):
                     Jp2k(tfile.name, data=data, cinema2k=24)
 
 
-
 @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
 @unittest.skipIf(sys.hexversion < 0x03020000,
                  "TemporaryDirectory introduced in 3.2.")
@@ -1044,8 +1043,9 @@ class TestSuiteXML(unittest.TestCase):
         """
         fptr = BytesIO()
 
-        buffer = b"<?xpacket begin='" + codecs.BOM_UTF8
-        buffer += b"' id='W5M0MpCehiHzreSzNTczkc9d'?>"
+        buffer = b"<?xpacket "
+        buffer += b"begin='" + codecs.BOM_UTF8 + b"' "
+        buffer += b"id='W5M0MpCehiHzreSzNTczkc9d'?>"
         buffer += b"<stuff>goes here</stuff>"
         buffer += b"<?xpacket end='w'?>"
 
@@ -1053,10 +1053,10 @@ class TestSuiteXML(unittest.TestCase):
         num_bytes = fptr.tell()
         fptr.seek(0)
 
-        if sys.hexversion < 0x03000000:
-            with warnings.catch_warnings(record=True) as w:
-                 glymur.jp2box.XMLBox.parse(fptr, 0, 8 + num_bytes)
-            assert issubclass(w[-1].category, UserWarning)
-        else:
-            with self.assertWarns(UserWarning):
-                glymur.jp2box.XMLBox.parse(fptr, 0, 8 + num_bytes)
+        with warnings.catch_warnings(record=True) as w:
+            glymur.jp2box.XMLBox.parse(fptr, 0, 8 + num_bytes)
+            if sys.hexversion < 0x03000000:
+                assert issubclass(w[-1].category, UserWarning)
+            else:
+                # Python3 handles the BOM just fine.
+                self.assertEqual(len(w), 0)

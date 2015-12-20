@@ -5,50 +5,51 @@ env:
   global:
       - CPLUS_INCLUDE_PATH=/usr/include/gdal
       - C_INCLUDE_PATH=/usr/include/gdal    
-  matrix:
-      include:
-      - python: 2.7
-        env:
-        - JOB_NAME: "27_openjpeg15"
-        - NUMPY_VERSION=1.10.2
-        - LXML_VERSION=3.5.0
-        - OPJ_LIB=1
-      - python: 2.7
-        env:
-        - JOB_NAME: "27_np172"
-        - NUMPY_VERSION=1.7.2
-        - LXML_VERSION=3.0.2
-        - OPJ_LIB=2
-      - python: 2.7
-        env:
-        - JOB_NAME: "27_latest"
-        - NUMPY_VERSION=1.10.2
-        - LXML_VERSION=3.5.0
-        - OPJ_LIB=2
-      - python: 3.3
-        env:
-        - JOB_NAME: "33"
-        - NUMPY_VERSION=1.7.2
-        - LXML_VERSION=3.0.2
-        - OPJ_LIB=2
-      - python: 3.4
-        env:
-        - JOB_NAME: "34"
-        - NUMPY_VERSION=1.9.2
-        - LXML_VERSION=3.4.4
-        - OPJ_LIB=2
-      - python: 3.5
-        env:
-        - JOB_NAME: "35_latest"
-        - NUMPY_VERSION=1.10.2
-        - LXML_VERSION=3.5.0
-        - OPJ_LIB=2
-      - python: 3.5
-        env:
-        - JOB_NAME: "no_openjpeg"
-        - NUMPY_VERSION=1.10.2
-        - LXML_VERSION=3.5.0
-        - OPJ_LIB=0
+
+matrix:
+    include:
+    - python: 2.7
+      env:
+      - JOB_NAME: "27_openjpeg15"
+      - NUMPY_VERSION=1.10.2
+      - LXML_VERSION=3.5.0
+      - OPJ_LIB=1
+    - python: 2.7
+      env:
+      - JOB_NAME: "27_np172"
+      - NUMPY_VERSION=1.7.2
+      - LXML_VERSION=3.0.2
+      - OPJ_LIB=2
+    - python: 2.7
+      env:
+      - JOB_NAME: "27_latest"
+      - NUMPY_VERSION=1.10.2
+      - LXML_VERSION=3.5.0
+      - OPJ_LIB=2
+    - python: 3.3
+      env:
+      - JOB_NAME: "33"
+      - NUMPY_VERSION=1.7.2
+      - LXML_VERSION=3.0.2
+      - OPJ_LIB=2
+    - python: 3.4
+      env:
+      - JOB_NAME: "34"
+      - NUMPY_VERSION=1.9.2
+      - LXML_VERSION=3.4.4
+      - OPJ_LIB=2
+    - python: 3.5
+      env:
+      - JOB_NAME: "35_latest"
+      - NUMPY_VERSION=1.10.2
+      - LXML_VERSION=3.5.0
+      - OPJ_LIB=2
+    - python: 3.5
+      env:
+      - JOB_NAME: "no_openjpeg"
+      - NUMPY_VERSION=1.10.2
+      - LXML_VERSION=3.5.0
+      - OPJ_LIB=0
     
 before_install:
   - sh -c "if test $OPJ_LIB -eq 1; then bash travis-install-openjpeg15.sh; elif test $OPJ_LIB -eq 2; then bash travis-install-openjpeg.sh; fi"

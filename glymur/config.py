@@ -173,6 +173,58 @@ def get_configdir():
 _parseoptions = {'full_codestream': False}
 
 
+def set_option(pat, value):
+    """Set the value of the specified option.
+
+    These options determine the way JPEG 2000 boxes are parsed.
+
+    Parameters
+    ----------
+    pat : str
+        Regexp which should match a single option.
+    full_codestream : bool, defaults to True
+        When False, only the codestream header is parsed for metadata.  This
+        can results in faster JP2/JPX parsing.  When True, the entire
+        codestream is parsed for metadata.
+
+    See also
+    --------
+    get_option
+
+    Examples
+    --------
+    To put back the default options, you can use:
+
+    >>> import glymur
+    >>> glymur.set_option(full_codestream=True)
+    """
+    if pat in ['full_codestream']:
+        _parseoptions['full_codestream'] = value
+    elif pat in ['short', 'xml', 'codestream']:
+        _printoptions[pat] = value
+
+
+def get_option(pat):
+    """Return the value of the specified option
+
+    Parameter
+    ---------
+    pat : str
+        Regexp which should match a single option.
+
+    Returns
+    -------
+    result : the value of the option
+
+    See also
+    --------
+    set_option
+    """
+    if pat in ['full_codestream']:
+        return _parseoptions['full_codestream']
+    elif pat in ['short', 'xml', 'codestream']:
+        return _printoptions[pat]
+
 def set_parseoptions(full_codestream=True):
     """Set parsing options.
 
@@ -196,7 +248,7 @@ def set_parseoptions(full_codestream=True):
     >>> import glymur
     >>> glymur.set_parseoptions(full_codestream=True)
     """
-    _parseoptions['full_codestream'] = full_codestream
+    set_option('full_codestream', full_codestream)
 
 
 def get_parseoptions():
@@ -253,7 +305,7 @@ def set_printoptions(**kwargs):
     for key, value in kwargs.items():
         if key not in ['short', 'xml', 'codestream']:
             raise TypeError('"{0}" not a valid keyword parameter.'.format(key))
-        _printoptions[key] = value
+        set_option(key, value)
 
 
 def get_printoptions():

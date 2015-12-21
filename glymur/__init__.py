@@ -6,7 +6,7 @@ from glymur import version
 __version__ = version.version
 
 from .jp2k import Jp2k
-from .jp2box import (get_printoptions,
+from .config import (get_printoptions,
                      set_printoptions,
                      get_parseoptions,
                      set_parseoptions)

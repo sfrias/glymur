@@ -168,3 +168,110 @@ def get_configdir():
 
     # Last stand.  Should handle windows... others?
     return os.path.join(os.path.expanduser('~'), 'glymur')
+
+
+_parseoptions = {'full_codestream': False}
+
+
+def set_parseoptions(full_codestream=True):
+    """Set parsing options.
+
+    These options determine the way JPEG 2000 boxes are parsed.
+
+    Parameters
+    ----------
+    full_codestream : bool, defaults to True
+        When False, only the codestream header is parsed for metadata.  This
+        can results in faster JP2/JPX parsing.  When True, the entire
+        codestream is parsed for metadata.
+
+    See also
+    --------
+    get_parseoptions
+
+    Examples
+    --------
+    To put back the default options, you can use:
+
+    >>> import glymur
+    >>> glymur.set_parseoptions(full_codestream=True)
+    """
+    _parseoptions['full_codestream'] = full_codestream
+
+
+def get_parseoptions():
+    """Return the current parsing options.
+
+    Returns
+    -------
+    dict
+        Dictionary of current print options with keys
+
+          - codestream : bool
+
+        For a full description of these options, see `set_parseoptions`.
+
+    See also
+    --------
+    set_parseoptions
+    """
+    return _parseoptions
+
+_printoptions = {'short': False, 'xml': True, 'codestream': True}
+
+
+def set_printoptions(**kwargs):
+    """Set printing options.
+
+    These options determine the way JPEG 2000 boxes are displayed.
+
+    Parameters
+    ----------
+    short : bool, optional
+        When True, only the box ID, offset, and length are displayed.  Useful
+        for displaying only the basic structure or skeleton of a JPEG 2000
+        file.
+    xml : bool, optional
+        When False, printing of the XML contents of any XML boxes or UUID XMP
+        boxes is suppressed.
+    codestream : bool, optional
+        When False, only the codestream header is printed.  When True, the
+        entire codestream is printed.  This option has no effect when the
+        'short' option is set to True.
+
+    See also
+    --------
+    get_printoptions
+
+    Examples
+    --------
+    To put back the default options, you can use:
+
+    >>> import glymur
+    >>> glymur.set_printoptions(short=False, xml=True, codestream=True)
+    """
+    for key, value in kwargs.items():
+        if key not in ['short', 'xml', 'codestream']:
+            raise TypeError('"{0}" not a valid keyword parameter.'.format(key))
+        _printoptions[key] = value
+
+
+def get_printoptions():
+    """Return the current print options.
+
+    Returns
+    -------
+    dict
+        Dictionary of current print options with keys
+
+          - short : bool
+          - xml : bool
+          - codestream : bool
+
+        For a full description of these options, see `set_printoptions`.
+
+    See also
+    --------
+    set_printoptions
+    """
+    return _printoptions

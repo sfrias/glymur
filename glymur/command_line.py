@@ -48,7 +48,7 @@ def main():
     if codestream_level == 0:
         set_option('print.codestream', False)
     elif codestream_level == 2:
-        set_option('parse.codestream_header', True)
+        set_option('parse.full_codestream', True)
 
     filename = args.filename
 

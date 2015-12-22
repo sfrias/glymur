@@ -1092,7 +1092,7 @@ class ContiguousCodestreamBox(Jp2kBox):
 
     @property
     def codestream(self):
-        if config.get_option('parse.codestream_header') is True:
+        if config.get_option('parse.full_codestream') is True:
             header_only = False
         else:
             header_only = True
@@ -1113,7 +1113,7 @@ class ContiguousCodestreamBox(Jp2kBox):
         title = Jp2kBox.__str__(self)
         if config.get_option('print.short') is True:
             return title
-        if config.get_option('parse.codestream_header') is False:
+        if config.get_option('print.codestream') is False:
             return title
 
         lst = []
@@ -1144,7 +1144,7 @@ class ContiguousCodestreamBox(Jp2kBox):
             Instance of the current contiguous codestream box.
         """
         main_header_offset = fptr.tell()
-        if config.get_option('parse.codestream_header') is True:
+        if config.get_option('parse.full_codestream'):
             codestream = Codestream(fptr, length, header_only=False)
         else:
             codestream = None

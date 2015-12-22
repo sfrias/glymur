@@ -47,9 +47,7 @@ class TestPrinting(unittest.TestCase):
         glymur.reset_option('all')
 
     def tearDown(self):
-        import ipdb; ipdb.set_trace()
         glymur.reset_option('all')
-        print(glymur.config._options)
 
     def test_palette(self):
         """
@@ -1206,6 +1204,7 @@ class TestJp2dump(unittest.TestCase):
         lines = fixtures.nemo.split('\n')
         expected = lines[0:140]
         expected = '\n'.join(expected)
+        self.maxDiff = None
         self.assertEqual(actual, expected)
 
     def test_jp2_codestream_2(self):

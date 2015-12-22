@@ -172,13 +172,12 @@ def get_configdir():
 
 
 _parseoptions = {'full_codestream': False}
-_original_options = {
-    'parse.codestream_header': True,
+_options = {
+    'parse.full_codestream': False,
     'print.xml': True,
     'print.codestream': True,
     'print.short': False,
 }
-_options = copy.deepcopy(_original_options)
 
 
 def set_option(key, value):
@@ -188,7 +187,7 @@ def set_option(key, value):
 
     Available options:
 
-        parse.codestream_header
+        parse.full_codestream
         print.xml
         print.codestream
         print.short
@@ -214,7 +213,7 @@ def get_option(key):
 
     Available options:
 
-        parse.codestream_header
+        parse.full_codestream
         print.xml
         print.codestream
         print.short
@@ -242,7 +241,7 @@ def reset_option(key):
 
     Available options:
 
-        parse.codestream_header
+        parse.full_codestream
         print.xml
         print.codestream
         print.short
@@ -253,7 +252,10 @@ def reset_option(key):
         Name of a single option.
     """
     if key == 'all':
-        _options = copy.deepcopy(_original_options)
+        set_option('parse.full_codestream', False)
+        set_option('print.xml', True)
+        set_option('print.codestream', True)
+        set_option('print.short', False)
     else:
         if key not in _options.keys():
             raise KeyError('{key} not valid.'.format(key=key))
@@ -282,7 +284,7 @@ def set_parseoptions(full_codestream=True):
     >>> import glymur
     >>> glymur.set_parseoptions(full_codestream=True)
     """
-    set_option('full_codestream', full_codestream)
+    set_option('parse.full_codestream', full_codestream)
 
 
 def get_parseoptions():

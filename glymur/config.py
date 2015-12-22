@@ -338,10 +338,12 @@ def set_printoptions(**kwargs):
     >>> import glymur
     >>> glymur.set_printoptions(short=False, xml=True, codestream=True)
     """
+    warnings.warn('Use set_option instead of set_printoptions.',
+                  DeprecationWarning)
     for key, value in kwargs.items():
         if key not in ['short', 'xml', 'codestream']:
             raise TypeError('"{0}" not a valid keyword parameter.'.format(key))
-        set_option(key, value)
+        set_option('print.' + key, value)
 
 
 def get_printoptions():
@@ -362,4 +364,6 @@ def get_printoptions():
     --------
     set_printoptions
     """
+    warnings.warn('Use get_option instead of get_printoptions.',
+                  DeprecationWarning)
     return _printoptions

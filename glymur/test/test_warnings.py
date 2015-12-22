@@ -34,8 +34,12 @@ class TestSuite(unittest.TestCase):
         self.j2kfile = glymur.data.goodstuff()
         self.jpxfile = glymur.data.jpxfile()
 
+        # Reset printoptions for every test.
+        glymur.reset_option('all')
+
     def tearDown(self):
         warnings.resetwarnings()
+        glymur.reset_option('all')
 
     def test_unrecognized_marker(self):
         """
@@ -994,6 +998,19 @@ class TestSuite(unittest.TestCase):
             else:
                 with self.assertWarns(UserWarning):
                     Jp2k(tfile.name, data=data, cinema2k=24)
+
+    def test_deprecated_set_get_printoptions(self):
+        """
+        Verify deprecated get_printoptions and set_printoptions
+        """
+        with self.assertWarns(DeprecationWarning):
+            glymur.set_printoptions(short=True)
+        with self.assertWarns(DeprecationWarning):
+            glymur.set_printoptions(xml=True)
+        with self.assertWarns(DeprecationWarning):
+            glymur.set_printoptions(codestream=True)
+        with self.assertWarns(DeprecationWarning):
+            glymur.get_printoptions()
 
 
 @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)

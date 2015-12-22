@@ -1153,6 +1153,24 @@ class TestPrinting(unittest.TestCase):
 
         self.assertEqual(actual, fixtures.multiple_precinct_size)
 
+    def test_old_short_option(self):
+        """
+        Verify printing with deprecated set_printoptions "short"
+        """
+        jp2 = Jp2k(self.jp2file)
+        glymur.set_printoptions(short=True)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                print(jp2)
+            actual = fake_out.getvalue().strip()
+            # Get rid of the file line, that's kind of volatile.
+            actual = '\n'.join(actual.splitlines()[1:])
+
+        expected = fixtures.nemo_dump_short
+        self.assertEqual(actual, expected)
+
+
 class TestJp2dump(unittest.TestCase):
     """Tests for verifying how jp2dump console script works."""
     def setUp(self):

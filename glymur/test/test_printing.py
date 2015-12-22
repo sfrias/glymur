@@ -44,10 +44,12 @@ class TestPrinting(unittest.TestCase):
         self.j2kfile = glymur.data.goodstuff()
 
         # Reset printoptions for every test.
-        glymur.set_printoptions(short=False, xml=True, codestream=True)
+        glymur.reset_option('all')
 
     def tearDown(self):
-        glymur.set_printoptions(short=False, xml=True, codestream=True)
+        import ipdb; ipdb.set_trace()
+        glymur.reset_option('all')
+        print(glymur.config._options)
 
     def test_palette(self):
         """
@@ -123,6 +125,7 @@ class TestPrinting(unittest.TestCase):
             print(box)
             actual = fake_out.getvalue().strip()
         expected = fixtures.file1_xml_box
+        self.maxDiff = None
         self.assertEqual(actual, expected)
 
     def test_uuid(self):
@@ -266,7 +269,7 @@ class TestPrinting(unittest.TestCase):
                 warnings.simplefilter("ignore")
                 jpx = Jp2k(tfile.name)
 
-            glymur.set_printoptions(short=True)
+            glymur.set_option('print.short', True)
             with patch('sys.stdout', new=StringIO()) as fake_out:
                 print(jpx.box[-1])
                 actual = fake_out.getvalue().strip()
@@ -278,8 +281,8 @@ class TestPrinting(unittest.TestCase):
 
     def test_printoptions_bad_argument(self):
         """Verify error when bad parameter to set_printoptions"""
-        with self.assertRaises(TypeError):
-            glymur.set_printoptions(hi='low')
+        with self.assertRaises(KeyError):
+            glymur.set_option('hi', 'low')
 
     @unittest.skipIf(re.match("1.5|2",
                               glymur.version.openjpeg_version) is None,
@@ -509,6 +512,7 @@ class TestPrinting(unittest.TestCase):
             actual = fake_out.getvalue().strip()
 
         expected = fixtures.nemo_xmp_box
+        self.maxDiff = None
         self.assertEqual(actual, expected)
 
     def test_codestream(self):
@@ -1159,11 +1163,10 @@ class TestJp2dump(unittest.TestCase):
         self.j2kfile = glymur.data.goodstuff()
 
         # Reset printoptions for every test.
-        glymur.set_printoptions(short=False, xml=True, codestream=True)
-        glymur.set_parseoptions(full_codestream=False)
+        glymur.reset_option('all')
 
     def tearDown(self):
-        glymur.set_parseoptions(full_codestream=False)
+        glymur.reset_option('all')
 
     def run_jp2dump(self, args):
         sys.argv = args
@@ -1251,4 +1254,5 @@ class TestJp2dump(unittest.TestCase):
         expected = lines[0:18]
         expected.extend(lines[104:140])
         expected = '\n'.join(expected)
+        self.maxDiff = None
         self.assertEqual(actual, expected)

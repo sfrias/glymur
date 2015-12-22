@@ -1,6 +1,7 @@
 """
 Configure glymur to use installed libraries if possible.
 """
+import copy
 import ctypes
 from ctypes.util import find_library
 import os
@@ -171,59 +172,92 @@ def get_configdir():
 
 
 _parseoptions = {'full_codestream': False}
+_original_options = {
+    'parse.codestream_header': True,
+    'print.xml': True,
+    'print.codestream': True,
+    'print.short': False,
+}
+_options = copy.deepcopy(_original_options)
 
 
-def set_option(pat, value):
+def set_option(key, value):
     """Set the value of the specified option.
 
     These options determine the way JPEG 2000 boxes are parsed.
 
+    Available options:
+
+        parse.codestream_header
+        print.xml
+        print.codestream
+        print.short
+
     Parameters
     ----------
-    pat : str
-        Regexp which should match a single option.
-    full_codestream : bool, defaults to True
-        When False, only the codestream header is parsed for metadata.  This
-        can results in faster JP2/JPX parsing.  When True, the entire
-        codestream is parsed for metadata.
+    key : str
+        Name of a single option.
+    value : 
+        New value of option.
 
     See also
     --------
     get_option
-
-    Examples
-    --------
-    To put back the default options, you can use:
-
-    >>> import glymur
-    >>> glymur.set_option(full_codestream=True)
     """
-    if pat in ['full_codestream']:
-        _parseoptions['full_codestream'] = value
-    elif pat in ['short', 'xml', 'codestream']:
-        _printoptions[pat] = value
+    if key not in _options.keys():
+        raise KeyError('{key} not valid.'.format(key=key))
+    _options[key] = value
 
 
-def get_option(pat):
+def get_option(key):
     """Return the value of the specified option
+
+    Available options:
+
+        parse.codestream_header
+        print.xml
+        print.codestream
+        print.short
 
     Parameter
     ---------
-    pat : str
-        Regexp which should match a single option.
+    key : str
+        Name of a single option.
 
     Returns
     -------
-    result : the value of the option
+    result : the value of the option.
 
     See also
     --------
     set_option
     """
-    if pat in ['full_codestream']:
-        return _parseoptions['full_codestream']
-    elif pat in ['short', 'xml', 'codestream']:
-        return _printoptions[pat]
+    return _options[key]
+
+def reset_option(key):
+    """
+    Reset one or more options to their default value.
+
+    Pass "all" as argument to reset all options.
+
+    Available options:
+
+        parse.codestream_header
+        print.xml
+        print.codestream
+        print.short
+
+    Parameter
+    ---------
+    key : str
+        Name of a single option.
+    """
+    if key == 'all':
+        _options = copy.deepcopy(_original_options)
+    else:
+        if key not in _options.keys():
+            raise KeyError('{key} not valid.'.format(key=key))
+        _options[key] = _original_options[key]
 
 def set_parseoptions(full_codestream=True):
     """Set parsing options.

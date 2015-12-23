@@ -171,7 +171,6 @@ def get_configdir():
     return os.path.join(os.path.expanduser('~'), 'glymur')
 
 
-_parseoptions = {'full_codestream': False}
 _options = {
     'parse.full_codestream': False,
     'print.xml': True,
@@ -366,4 +365,7 @@ def get_printoptions():
     """
     warnings.warn('Use get_option instead of get_printoptions.',
                   DeprecationWarning)
-    return _printoptions
+    d = {}
+    for key in ['short', 'xml', 'codestream']:
+        d[key] = _options['print.' + key]
+    return d

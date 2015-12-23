@@ -1175,6 +1175,87 @@ class TestPrinting(unittest.TestCase):
             opt = glymur.get_printoptions()['short']
         self.assertTrue(opt)
 
+    def test_suppress_xml_old_option(self):
+        """
+        Verify printing with xml suppressed, deprecated method
+        """
+        jp2 = Jp2k(self.jp2file)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            glymur.set_printoptions(xml=False)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(jp2)
+            actual = fake_out.getvalue().strip()
+            # Get rid of the file line, that's kind of volatile.
+            actual = '\n'.join(actual.splitlines()[1:])
+
+        # shave off the XML and non-main-header segments
+        expected = fixtures.nemo_dump_no_xml
+        self.assertEqual(actual, expected)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            opt = glymur.get_printoptions()['xml']
+        self.assertFalse(opt)
+
+    def test_suppress_xml(self):
+        """
+        Verify printing with xml suppressed
+        """
+        jp2 = Jp2k(self.jp2file)
+        glymur.set_option('print.xml', False)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(jp2)
+            actual = fake_out.getvalue().strip()
+            # Get rid of the file line, that's kind of volatile.
+            actual = '\n'.join(actual.splitlines()[1:])
+
+        # shave off the XML and non-main-header segments
+        expected = fixtures.nemo_dump_no_xml
+        self.assertEqual(actual, expected)
+
+        opt = glymur.get_option('print.xml')
+        self.assertFalse(opt)
+
+    def test_suppress_codestream_old_option(self):
+        """
+        Verify printing with codestream suppressed, deprecated
+        """
+        jp2 = Jp2k(self.jp2file)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            glymur.set_printoptions(codestream=False)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(jp2)
+            actual = fake_out.getvalue().strip()
+            # Get rid of the file line, that's kind of volatile.
+            actual = '\n'.join(actual.splitlines()[1:])
+
+        expected = fixtures.nemo_dump_no_codestream
+        self.assertEqual(actual, expected)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            opt = glymur.get_printoptions()['codestream']
+        self.assertFalse(opt)
+
+    def test_suppress_codestream(self):
+        """
+        Verify printing with codestream suppressed
+        """
+        jp2 = Jp2k(self.jp2file)
+        glymur.set_option('print.codestream', False)
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            print(jp2)
+            actual = fake_out.getvalue().strip()
+            # Get rid of the file line, that's kind of volatile.
+            actual = '\n'.join(actual.splitlines()[1:])
+
+        expected = fixtures.nemo_dump_no_codestream
+        self.assertEqual(actual, expected)
+
+        opt = glymur.get_option('print.codestream')
+        self.assertFalse(opt)
 
 class TestJp2dump(unittest.TestCase):
     """Tests for verifying how jp2dump console script works."""

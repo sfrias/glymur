@@ -304,8 +304,6 @@ def get_parseoptions():
     """
     return _parseoptions
 
-_printoptions = {'short': False, 'xml': True, 'codestream': True}
-
 
 def set_printoptions(**kwargs):
     """Set printing options.

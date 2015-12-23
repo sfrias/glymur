@@ -182,8 +182,6 @@ _options = {
 def set_option(key, value):
     """Set the value of the specified option.
 
-    These options determine the way JPEG 2000 boxes are parsed.
-
     Available options:
 
         parse.full_codestream
@@ -197,6 +195,24 @@ def set_option(key, value):
         Name of a single option.
     value : 
         New value of option.
+
+    Option Descriptions
+    -------------------
+    parse.full_codestream : bool
+        When False, only the codestream header is parsed for metadata.  This
+        can results in faster JP2/JPX parsing.  When True, the entire
+        codestream is parsed. [default: False]
+    print.codestream : bool
+        When False, the codestream segments are not printed.  Otherwise the
+        segments are printed depending on the value of the
+        parse.full_codestream option. [default: True]
+    print.short : bool
+        When True, only the box ID, offset, and length are displayed.  Useful
+        for displaying only the basic structure or skeleton of a JPEG 2000
+        file. [default: False]
+    print.xml : bool
+        When False, printing of the XML contents of any XML boxes or UUID XMP
+        boxes is suppressed. [default: True]
 
     See also
     --------
@@ -320,9 +336,8 @@ def set_printoptions(**kwargs):
         When False, printing of the XML contents of any XML boxes or UUID XMP
         boxes is suppressed.
     codestream : bool, optional
-        When False, only the codestream header is printed.  When True, the
-        entire codestream is printed.  This option has no effect when the
-        'short' option is set to True.
+        When False, the codestream segments are not printed.  Otherwise the
+        segments are printed depending on how set_parseoptions has been used.
 
     See also
     --------

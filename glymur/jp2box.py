@@ -3024,6 +3024,7 @@ class XMLBox(Jp2kBox):
     """
     box_id = 'xml '
     longname = 'XML'
+    parser = ET.XMLParser(remove_blank_text=True)
 
     def __init__(self, xml=None, filename=None, length=0, offset=-1):
         """
@@ -3041,7 +3042,7 @@ class XMLBox(Jp2kBox):
                    "should be provided.")
             raise IOError(msg)
         if filename is not None:
-            self.xml = ET.parse(filename)
+            self.xml = ET.parse(filename, self.parser)
         else:
             self.xml = xml
         self.length = length
@@ -3138,7 +3139,7 @@ class XMLBox(Jp2kBox):
             text = text[38:]
 
         try:
-            elt = ET.fromstring(text)
+            elt = ET.fromstring(text, cls.parser)
             xml = ET.ElementTree(elt)
         except ET.ParseError as err:
             msg = ('A problem was encountered while parsing an XML box:'

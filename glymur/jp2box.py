@@ -3637,6 +3637,10 @@ class UUIDBox(Jp2kBox):
         lst.append(txt)
 
         gdal.Unlink(in_mem_name)
+        4mt = ("Coordinate System = {coordinate_system}"
+               "Origin = ({origin_x}, {origin_y)}"
+               "Pixel Size = ({pixel_x_size}, {pixel_y_size})"
+               "Corner Coordinates: {corner_coords}")
         return '\n'.join(lst)
 
     def GDALInfoReportCorner(self, hDataset, hTransform, corner_name, x, y):

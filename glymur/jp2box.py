@@ -3633,15 +3633,15 @@ class UUIDBox(Jp2kBox):
                "{coordinate_system}\n"
                "{geotransform}\n"
                "Corner Coordinates:\n"
-               "Upper Left  {uleft}\n"
-               "Lower Left  {lleft}\n"
-               "Upper Right {uright}\n"
-               "Lower Right {lright}\n"
-               "Center      {center}")
+               "{upper_left}\n"
+               "{lower_left}\n"
+               "{upper_right}\n"
+               "{lower_right}\n"
+               "{center}")
         msg = fmt.format(coordinate_system=self._indent(psz_pretty_wkt),
                          geotransform=geotransform_str,
-                         uleft=uleft, uright=uright,
-                         lleft=lleft, lright=lright, center=center)
+                         upper_left=uleft, upper_right=uright,
+                         lower_left=lleft, lower_right=lright, center=center)
         return msg
 
     def GDALInfoReportCorner(self, hDataset, hTransform, corner_name, x, y):

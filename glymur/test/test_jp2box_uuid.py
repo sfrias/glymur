@@ -155,7 +155,6 @@ class TestSuiteHiRISE(unittest.TestCase):
     @unittest.skipIf(sys.platform == 'cygwin', 'Problem with corner coords')
     def test_printing(self):
         jp2 = Jp2k(self.hirise_jp2file_name)
-        print(jp2.box[4])
         with patch('sys.stdout', new=StringIO()) as fake_out:
             print(jp2.box[4])
             actual = fake_out.getvalue().strip()
@@ -163,8 +162,8 @@ class TestSuiteHiRISE(unittest.TestCase):
             expected = fixtures.geotiff_uuid
         else:
             expected = fixtures.geotiff_uuid_without_gdal
-        self.maxDiff = None
         self.assertEqual(actual, expected)
+        pass
 
 
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

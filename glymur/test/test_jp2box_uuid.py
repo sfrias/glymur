@@ -163,6 +163,7 @@ class TestSuiteHiRISE(unittest.TestCase):
             expected = fixtures.geotiff_uuid
         else:
             expected = fixtures.geotiff_uuid_without_gdal
+        self.maxDiff = None
         self.assertEqual(actual, expected)
 
 

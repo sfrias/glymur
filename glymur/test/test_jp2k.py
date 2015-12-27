@@ -1193,6 +1193,7 @@ class TestJp2k_write(fixtures.MetadataBase):
                          ((2, 2), (4, 4), (8, 8), (16, 16), (32, 32),
                           (64, 64)))
 
+    @unittest.skipIf(fixtures.low_memory_machine(), "Low memory machine")
     def test_NR_ENC_Bretagne2_ppm_4_encode(self):
         """
         Original file tested was

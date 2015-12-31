@@ -6,9 +6,9 @@ import ctypes
 from ctypes.util import find_library
 import os
 import platform
+import sys
 import warnings
 
-import sys
 if sys.hexversion <= 0x03000000:
     from ConfigParser import SafeConfigParser as ConfigParser
     from ConfigParser import NoOptionError, NoSectionError
@@ -59,20 +59,30 @@ def glymurrc_fname():
 
 def load_openjpeg_library(libname):
 
+    # A location specified by the glymur configuration file has precedence.
     path = read_config_file(libname)
     if path is not None:
         return load_library_handle(libname, path)
 
     # No location specified by the configuration file, must look for it
-    # elsewhere.
+    # elsewhere.  Here we attempt to locate it in the usual system-dependent
+    # locations.
     path = find_library(libname)
 
+    # At the moment, 
     if path is None and 'Anaconda' in sys.version:
         if platform.system() == 'Windows':
-            lib = os.path.join(os.path.dirname(sys.executable),
-                               'Library', 'bin', libname + '.dll')
-            if os.path.exists(lib):
-                path = lib
+            basedir = os.path.dirname(sys.executable)
+            lib = os.path.join(basedir, 'Library', 'bin', libname + '.dll')
+        elif platform.system() == 'Linux':
+            basedir = os.path.dirname(os.path.dirname(sys.executable))
+            lib = os.path.join(basedir, 'lib', libname + '.so')
+        elif platform.system() == 'Darwin':
+            basedir = os.path.dirname(os.path.dirname(sys.executable))
+            lib = os.path.join(basedir, 'lib', libname + '.dylib')
+
+        if os.path.exists(lib):
+            path = lib
 
     if path is None:
         # Could not find a library via ctypes
@@ -85,7 +95,6 @@ def load_openjpeg_library(libname):
         if path is not None and not os.path.exists(path):
             # the mac/win default location does not exist.
             return None
-
     return load_library_handle(libname, path)
 
 

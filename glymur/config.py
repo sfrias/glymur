@@ -71,7 +71,7 @@ def load_openjpeg_library(libname):
 
     # Attempt to locate in the usual location in Anaconda/other.
     if path is None and 'Anaconda' in sys.version:
-        suffix = '.so' if if platform.system() == 'Linux' else '.dylib'
+        suffix = '.so' if platform.system() == 'Linux' else '.dylib'
         basedir = os.path.dirname(os.path.dirname(sys.executable))
         lib = os.path.join(basedir, 'lib', 'lib' + libname + suffix)
         if os.path.exists(lib):

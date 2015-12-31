@@ -66,30 +66,22 @@ def load_openjpeg_library(libname):
 
     # No location specified by the configuration file, must look for it
     # elsewhere.  Here we attempt to locate it in the usual system-dependent
-    # locations.
+    # locations.  This works in Anaconda/windows, but not Anaconda/other.
     path = find_library(libname)
 
-    # At the moment, 
+    # Attempt to locate in the usual location in Anaconda/other.
     if path is None and 'Anaconda' in sys.version:
-        if platform.system() == 'Windows':
-            basedir = os.path.dirname(sys.executable)
-            lib = os.path.join(basedir, 'Library', 'bin', libname + '.dll')
-        elif platform.system() == 'Linux':
-            basedir = os.path.dirname(os.path.dirname(sys.executable))
-            lib = os.path.join(basedir, 'lib', libname + '.so')
-        elif platform.system() == 'Darwin':
-            basedir = os.path.dirname(os.path.dirname(sys.executable))
-            lib = os.path.join(basedir, 'lib', libname + '.dylib')
-
+        suffix = '.so' if if platform.system() == 'Linux' else '.dylib'
+        basedir = os.path.dirname(os.path.dirname(sys.executable))
+        lib = os.path.join(basedir, 'lib', 'lib' + libname + suffix)
         if os.path.exists(lib):
             path = lib
 
+    # Last gasp.
     if path is None:
-        # Could not find a library via ctypes
         if platform.system() == 'Darwin':
-            # MacPorts
             path = _macports_default_location[libname]
-        elif os.name == 'nt':
+        elif platform.system == 'Windows':
             path = _windows_default_location[libname]
 
         if path is not None and not os.path.exists(path):

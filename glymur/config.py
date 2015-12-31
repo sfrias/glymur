@@ -67,6 +67,13 @@ def load_openjpeg_library(libname):
     # elsewhere.
     path = find_library(libname)
 
+    if path is None and 'Anaconda' in sys.version:
+        if platform.system() == 'Windows':
+            lib = os.path.join(os.path.dirname(sys.executable),
+                               'Library', 'bin', libname + '.dll')
+            if os.path.exists(lib):
+                path = lib
+
     if path is None:
         # Could not find a library via ctypes
         if platform.system() == 'Darwin':

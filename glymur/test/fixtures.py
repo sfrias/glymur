@@ -698,7 +698,8 @@ file1_xml_box = """XML Box (xml ) @ (36, 439)
             <CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>
             <IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>
         </GENERAL_CREATION_INFO>
-    </IMAGE_CREATION>"""
+    </IMAGE_CREATION>
+"""
 
 issue_182_cmap = """Component Mapping Box (cmap) @ (130, 24)
     Component 0 ==> palette column 0

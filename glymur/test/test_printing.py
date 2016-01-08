@@ -60,12 +60,9 @@ class TestPrinting(unittest.TestCase):
         signed = (False, False, False)
         box = glymur.jp2box.PaletteBox(palette, bits_per_component=bps,
                                        signed=signed, length=782, offset=66)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(box)
-            actual = fake_out.getvalue().strip()
-        lines = ['Palette Box (pclr) @ (66, 782)',
-                 '    Size:  (256 x 3)']
-        expected = '\n'.join(lines)
+        actual = str(box)
+        expected = ('Palette Box (pclr) @ (66, 782)\n'
+                    '    Size:  (256 x 3)')
         self.assertEqual(actual, expected)
 
     def test_component_mapping(self):
@@ -78,14 +75,11 @@ class TestPrinting(unittest.TestCase):
                                                  mapping_type=(1, 1, 1),
                                                  palette_index=(0, 1, 2),
                                                  length=20, offset=848)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(cmap)
-            actual = fake_out.getvalue().strip()
-        lines = ['Component Mapping Box (cmap) @ (848, 20)',
-                 '    Component 0 ==> palette column 0',
-                 '    Component 0 ==> palette column 1',
-                 '    Component 0 ==> palette column 2']
-        expected = '\n'.join(lines)
+        actual = str(cmap)
+        expected = ('Component Mapping Box (cmap) @ (848, 20)\n'
+                    '    Component 0 ==> palette column 0\n'
+                    '    Component 0 ==> palette column 1\n'
+                    '    Component 0 ==> palette column 2')
         self.assertEqual(actual, expected)
 
     def test_channel_definition(self):
@@ -100,14 +94,11 @@ class TestPrinting(unittest.TestCase):
                                                   channel_type=channel_type,
                                                   association=association,
                                                   length=28, offset=81)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(cdef)
-            actual = fake_out.getvalue().strip()
-        lines = ['Channel Definition Box (cdef) @ (81, 28)',
-                 '    Channel 0 (color) ==> (3)',
-                 '    Channel 1 (color) ==> (2)',
-                 '    Channel 2 (color) ==> (1)']
-        expected = '\n'.join(lines)
+        actual = str(cdef)
+        expected = ('Channel Definition Box (cdef) @ (81, 28)\n'
+                    '    Channel 0 (color) ==> (3)\n'
+                    '    Channel 1 (color) ==> (2)\n'
+                    '    Channel 2 (color) ==> (1)')
         self.assertEqual(actual, expected)
 
     def test_xml(self):
@@ -119,11 +110,8 @@ class TestPrinting(unittest.TestCase):
         elt = ET.fromstring(fixtures.file1_xml)
         xml = ET.ElementTree(elt)
         box = glymur.jp2box.XMLBox(xml=xml, length=439, offset=36)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(box)
-            actual = fake_out.getvalue().strip()
+        actual = str(box)
         expected = fixtures.file1_xml_box
-        self.maxDiff = None
         self.assertEqual(actual, expected)
 
     def test_uuid(self):
@@ -134,14 +122,11 @@ class TestPrinting(unittest.TestCase):
         """
         buuid = UUID('urn:uuid:3a0d0218-0ae9-4115-b376-4bca41ce0e71')
         box = glymur.jp2box.UUIDBox(buuid, b'\x00', 25, 1544)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(box)
-            actual = fake_out.getvalue().strip()
-        lines = ['UUID Box (uuid) @ (1544, 25)',
-                 '    UUID:  3a0d0218-0ae9-4115-b376-4bca41ce0e71 (unknown)',
-                 '    UUID Data:  1 bytes']
-
-        expected = '\n'.join(lines)
+        actual = str(box)
+        expected = (
+            'UUID Box (uuid) @ (1544, 25)\n'
+            '    UUID:  3a0d0218-0ae9-4115-b376-4bca41ce0e71 (unknown)\n'
+            '    UUID Data:  1 bytes')
         self.assertEqual(actual, expected)
 
     def test_invalid_progression_order(self):
@@ -155,9 +140,7 @@ class TestPrinting(unittest.TestCase):
             warnings.simplefilter('ignore')
             segment = glymur.codestream.CODsegment(*pargs, length=12,
                                                    offset=174)
-        with patch('sys.stdout', new=StringIO()) as stdout:
-            print(segment)
-            actual = stdout.getvalue().strip()
+        actual = str(segment)
         expected = fixtures.issue_186_progression_order
         self.assertEqual(actual, expected)
 
@@ -213,9 +196,7 @@ class TestPrinting(unittest.TestCase):
         box = BitsPerComponentBox((5, 5, 5, 1),
                                   (False, False, False, False),
                                   length=12, offset=62)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(box)
-            actual = fake_out.getvalue().strip()
+        actual = str(box)
         self.assertEqual(actual, fixtures.bpcc)
 
     def test_cinema_profile(self):

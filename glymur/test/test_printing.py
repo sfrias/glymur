@@ -401,9 +401,7 @@ class TestPrinting(unittest.TestCase):
         """verify printing of SIZ segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[1])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[1])
 
         exp = ('SIZ marker segment @ (3233, 47)\n'
                '    Profile:  no profile\n'
@@ -422,52 +420,40 @@ class TestPrinting(unittest.TestCase):
         """verify printing of SOC segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[0])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[0])
 
-        lines = ['SOC marker segment @ (3231, 0)']
-        expected = '\n'.join(lines)
+        expected = 'SOC marker segment @ (3231, 0)'
         self.assertEqual(actual, expected)
 
     def test_sod_segment(self):
         """verify printing of SOD segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream(header_only=False)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[10])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[10])
 
-        lines = ['SOD marker segment @ (3398, 0)']
-        expected = '\n'.join(lines)
+        expected = 'SOD marker segment @ (3398, 0)'
         self.assertEqual(actual, expected)
 
     def test_sot_segment(self):
         """verify printing of SOT segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream(header_only=False)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[5])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[5])
 
-        lines = ['SOT marker segment @ (3344, 10)',
-                 '    Tile part index:  0',
-                 '    Tile part length:  1132173',
-                 '    Tile part instance:  0',
-                 '    Number of tile parts:  1']
+        expected = ('SOT marker segment @ (3344, 10)\n'
+                    '    Tile part index:  0\n'
+                    '    Tile part length:  1132173\n'
+                    '    Tile part instance:  0\n'
+                    '    Number of tile parts:  1')
 
-        expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
 
     def test_xmp(self):
         """Verify the printing of a UUID/XMP box."""
         j = glymur.Jp2k(self.jp2file)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(j.box[3])
-            actual = fake_out.getvalue().strip()
+        actual = str(j.box[3])
 
         expected = fixtures.nemo_xmp_box
-        self.maxDiff = None
         self.assertEqual(actual, expected)
 
     def test_codestream(self):
@@ -475,9 +461,7 @@ class TestPrinting(unittest.TestCase):
         verify printing of entire codestream
         """
         j = glymur.Jp2k(self.jp2file)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(j.get_codestream())
-            actual = fake_out.getvalue().strip()
+        actual = str(j.get_codestream())
         exp = ('Codestream:\n'
                '    SOC marker segment @ (3231, 0)\n'
                '    SIZ marker segment @ (3233, 47)\n'
@@ -536,17 +520,14 @@ class TestPrinting(unittest.TestCase):
             xml = ET.parse(StringIO(text))
 
         xmlbox = glymur.jp2box.XMLBox(xml=xml)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(xmlbox)
-            actual = fake_out.getvalue().strip()
-            if sys.hexversion < 0x03000000:
-                lines = ["XML Box (xml ) @ (-1, 0)",
-                         "    <flow>Str\xc3\xb6mung</flow>"]
-            else:
-                lines = ["XML Box (xml ) @ (-1, 0)",
-                         "    <flow>Strömung</flow>"]
-            expected = '\n'.join(lines)
-            self.assertEqual(actual, expected)
+        actual = str(xmlbox)
+        if sys.hexversion < 0x03000000:
+            expected = ("XML Box (xml ) @ (-1, 0)\n"
+                        "    <flow>Str\xc3\xb6mung</flow>")
+        else:
+            expected = ("XML Box (xml ) @ (-1, 0)\n"
+                        "    <flow>Strömung</flow>")
+        self.assertEqual(actual, expected)
 
     @unittest.skipIf(sys.hexversion < 0x03000000,
                      "Only trusting python3 for printing non-ascii chars")
@@ -564,19 +545,16 @@ class TestPrinting(unittest.TestCase):
             xml = ET.parse(StringIO(text))
 
         xmlbox = glymur.jp2box.XMLBox(xml=xml)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(xmlbox)
-            actual = fake_out.getvalue().strip()
-            if sys.hexversion < 0x03000000:
-                lines = ["XML Box (xml ) @ (-1, 0)",
-                         ("    <country>&#1056;&#1086;&#1089;&#1089;",
-                          "&#1080;&#1103;</country>")]
-            else:
-                lines = ["XML Box (xml ) @ (-1, 0)",
-                         "    <country>Россия</country>"]
+        actual = str(xmlbox)
+        if sys.hexversion < 0x03000000:
+            expected = ("XML Box (xml ) @ (-1, 0)\n"
+                        ("    <country>&#1056;&#1086;&#1089;&#1089;"
+                         "&#1080;&#1103;</country>"))
+        else:
+            expected = ("XML Box (xml ) @ (-1, 0)\n"
+                        "    <country>Россия</country>")
 
-            expected = '\n'.join(lines)
-            self.assertEqual(actual, expected)
+        self.assertEqual(actual, expected)
 
     @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
     def test_less_common_boxes(self):
@@ -637,79 +615,64 @@ class TestPrinting(unittest.TestCase):
                 print(jp2k.box[3])
                 print(jp2k.box[4])
                 actual = fake_out.getvalue().strip()
-            lines = ['UUIDInfo Box (uinf) @ (77, 50)',
-                     '    UUID List Box (ulst) @ (85, 26)',
-                     '        UUID[0]:  00000000-0000-0000-0000-000000000000',
-                     '    Data Entry URL Box (url ) @ (111, 16)',
-                     '        Version:  0',
-                     '        Flag:  0 0 0',
-                     '        URL:  "abcd"',
-                     'Resolution Box (res ) @ (127, 44)',
-                     '    Capture Resolution Box (resc) @ (135, 18)',
-                     '        VCR:  1.0',
-                     '        HCR:  10.0',
-                     '    Display Resolution Box (resd) @ (153, 18)',
-                     '        VDR:  10.0',
-                     '        HDR:  1.0']
+            exp = ('UUIDInfo Box (uinf) @ (77, 50)\n'
+                   '    UUID List Box (ulst) @ (85, 26)\n'
+                   '        UUID[0]:  00000000-0000-0000-0000-000000000000\n'
+                   '    Data Entry URL Box (url ) @ (111, 16)\n'
+                   '        Version:  0\n'
+                   '        Flag:  0 0 0\n'
+                   '        URL:  "abcd"\n'
+                   'Resolution Box (res ) @ (127, 44)\n'
+                   '    Capture Resolution Box (resc) @ (135, 18)\n'
+                   '        VCR:  1.0\n'
+                   '        HCR:  10.0\n'
+                   '    Display Resolution Box (resd) @ (153, 18)\n'
+                   '        VDR:  10.0\n'
+                   '        HDR:  1.0')
 
-            expected = '\n'.join(lines)
-            self.assertEqual(actual, expected)
+            self.assertEqual(actual, exp)
 
     def test_flst(self):
         """Verify printing of fragment list box."""
         flst = glymur.jp2box.FragmentListBox([89], [1132288], [0])
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(flst)
-            actual = fake_out.getvalue().strip()
+        actual = str(flst)
         self.assertEqual(actual, fixtures.fragment_list_box)
 
     def test_dref(self):
         """Verify printing of data reference box."""
         dref = glymur.jp2box.DataReferenceBox()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(dref)
-            actual = fake_out.getvalue().strip()
+        actual = str(dref)
         self.assertEqual(actual, 'Data Reference Box (dtbl) @ (-1, 0)')
 
     def test_jplh_cgrp(self):
         """Verify printing of compositing layer header box, color group box."""
         jpx = glymur.Jp2k(self.jpxfile)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(jpx.box[7])
-            actual = fake_out.getvalue().strip()
+        actual = str(jpx.box[7])
         self.assertEqual(actual, fixtures.jplh_color_group_box)
 
     def test_free(self):
         """Verify printing of Free box."""
         free = glymur.jp2box.FreeBox()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(free)
-            actual = fake_out.getvalue().strip()
+        actual = str(free)
         self.assertEqual(actual, 'Free Box (free) @ (-1, 0)')
 
     def test_nlst(self):
         """Verify printing of number list box."""
         assn = (0, 16777216, 33554432)
         nlst = glymur.jp2box.NumberListBox(assn)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(nlst)
-            actual = fake_out.getvalue().strip()
+        actual = str(nlst)
         self.assertEqual(actual, fixtures.number_list_box)
 
     def test_ftbl(self):
         """Verify printing of fragment table box."""
         ftbl = glymur.jp2box.FragmentTableBox()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(ftbl)
-            actual = fake_out.getvalue().strip()
+        actual = str(ftbl)
         self.assertEqual(actual, 'Fragment Table Box (ftbl) @ (-1, 0)')
 
     def test_jpch(self):
         """Verify printing of JPCH box."""
         jpx = glymur.Jp2k(self.jpxfile)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(jpx.box[3])
-            actual = fake_out.getvalue().strip()
+        actual = str(jpx.box[3])
         self.assertEqual(actual, 'Codestream Header Box (jpch) @ (887, 8)')
 
     @unittest.skipIf(sys.hexversion < 0x03000000,
@@ -740,28 +703,20 @@ class TestPrinting(unittest.TestCase):
 
             j = glymur.Jp2k(tfile.name)
 
-            with patch('sys.stdout', new=StringIO()) as fake_out:
-                print(j.box[5])
-                actual = fake_out.getvalue().strip()
+            actual = str(j.box[5])
 
-        lines = ["UUID Box (uuid) @ (1135519, 76)",
-                 "    UUID:  4a706754-6966-6645-7869-662d3e4a5032 (EXIF)",
-                 ("    UUID Data:  OrderedDict([('ImageWidth', 256),"
-                  " ('ImageLength', 512), ('Make', 'HTC')])")]
-
-        expected = '\n'.join(lines)
-
+        expected = ("UUID Box (uuid) @ (1135519, 76)\n"
+                    "    UUID:  4a706754-6966-6645-7869-662d3e4a5032 (EXIF)\n"
+                    "    UUID Data:  OrderedDict([('ImageWidth', 256), "
+                    "('ImageLength', 512), ('Make', 'HTC')])")
         self.assertEqual(actual, expected)
 
     def test_crg(self):
         """verify printing of CRG segment"""
         crg = glymur.codestream.CRGsegment((65535,), (32767,), 6, 87)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(crg)
-            actual = fake_out.getvalue().strip()
-        lines = ['CRG marker segment @ (87, 6)',
-                 '    Vertical, Horizontal offset:  (0.50, 1.00)']
-        expected = '\n'.join(lines)
+        actual = str(crg)
+        expected = ('CRG marker segment @ (87, 6)\n'
+                    '    Vertical, Horizontal offset:  (0.50, 1.00)')
         self.assertEqual(actual, expected)
 
     def test_rgn(self):
@@ -769,14 +724,11 @@ class TestPrinting(unittest.TestCase):
         verify printing of RGN segment
         """
         segment = glymur.codestream.RGNsegment(0, 0, 7, 5, 310)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(segment)
-            actual = fake_out.getvalue().strip()
-        lines = ['RGN marker segment @ (310, 5)',
-                 '    Associated component:  0',
-                 '    ROI style:  0',
-                 '    Parameter:  7']
-        expected = '\n'.join(lines)
+        actual = str(segment)
+        expected = ('RGN marker segment @ (310, 5)\n'
+                    '    Associated component:  0\n'
+                    '    ROI style:  0\n'
+                    '    Parameter:  7')
         self.assertEqual(actual, expected)
 
     def test_sop(self):
@@ -784,12 +736,9 @@ class TestPrinting(unittest.TestCase):
         verify printing of SOP segment
         """
         segment = glymur.codestream.SOPsegment(15, 4, 12836)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(segment)
-            actual = fake_out.getvalue().strip()
-        lines = ['SOP marker segment @ (12836, 4)',
-                 '    Nsop:  15']
-        expected = '\n'.join(lines)
+        actual = str(segment)
+        expected = ('SOP marker segment @ (12836, 4)\n'
+                    '    Nsop:  15')
         self.assertEqual(actual, expected)
 
     def test_cme(self):
@@ -800,12 +749,9 @@ class TestPrinting(unittest.TestCase):
         """
         buffer = "Creator: AV-J2K (c) 2000,2001 Algo Vision".encode('latin-1')
         segment = glymur.codestream.CMEsegment(1, buffer, 45, 85)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(segment)
-            actual = fake_out.getvalue().strip()
-        lines = ['CME marker segment @ (85, 45)',
-                 '    "Creator: AV-J2K (c) 2000,2001 Algo Vision"']
-        expected = '\n'.join(lines)
+        actual = str(segment)
+        expected = ('CME marker segment @ (85, 45)\n'
+                    '    "Creator: AV-J2K (c) 2000,2001 Algo Vision"')
         self.assertEqual(actual, expected)
 
     def test_plt_segment(self):
@@ -819,9 +765,7 @@ class TestPrinting(unittest.TestCase):
                        2188, 2223]
         segment = glymur.codestream.PLTsegment(0, pkt_lengths, 38, 7871146)
 
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(segment)
-            actual = fake_out.getvalue().strip()
+        actual = str(segment)
 
         exp = ('PLT marker segment @ (7871146, 38)\n'
                '    Index:  0\n'
@@ -829,17 +773,6 @@ class TestPrinting(unittest.TestCase):
                ' 55, 82, 299, 93, 941, 951, 687, 1729, 1443, 1008, 2168,'
                ' 2188, 2223]')
         self.assertEqual(actual, exp)
-
-    def test_componentmapping_box_alpha(self):
-        """Verify __repr__ method on cmap box."""
-        cmap = glymur.jp2box.ComponentMappingBox(component_index=(0, 0, 0),
-                                                 mapping_type=(1, 1, 1),
-                                                 palette_index=(0, 1, 2))
-        newbox = eval(repr(cmap))
-        self.assertEqual(newbox.box_id, 'cmap')
-        self.assertEqual(newbox.component_index, (0, 0, 0))
-        self.assertEqual(newbox.mapping_type, (1, 1, 1))
-        self.assertEqual(newbox.palette_index, (0, 1, 2))
 
     def test_pod_segment(self):
         """

@@ -1,5 +1,6 @@
 # -*- coding:  utf-8 -*-
-"""Test suite for printing.
+"""
+Test suite for printing.
 """
 from io import BytesIO
 import os
@@ -154,8 +155,7 @@ class TestPrinting(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             segment = glymur.codestream.CODsegment(*pargs, length=0, offset=0)
-        with patch('sys.stdout', new=StringIO()):
-            print(segment)
+        str(segment)
 
     def test_bad_rsiz(self):
         """
@@ -175,8 +175,7 @@ class TestPrinting(unittest.TestCase):
                   'length': 47,
                   'offset': 2}
         segment = glymur.codestream.SIZsegment(**kwargs)
-        with patch('sys.stdout', new=StringIO()):
-            print(segment)
+        str(segment)
 
     def test_invalid_colorspace(self):
         """
@@ -186,8 +185,7 @@ class TestPrinting(unittest.TestCase):
         """
         colr = ColourSpecificationBox(colorspace=276)
         colr.colorspace = 276
-        with patch('sys.stdout', new=StringIO()):
-            print(colr)
+        str(colr)
 
     def test_bpcc(self):
         """
@@ -215,16 +213,12 @@ class TestPrinting(unittest.TestCase):
                   'length': 47,
                   'offset': 2}
         segment = glymur.codestream.SIZsegment(**kwargs)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(segment)
-            actual = fake_out.getvalue().strip()
+        actual = str(segment)
         self.assertEqual(actual, fixtures.cinema2k_profile)
 
     def test_version_info(self):
         """Should be able to print(glymur.version.info)"""
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(glymur.version.info)
-            fake_out.getvalue().strip()
+        str(glymur.version.info)
 
         self.assertTrue(True)
 
@@ -249,9 +243,7 @@ class TestPrinting(unittest.TestCase):
                 jpx = Jp2k(tfile.name)
 
             glymur.set_option('print.short', True)
-            with patch('sys.stdout', new=StringIO()) as fake_out:
-                print(jpx.box[-1])
-                actual = fake_out.getvalue().strip()
+            actual = str(jpx.box[-1])
             if sys.hexversion < 0x03000000:
                 expected = "Unknown Box (grp ) @ (1399071, 20)"
             else:
@@ -306,24 +298,19 @@ class TestPrinting(unittest.TestCase):
                 tfile2.flush()
 
                 jasoc = glymur.Jp2k(tfile2.name)
-                with patch('sys.stdout', new=StringIO()) as fake_out:
-                    print(jasoc.box[3])
-                    actual = fake_out.getvalue().strip()
-                lines = ['Association Box (asoc) @ (77, 56)',
-                         '    Label Box (lbl ) @ (85, 13)',
-                         '        Label:  label',
-                         '    XML Box (xml ) @ (98, 35)',
-                         '        <test>this is a test</test>']
-                expected = '\n'.join(lines)
+                actual = str(jasoc.box[3])
+                expected = ('Association Box (asoc) @ (77, 56)\n'
+                            '    Label Box (lbl ) @ (85, 13)\n'
+                            '        Label:  label\n'
+                            '    XML Box (xml ) @ (98, 35)\n'
+                            '        <test>this is a test</test>')
                 self.assertEqual(actual, expected)
 
     def test_coc_segment(self):
         """verify printing of COC segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream(header_only=False)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[6])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[6])
 
         exp = ('COC marker segment @ (3356, 9)\n'
                '    Associated component:  1\n'
@@ -349,9 +336,7 @@ class TestPrinting(unittest.TestCase):
         """verify printing of COD segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[2])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[2])
 
         exp = ('COD marker segment @ (3282, 12)\n'
                '    Coding style:\n'
@@ -382,43 +367,34 @@ class TestPrinting(unittest.TestCase):
         """verify printing of eoc segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream(header_only=False)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[-1])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[-1])
 
-        lines = ['EOC marker segment @ (1135517, 0)']
-        expected = '\n'.join(lines)
+        expected = 'EOC marker segment @ (1135517, 0)'
         self.assertEqual(actual, expected)
 
     def test_qcc_segment(self):
         """verify printing of qcc segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream(header_only=False)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[7])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[7])
 
-        lines = ['QCC marker segment @ (3367, 8)',
-                 '    Associated Component:  1',
-                 '    Quantization style:  no quantization, 2 guard bits',
-                 '    Step size:  [(0, 8), (0, 9), (0, 9), (0, 10)]']
+        expected = ('QCC marker segment @ (3367, 8)\n'
+                    '    Associated Component:  1\n'
+                    '    Quantization style:  no quantization, 2 guard bits\n'
+                    '    Step size:  [(0, 8), (0, 9), (0, 9), (0, 10)]')
 
-        expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
 
     def test_qcd_segment_5x3_transform(self):
         """verify printing of qcd segment"""
         j = glymur.Jp2k(self.jp2file)
         codestream = j.get_codestream()
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(codestream.segment[3])
-            actual = fake_out.getvalue().strip()
+        actual = str(codestream.segment[3])
 
-        lines = ['QCD marker segment @ (3296, 7)',
-                 '    Quantization style:  no quantization, 2 guard bits',
-                 '    Step size:  [(0, 8), (0, 9), (0, 9), (0, 10)]']
+        expected = ('QCD marker segment @ (3296, 7)\n'
+                    '    Quantization style:  no quantization, 2 guard bits\n'
+                    '    Step size:  [(0, 8), (0, 9), (0, 9), (0, 10)]')
 
-        expected = '\n'.join(lines)
         self.assertEqual(actual, expected)
 
     def test_siz_segment(self):

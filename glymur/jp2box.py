@@ -3060,7 +3060,7 @@ class XMLBox(Jp2kBox):
         if self.xml is not None:
             body = ET.tostring(self.xml,
                                encoding='utf-8',
-                               pretty_print=True).decode('utf-8')
+                               pretty_print=True).decode('utf-8').rstrip()
         else:
             body = 'None'
         body = self._indent(body)

@@ -206,10 +206,14 @@ try:
 except ((ImportError, RuntimeError)):
     NO_SKIMAGE_FREEIMAGE_SUPPORT = True
 
-# Do we have gdal?
+# Do we have gdal?  Do we have openjpeg support?
 try:
-    import gdal
-    HAVE_GDAL = True
+    import ogr
+    lst = ['JP2OpenJPEG', 'JPEG2000']
+    if any(ogr.GetDriverByName(x) for x in ['JP2OpenJPEG', 'JPEG2000']):
+        HAVE_GDAL = True
+    else:
+        HAVE_GDAL = False
 except ImportError:
     HAVE_GDAL = False
 

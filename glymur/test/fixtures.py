@@ -207,15 +207,17 @@ except ((ImportError, RuntimeError)):
     NO_SKIMAGE_FREEIMAGE_SUPPORT = True
 
 # Do we have gdal?  Do we have openjpeg support?
+HAVE_GDAL = False
+HAVE_GDAL_WITH_JP2K = False
 try:
     import ogr
     lst = ['JP2OpenJPEG', 'JPEG2000']
     if any(ogr.GetDriverByName(x) for x in ['JP2OpenJPEG', 'JPEG2000']):
-        HAVE_GDAL = True
+        HAVE_GDAL_WITH_JP2K = True
     else:
-        HAVE_GDAL = False
+        HAVE_GDAL = True
 except ImportError:
-    HAVE_GDAL = False
+    pass
 
 def _indent(textstr):
     """
@@ -886,6 +888,32 @@ bpcc = """Bits Per Component Box (bpcc) @ (62, 12)
     Signed:  [False, False, False, False]"""
 
 # manually verified via gdalinfo
+geotiff_uuid_with_no_jp2k = """UUID Box (uuid) @ (149, 523)
+    UUID:  b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)
+    Coordinate System =
+        PROJCS["Equirectangular MARS",
+            GEOGCS["GCS_MARS",
+                DATUM["unknown",
+                    SPHEROID["unnamed",3396190,0]],
+                PRIMEM["Greenwich",0],
+                UNIT["degree",0.0174532925199433]],
+            PROJECTION["Equirectangular"],
+            PARAMETER["latitude_of_origin",0],
+            PARAMETER["central_meridian",180],
+            PARAMETER["standard_parallel_1",0],
+            PARAMETER["false_easting",0],
+            PARAMETER["false_northing",0],
+            UNIT["metre",1,
+                AUTHORITY["EPSG","9001"]]]
+    Origin = (-2523306.125000000000000,-268608.875000000000000)
+    Pixel Size = (0.250000000000000,-0.250000000000000)
+    Corner Coordinates:
+    Upper Left  (-2523306.125, -268608.875) 
+    Lower Left  (-2523306.125, -268609.125) 
+    Upper Right (-2523305.875, -268608.875) 
+    Lower Right (-2523305.875, -268609.125) 
+    Center      (-2523306.000, -268609.000) """
+
 geotiff_uuid = """UUID Box (uuid) @ (149, 523)
     UUID:  b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)
     Coordinate System =

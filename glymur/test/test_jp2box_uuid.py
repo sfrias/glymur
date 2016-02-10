@@ -152,14 +152,13 @@ class TestSuiteHiRISE(unittest.TestCase):
             0.0, 0.0, 0.0, -2523306.125, -268608.875, 0.0
         ))
 
-    @unittest.skipIf('Anaconda' in sys.version, 'Problem with corner coords')
     def test_printing(self):
         jp2 = Jp2k(self.hirise_jp2file_name)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(jp2.box[4])
-            actual = fake_out.getvalue().strip()
-        if fixtures.HAVE_GDAL:
+        actual = str(jp2.box[4])
+        if fixtures.HAVE_GDAL_WITH_JP2K:
             expected = fixtures.geotiff_uuid
+        elif fixtures.HAVE_GDAL:
+            expected = fixtures.geotiff_uuid_with_no_jp2k
         else:
             expected = fixtures.geotiff_uuid_without_gdal
         self.assertEqual(actual, expected)

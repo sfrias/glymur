@@ -85,7 +85,8 @@ def load_openjpeg_library(libname):
     # No location specified by the configuration file, must look for it
     # elsewhere.  Here we attempt to locate it in the usual system-dependent
     # locations.  This works in Anaconda/windows, but not Anaconda/{mac,linux}.
-    path = find_library(libname)
+    if path is None:
+        path = find_library(libname)
 
     # Last gasp.
     if path is None:

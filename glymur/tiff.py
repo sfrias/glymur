@@ -7,13 +7,39 @@ import struct
 import sys
 import warnings
 
+TIFF_ASCII = 2
+TIFF_SHORT = 3
+TIFF_LONG = 4
+TIFF_RATIONAL = 5
+TIFF_DOUBLE = 12
+
+SUBFILETYPE = 254
+FILETYPE_REDUCEDIMAGE = 0x1
+OSUBFILETYPE = 255
+IMAGEWIDTH = 256
+IMAGELENGTH	 = 257
+BITSPERSAMPLE = 258
+COMPRESSION = 259
+COMPRESSION_NONE = 1
+PHOTOMETRIC = 262
+STRIPOFFSETS = 273
+ORIENTATION = 274
+PHOTOMETRIC_MINISBLACK = 1
+SAMPLESPERPIXEL = 277
+ROWSPERSTRIP = 278
+STRIPBYTECOUNTS = 279
+MINSAMPLEVALUE = 280
+MAXSAMPLEVALUE = 281
+XRESOLUTION = 282
+YRESOLUTION = 283
+PLANARCONFIG = 284
 
 def _tiff_header(read_buffer):
     """
     Interpret the uuid raw data as a tiff header.
     """
     # First 8 should be (73, 73, 42, 8) or (77, 77, 42, 8)
-    data = struct.unpack('<BB', read_buffer[0:2])
+    data = struct.unpack('BB', read_buffer[0:2])
     if data[0] == 73 and data[1] == 73:
         # little endian
         endian = '<'
@@ -108,10 +134,7 @@ class _Ifd(object):
 
         if dtype == 2:
             # ASCII
-            if sys.hexversion < 0x03000000:
-                payload = target_buffer.rstrip('\x00')
-            else:
-                payload = target_buffer.decode('utf-8').rstrip('\x00')
+            payload = target_buffer.decode('utf-8').rstrip('\x00')
 
         else:
             payload = struct.unpack(self.endian + fmt, target_buffer)

@@ -310,7 +310,8 @@ class Jp2k(Jp2kBox):
             self._validate()
 
     def _validate(self):
-        """Validate the JPEG 2000 outermost superbox.
+        """Validate the JPEG 2000 outermost superbox.  These checks must be
+        done at a file level.
         """
         # A JP2 file must contain certain boxes.  The 2nd box must be a file
         # type box.

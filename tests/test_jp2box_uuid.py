@@ -1,6 +1,7 @@
 # -*- coding:  utf-8 -*-
 """Test suite for printing.
 """
+# Standard library imports
 import os
 import pkg_resources as pkg
 import shutil
@@ -10,23 +11,30 @@ import tempfile
 import unittest
 import uuid
 import warnings
-
-if sys.hexversion <= 0x03000000:
+if sys.hexversion >= 0x03000000:
+    from unittest.mock import patch
+    from io import BytesIO, StringIO
+else:
     from mock import patch
     from StringIO import StringIO
-else:
-    from unittest.mock import patch
-    from io import StringIO
+    from io import BytesIO
 
+# Third party library imports ...
 try:
     import lxml.etree
 except ImportError:
     import xml.etree.ElementTree as ET
 
-from . import fixtures
-
+# Local imports
 import glymur
 from glymur import Jp2k
+from glymur.tiff import TIFF_ASCII, TIFF_SHORT, TIFF_LONG, TIFF_RATIONAL
+from glymur.tiff import TIFF_DOUBLE
+from glymur.tiff import SUBFILETYPE, IMAGEWIDTH, IMAGELENGTH, BITSPERSAMPLE
+from glymur.tiff import COMPRESSION, COMPRESSION_NONE, PHOTOMETRIC
+from glymur.tiff import STRIPOFFSETS, SAMPLESPERPIXEL, ROWSPERSTRIP
+from glymur.tiff import STRIPBYTECOUNTS, XRESOLUTION, YRESOLUTION, PLANARCONFIG
+from . import fixtures
 from .fixtures import SimpleRDF
 
 
@@ -39,6 +47,176 @@ class TestSuite(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def _create_degenerate_geotiff(self, e):
+        """
+        Create an in-memory degenerate geotiff.
+
+        Parameters
+        ----------
+        e : str
+           Either '<' for little endian or '>' for big endian.
+
+        Returns
+        -------
+        bytes
+            sequence of bytes making up a degenerate geotiff.  Should have
+            something like the following structure:
+
+            Magic: 0x4949 <little-endian> Version: 0x2a <ClassicTIFF>
+            Directory 0: offset 8 (0x8) next 0 (0)
+            SubFileType (254) LONG (4) 1<1>
+            ImageWidth (256) SHORT (3) 1<1>
+            ImageLength (257) SHORT (3) 1<1>
+            BitsPerSample (258) SHORT (3) 1<8>
+            Compression (259) SHORT (3) 1<1>
+            Photometric (262) SHORT (3) 1<1>
+            StripOffsets (273) LONG (4) 1<1>
+            SamplesPerPixel (277) SHORT (3) 1<1>
+            RowsPerStrip (278) LONG (4) 1<1>
+            StripByteCounts (279) LONG (4) 1<1>
+            XResolution (282) RATIONAL (5) 1<75>
+            YResolution (283) RATIONAL (5) 1<75>
+            33550 (0x830e) DOUBLE (12) 3<10 10 0>
+            33922 (0x8482) DOUBLE (12) 6<0 0 0 444650 4.64051e+06 0>
+            34735 (0x87af) SHORT (3) 24<1 1 0 5 1024 0 1 1 1025 0 1 1 ...>
+            34737 (0x87b1) ASCII (2) 45<UTM Zone 16N NAD27"|Clar ...>
+        """
+        tag_payloads = []
+
+        b = BytesIO()
+
+        # Create the header.
+        # Signature, version, offset to IFD
+        if e == '<':
+            buffer = struct.pack('<2sHI', b'II', 42, 8)
+        else:
+            buffer = struct.pack('>2sHI', b'MM', 42, 8)
+        b.write(buffer)
+    
+        offset = b.tell()
+    
+        num_tags = 16
+    
+        # The CDATA offset is past IFD tag count
+        offset += 2
+    
+        # The CDATA offset is past the IFD
+        offset += num_tags * 12
+    
+        # The CDATA offset is past the null offset to next IFD
+        offset += 4
+    
+        # The CDATA offset is past the image data
+        offset += 1
+    
+        # Write the tag count
+        buffer = struct.pack(e + 'H', num_tags)
+        b.write(buffer)
+    
+        # Sub file type
+        buffer = struct.pack(e + 'HHII', SUBFILETYPE, TIFF_LONG, 1, 1)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', IMAGEWIDTH, TIFF_SHORT, 1, 1)
+        b.write(buffer)
+        buffer = struct.pack(e + 'HHII', IMAGELENGTH, TIFF_SHORT, 1, 1)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', BITSPERSAMPLE, TIFF_SHORT, 1, 8)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', COMPRESSION, TIFF_SHORT, 1, COMPRESSION_NONE)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', PHOTOMETRIC, TIFF_SHORT, 1, 1)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', STRIPOFFSETS, TIFF_LONG, 1, 1)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', SAMPLESPERPIXEL, TIFF_SHORT, 1, 1)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', ROWSPERSTRIP, TIFF_LONG, 1, 1)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', STRIPBYTECOUNTS, TIFF_LONG, 1, 1)
+        b.write(buffer)
+    
+        buffer = struct.pack(e + 'HHII', XRESOLUTION, TIFF_RATIONAL, 1, offset)
+        b.write(buffer)
+        tag_payloads.append((e + 'I', 75))
+        tag_payloads.append((e + 'I', 1))
+    
+        buffer = struct.pack(e + 'HHII', YRESOLUTION, TIFF_RATIONAL, 1, offset + 8)
+        b.write(buffer)
+        tag_payloads.append((e + 'I', 75))
+        tag_payloads.append((e + 'I', 1))
+    
+        # Model pixel scale tag
+        buffer = struct.pack(e + 'HHII', 33550, TIFF_DOUBLE, 3, offset + 16)
+        b.write(buffer)
+        tag_payloads.append((e + 'd', 10))
+        tag_payloads.append((e + 'd', 10))
+        tag_payloads.append((e + 'd', 0))
+    
+        buffer = struct.pack(e + 'HHII', 33922, TIFF_DOUBLE, 6, offset + 40)
+        b.write(buffer)
+        tag_payloads.append((e + 'd', 0.0))
+        tag_payloads.append((e + 'd', 0.0))
+        tag_payloads.append((e + 'd', 0.0))
+        tag_payloads.append((e + 'd', 444650.0))
+        tag_payloads.append((e + 'd', 4640510.0))
+        tag_payloads.append((e + 'd', 0.0))
+    
+        buffer = struct.pack(e + 'HHII', 34735, TIFF_SHORT, 24, offset + 88)
+        b.write(buffer)
+        tag_payloads.append((e + 'H', 1))
+        tag_payloads.append((e + 'H', 1))
+        tag_payloads.append((e + 'H', 0))
+        tag_payloads.append((e + 'H', 5))
+        tag_payloads.append((e + 'H', 1024))
+        tag_payloads.append((e + 'H', 0))
+        tag_payloads.append((e + 'H', 1))
+        tag_payloads.append((e + 'H', 1))
+        tag_payloads.append((e + 'H', 1025))
+        tag_payloads.append((e + 'H', 0))
+        tag_payloads.append((e + 'H', 1))
+        tag_payloads.append((e + 'H', 1))
+        tag_payloads.append((e + 'H', 1026))
+        tag_payloads.append((e + 'H', 34737))
+        tag_payloads.append((e + 'H', 20))
+        tag_payloads.append((e + 'H', 0))
+        tag_payloads.append((e + 'H', 2049))
+        tag_payloads.append((e + 'H', 34737))
+        tag_payloads.append((e + 'H', 24))
+        tag_payloads.append((e + 'H', 20))
+        tag_payloads.append((e + 'H', 3072))
+        tag_payloads.append((e + 'H', 0))
+        tag_payloads.append((e + 'H', 1))
+        tag_payloads.append((e + 'H', 26716))
+    
+        buffer = struct.pack(e + 'HHII', 34737, TIFF_ASCII, 45, offset + 136)
+        b.write(buffer)
+        items = (e + '45s', b'UTM Zone 16N NAD27"|Clarke, 1866 by Default| ')
+        tag_payloads.append(items)
+    
+        # NULL pointer to next IFD
+        buffer = struct.pack(e + 'I', 0)
+        b.write(buffer)
+    
+        # Image data.  Just a single byte will do.
+        buffer = struct.pack(e + 'B', 0)
+        b.write(buffer)
+    
+        # Tag payloads
+        for format, datum in tag_payloads:
+            buffer = struct.pack(format, datum)
+            b.write(buffer)
+
+        b.seek(0)
+        return b.read()
 
     def test_append_xmp_uuid(self):
         """Should be able to append an XMP UUID box."""
@@ -64,30 +242,40 @@ class TestSuite(unittest.TestCase):
                 self.assertTrue(isinstance(jp2.box[-1].data,
                                            ET.ElementTree))
 
-    def test_big_endian_exif(self):
-        """Verify read of Exif big-endian IFD."""
+    def test_exif(self):
+        """Verify read of Exif IFDs."""
+        # Check both little and big endian.
+        for endian in ['<', '>']:
+            self._test_endian_exif(endian)
+
+    def _test_endian_exif(self, endian):
+
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
 
             with open(self.jp2file, 'rb') as ifptr:
                 tfile.write(ifptr.read())
-
+    
             # Write L, T, UUID identifier.
-            tfile.write(struct.pack('>I4s', 52, b'uuid'))
+            # 388 = length of degenerate tiff
+            # 6 = Exif\x0\x0
+            # 16 = length of UUID identifier
+            # 8 = length of L, T
+            # 388 + 6 + 16 + 8 = 418
+            tfile.write(struct.pack('>I4s', 418, b'uuid'))
             tfile.write(b'JpgTiffExif->JP2')
-
+    
             tfile.write(b'Exif\x00\x00')
-            xbuffer = struct.pack('>BBHI', 77, 77, 42, 8)
-            tfile.write(xbuffer)
-
-            # We will write just a single tag.
-            tfile.write(struct.pack('>H', 1))
-
-            # The "Make" tag is tag no. 271.
-            tfile.write(struct.pack('>HHI4s', 271, 2, 3, b'HTC\x00'))
+    
+            buffer = self._create_degenerate_geotiff(endian)
+            tfile.write(buffer)
+    
             tfile.flush()
-
+    
             jp2 = glymur.Jp2k(tfile.name)
-            self.assertEqual(jp2.box[-1].data['Make'], "HTC")
+            self.assertEqual(jp2.box[-1].data['XResolution'], 75)
+    
+            expected = 'UTM Zone 16N NAD27"|Clarke, 1866 by Default| '
+            self.assertEqual(jp2.box[-1].data['GeoAsciiParams'], expected)
 
 
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

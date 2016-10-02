@@ -1,5 +1,4 @@
-"""
-Test suite specifically targeting JP2 box layout.
+"""Test suite specifically targeting JP2 box layout.
 """
 # Standard library imports ...
 import doctest
@@ -28,7 +27,7 @@ from glymur import Jp2k
 from glymur.jp2box import ColourSpecificationBox, ContiguousCodestreamBox
 from glymur.jp2box import FileTypeBox, ImageHeaderBox, JP2HeaderBox
 from glymur.jp2box import JPEG2000SignatureBox
-from glymur.core import COLOR, OPACITY
+from glymur.core import COLOR, OPACITY, SRGB, GREYSCALE
 from glymur.core import RED, GREEN, BLUE, GREY, WHOLE_IMAGE
 from .fixtures import WINDOWS_TMP_FILE_MSG, MetadataBase
 
@@ -167,8 +166,8 @@ class TestChannelDefinition(unittest.TestCase):
         self.jp2c = ContiguousCodestreamBox()
         self.ihdr = ImageHeaderBox(height=height, width=width,
                                    num_components=num_components)
-        self.colr_rgb = ColourSpecificationBox(colorspace=glymur.core.SRGB)
-        self.colr_gr = ColourSpecificationBox(colorspace=glymur.core.GREYSCALE)
+        self.colr_rgb = ColourSpecificationBox(colorspace=SRGB)
+        self.colr_gr = ColourSpecificationBox(colorspace=GREYSCALE)
 
     def tearDown(self):
         pass
@@ -439,8 +438,7 @@ class TestColourSpecificationBox(unittest.TestCase):
         """JP2 has requirements for approx field"""
         j2k = Jp2k(self.j2kfile)
         boxes = [self.jp2b, self.ftyp, self.jp2h, self.jp2c]
-        colr = ColourSpecificationBox(colorspace=glymur.core.SRGB,
-                                      approximation=1)
+        colr = ColourSpecificationBox(colorspace=SRGB, approximation=1)
         boxes[2].box = [self.ihdr, colr]
         with tempfile.NamedTemporaryFile(suffix=".jp2") as tfile:
             with self.assertRaises(IOError):
@@ -448,19 +446,32 @@ class TestColourSpecificationBox(unittest.TestCase):
 
     def test_default_colr(self):
         """basic colr instantiation"""
-        colr = ColourSpecificationBox(colorspace=glymur.core.SRGB)
+        colr = ColourSpecificationBox(colorspace=SRGB)
         self.assertEqual(colr.method, glymur.core.ENUMERATED_COLORSPACE)
         self.assertEqual(colr.precedence, 0)
         self.assertEqual(colr.approximation, 0)
-        self.assertEqual(colr.colorspace, glymur.core.SRGB)
+        self.assertEqual(colr.colorspace, SRGB)
         self.assertIsNone(colr.icc_profile)
 
     def test_colr_with_bad_color(self):
         """colr must have a valid color, strange as though that may sound."""
         colorspace = -1
         approx = 0
-        colr = glymur.jp2box.ColourSpecificationBox(colorspace=colorspace,
-                                                    approximation=approx)
+        colr = ColourSpecificationBox(colorspace=colorspace,
+                                      approximation=approx)
+        with tempfile.TemporaryFile() as tfile:
+            with self.assertRaises(IOError):
+                colr.write(tfile)
+
+    def test_write_colr_with_bad_method(self):
+        """
+        A colr box has an invalid method.
+        
+        Expect an IOError when trying to write to file.
+        """
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            colr = ColourSpecificationBox(colorspace=SRGB, method=5)
         with tempfile.TemporaryFile() as tfile:
             with self.assertRaises(IOError):
                 colr.write(tfile)

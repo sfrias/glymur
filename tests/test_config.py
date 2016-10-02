@@ -18,6 +18,7 @@ except ImportError:
 
 # Local imports ...
 import glymur
+from glymur.config import load_openjpeg_library
 from glymur import Jp2k
 from .fixtures import WINDOWS_TMP_FILE_MSG
 
@@ -193,7 +194,7 @@ class TestSuiteConfigFile(unittest.TestCase):
 
     @unittest.skipIf(glymur.lib.openjp2.OPENJP2 is None,
                      "Needs openjp2 before this test make sense.")
-    @unittest.skipIf(openjp2_not_found_by_ctypes(),
+    @unittest.skipIf(load_openjpeg_library('openjp2') is None,
                      "OpenJP2 must be found before this test can work.")
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_config_dir_but_no_config_file(self):

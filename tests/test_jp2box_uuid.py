@@ -28,14 +28,35 @@ except ImportError:
 # Local imports
 import glymur
 from glymur import Jp2k
-from glymur.tiff import TIFF_ASCII, TIFF_SHORT, TIFF_LONG, TIFF_RATIONAL
-from glymur.tiff import TIFF_DOUBLE
-from glymur.tiff import SUBFILETYPE, IMAGEWIDTH, IMAGELENGTH, BITSPERSAMPLE
-from glymur.tiff import COMPRESSION, COMPRESSION_NONE, PHOTOMETRIC
-from glymur.tiff import STRIPOFFSETS, SAMPLESPERPIXEL, ROWSPERSTRIP
-from glymur.tiff import STRIPBYTECOUNTS, XRESOLUTION, YRESOLUTION, PLANARCONFIG
 from . import fixtures
 from .fixtures import SimpleRDF
+
+TIFF_ASCII = 2
+TIFF_SHORT = 3
+TIFF_LONG = 4
+TIFF_RATIONAL = 5
+TIFF_DOUBLE = 12
+
+SUBFILETYPE = 254
+FILETYPE_REDUCEDIMAGE = 0x1
+OSUBFILETYPE = 255
+IMAGEWIDTH = 256
+IMAGELENGTH = 257
+BITSPERSAMPLE = 258
+COMPRESSION = 259
+COMPRESSION_NONE = 1
+PHOTOMETRIC = 262
+STRIPOFFSETS = 273
+ORIENTATION = 274
+PHOTOMETRIC_MINISBLACK = 1
+SAMPLESPERPIXEL = 277
+ROWSPERSTRIP = 278
+STRIPBYTECOUNTS = 279
+MINSAMPLEVALUE = 280
+MAXSAMPLEVALUE = 281
+XRESOLUTION = 282
+YRESOLUTION = 283
+PLANARCONFIG = 284
 
 
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
@@ -93,74 +114,76 @@ class TestSuite(unittest.TestCase):
         else:
             buffer = struct.pack('>2sHI', b'MM', 42, 8)
         b.write(buffer)
-    
+
         offset = b.tell()
-    
+
         num_tags = 16
-    
+
         # The CDATA offset is past IFD tag count
         offset += 2
-    
+
         # The CDATA offset is past the IFD
         offset += num_tags * 12
-    
+
         # The CDATA offset is past the null offset to next IFD
         offset += 4
-    
+
         # The CDATA offset is past the image data
         offset += 1
-    
+
         # Write the tag count
         buffer = struct.pack(e + 'H', num_tags)
         b.write(buffer)
-    
+
         # Sub file type
         buffer = struct.pack(e + 'HHII', SUBFILETYPE, TIFF_LONG, 1, 1)
         b.write(buffer)
-    
+
         buffer = struct.pack(e + 'HHII', IMAGEWIDTH, TIFF_SHORT, 1, 1)
         b.write(buffer)
         buffer = struct.pack(e + 'HHII', IMAGELENGTH, TIFF_SHORT, 1, 1)
         b.write(buffer)
-    
+
         buffer = struct.pack(e + 'HHII', BITSPERSAMPLE, TIFF_SHORT, 1, 8)
         b.write(buffer)
-    
-        buffer = struct.pack(e + 'HHII', COMPRESSION, TIFF_SHORT, 1, COMPRESSION_NONE)
+
+        buffer = struct.pack(e + 'HHII',
+                             COMPRESSION, TIFF_SHORT, 1, COMPRESSION_NONE)
         b.write(buffer)
-    
+
         buffer = struct.pack(e + 'HHII', PHOTOMETRIC, TIFF_SHORT, 1, 1)
         b.write(buffer)
-    
+
         buffer = struct.pack(e + 'HHII', STRIPOFFSETS, TIFF_LONG, 1, 1)
         b.write(buffer)
-    
+
         buffer = struct.pack(e + 'HHII', SAMPLESPERPIXEL, TIFF_SHORT, 1, 1)
         b.write(buffer)
-    
+
         buffer = struct.pack(e + 'HHII', ROWSPERSTRIP, TIFF_LONG, 1, 1)
         b.write(buffer)
-    
+
         buffer = struct.pack(e + 'HHII', STRIPBYTECOUNTS, TIFF_LONG, 1, 1)
         b.write(buffer)
-    
+
         buffer = struct.pack(e + 'HHII', XRESOLUTION, TIFF_RATIONAL, 1, offset)
         b.write(buffer)
         tag_payloads.append((e + 'I', 75))
         tag_payloads.append((e + 'I', 1))
-    
-        buffer = struct.pack(e + 'HHII', YRESOLUTION, TIFF_RATIONAL, 1, offset + 8)
+
+        buffer = struct.pack(e + 'HHII',
+                             YRESOLUTION, TIFF_RATIONAL, 1, offset + 8)
         b.write(buffer)
         tag_payloads.append((e + 'I', 75))
         tag_payloads.append((e + 'I', 1))
-    
+
         # Model pixel scale tag
         buffer = struct.pack(e + 'HHII', 33550, TIFF_DOUBLE, 3, offset + 16)
         b.write(buffer)
         tag_payloads.append((e + 'd', 10))
         tag_payloads.append((e + 'd', 10))
         tag_payloads.append((e + 'd', 0))
-    
+
         buffer = struct.pack(e + 'HHII', 33922, TIFF_DOUBLE, 6, offset + 40)
         b.write(buffer)
         tag_payloads.append((e + 'd', 0.0))
@@ -169,7 +192,7 @@ class TestSuite(unittest.TestCase):
         tag_payloads.append((e + 'd', 444650.0))
         tag_payloads.append((e + 'd', 4640510.0))
         tag_payloads.append((e + 'd', 0.0))
-    
+
         buffer = struct.pack(e + 'HHII', 34735, TIFF_SHORT, 24, offset + 88)
         b.write(buffer)
         tag_payloads.append((e + 'H', 1))
@@ -196,20 +219,20 @@ class TestSuite(unittest.TestCase):
         tag_payloads.append((e + 'H', 0))
         tag_payloads.append((e + 'H', 1))
         tag_payloads.append((e + 'H', 26716))
-    
+
         buffer = struct.pack(e + 'HHII', 34737, TIFF_ASCII, 45, offset + 136)
         b.write(buffer)
         items = (e + '45s', b'UTM Zone 16N NAD27"|Clarke, 1866 by Default| ')
         tag_payloads.append(items)
-    
+
         # NULL pointer to next IFD
         buffer = struct.pack(e + 'I', 0)
         b.write(buffer)
-    
+
         # Image data.  Just a single byte will do.
         buffer = struct.pack(e + 'B', 0)
         b.write(buffer)
-    
+
         # Tag payloads
         for format, datum in tag_payloads:
             buffer = struct.pack(format, datum)
@@ -254,7 +277,7 @@ class TestSuite(unittest.TestCase):
 
             with open(self.jp2file, 'rb') as ifptr:
                 tfile.write(ifptr.read())
-    
+
             # Write L, T, UUID identifier.
             # 388 = length of degenerate tiff
             # 6 = Exif\x0\x0
@@ -263,17 +286,17 @@ class TestSuite(unittest.TestCase):
             # 388 + 6 + 16 + 8 = 418
             tfile.write(struct.pack('>I4s', 418, b'uuid'))
             tfile.write(b'JpgTiffExif->JP2')
-    
+
             tfile.write(b'Exif\x00\x00')
-    
+
             buffer = self._create_degenerate_geotiff(endian)
             tfile.write(buffer)
-    
+
             tfile.flush()
-    
+
             jp2 = glymur.Jp2k(tfile.name)
             self.assertEqual(jp2.box[-1].data['XResolution'], 75)
-    
+
             expected = 'UTM Zone 16N NAD27"|Clarke, 1866 by Default| '
             self.assertEqual(jp2.box[-1].data['GeoAsciiParams'], expected)
 

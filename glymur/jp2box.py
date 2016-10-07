@@ -888,14 +888,17 @@ class ComponentMappingBox(Jp2kBox):
             return title
 
         lst = []
-        for k in range(len(self.component_index)):
-            if self.mapping_type[k] == 1:
+        for k, (mapping_type, component_idx, palette_idx) in enumerate(
+            zip(self.mapping_type, self.component_index, self.palette_index)
+        ):
+            if mapping_type == 1:
+                # Direct use
                 text = 'Component {0} ==> palette column {1}'
-                text = text.format(self.component_index[k],
-                                   self.palette_index[k])
+                text = text.format(component_idx, palette_idx)
             else:
+                # palette mapping
                 text = 'Component {0} ==> {1}'
-                text = text.format(self.component_index[k], k)
+                text = text.format(component_idx, k)
             lst.append(text)
 
         text = '\n'.join(lst)

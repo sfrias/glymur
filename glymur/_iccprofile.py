@@ -73,8 +73,10 @@ class _ICCProfile(object):
         header['Connection Space'] = data
 
         data = struct.unpack('>HHHHHH', self._raw_buffer[24:36])
-        header['Datetime'] = datetime.datetime(data[0], data[1], data[2],
-                                               data[3], data[4], data[5])
+        try:
+            header['Datetime'] = datetime.datetime(*data)
+        except ValueError:
+            header['Datetime'] = None
         header['File Signature'] = read_buffer[36:40].decode('utf-8')
         if read_buffer[40:44] == b'\x00\x00\x00\x00':
             header['Platform'] = 'unrecognized'

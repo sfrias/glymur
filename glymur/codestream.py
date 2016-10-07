@@ -346,13 +346,10 @@ class Codestream(object):
         length, = struct.unpack('>H', read_buffer)
         kwargs['length'] = length
 
-        if self._csiz <= 255:
-            read_buffer = fptr.read(1)
-            component, = struct.unpack('>B', read_buffer)
-        else:
-            read_buffer = fptr.read(2)
-            component, = struct.unpack('>H', read_buffer)
-        ccoc = component
+        fmt = '>B' if self._csiz <= 255 else '>H'
+        nbytes = 1 if self._csiz <= 255 else 2
+        read_buffer = fptr.read(nbytes)
+        ccoc, = struct.unpack(fmt, read_buffer)
 
         read_buffer = fptr.read(1)
         scoc, = struct.unpack('>B', read_buffer)
@@ -591,12 +588,8 @@ class Codestream(object):
         length, = struct.unpack('>H', read_buffer)
 
         read_buffer = fptr.read(length - 2)
-        if cls._csiz > 256:
-            fmt = '>HB'
-            mantissa_exponent_offset = 3
-        else:
-            fmt = '>BB'
-            mantissa_exponent_offset = 2
+        fmt = '>HB' if cls._csiz > 256 else '>BB'
+        mantissa_exponent_offset = 3 if cls._csiz > 256 else 2
         cqcc, sqcc = struct.unpack_from(fmt, read_buffer)
         if cqcc >= cls._csiz:
             msg = ("Invalid QCC component number ({invalid_comp_no}), "
@@ -1153,7 +1146,7 @@ class CRGsegment(Segment):
     length : int
         Length of marker segment in bytes.  This number does not include the
         two bytes constituting the marker.
-    xcrg, ycrg : int
+    xcrg, ycrg : int sequences
         Horizontal, vertical offset for each component
     """
     def __init__(self, xcrg, ycrg, length, offset):

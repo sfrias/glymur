@@ -506,15 +506,11 @@ class Codestream(object):
         read_buffer = fptr.read(2)
         length, = struct.unpack('>H', read_buffer)
 
-        if self._csiz < 257:
-            numbytes = int((length - 2) / 7)
-            read_buffer = fptr.read(numbytes * 7)
-            fmt = '>' + 'BBHBBB' * numbytes
-        else:
-            numbytes = int((length - 2) / 9)
-            read_buffer = fptr.read(numbytes * 9)
-            fmt = '>' + 'BHHBHB' * numbytes
-
+        n = ((length - 2) / 7) if self._csiz < 257 else ((length - 2) / 9)
+        n = int(n)
+        nbytes = n * 7 if self._csiz < 257 else n * 9
+        read_buffer = fptr.read(nbytes)
+        fmt = '>' + 'BBHBBB' * n if self._csiz < 257 else '>' + 'BHHBHB' * n
         pod_params = struct.unpack(fmt, read_buffer)
 
         return PODsegment(pod_params, length, offset)
@@ -643,12 +639,10 @@ class Codestream(object):
         read_buffer = fptr.read(2)
         length, = struct.unpack('>H', read_buffer)
 
-        if cls._csiz < 257:
-            read_buffer = fptr.read(3)
-            data = struct.unpack('>BBB', read_buffer)
-        else:
-            read_buffer = fptr.read(4)
-            data = struct.unpack('>HBB', read_buffer)
+        nbytes = 3 if cls._csiz < 257 else 4
+        fmt = '>BBB' if cls._csiz < 257 else '>HBB'
+        read_buffer = fptr.read(nbytes)
+        data = struct.unpack(fmt, read_buffer)
 
         length = length
         crgn = data[0]

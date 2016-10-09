@@ -982,11 +982,13 @@ class TestPrinting(unittest.TestCase):
             # No need to verify, it's enough that we don't error out.
             str(box)
 
+    @unittest.skipIf(sys.hexversion < 0x03000000,
+                     'OrderedDict prints differently on python2')
     def test_icc_profile(self):
         """
         verify icc profile printing with a jpx
 
-        2.7, 3.3, 3.4, and 3.5 all print ordered dicts differently
+        3.4, and 3.5 all print ordered dicts differently
         Original file tested was input/nonregression/text_GBR.jp2.
         """
         fp = BytesIO()
@@ -1012,18 +1014,11 @@ class TestPrinting(unittest.TestCase):
         fp.seek(179 + 8)
 
         # Should be able to read the colr box now
-        if sys.hexversion < 0x03000000:
-            box = glymur.jp2box.ColourSpecificationBox.parse(fp, 179, 1339)
-        else:
-            box = glymur.jp2box.ColourSpecificationBox.parse(fp, 179, 1339)
+        box = glymur.jp2box.ColourSpecificationBox.parse(fp, 179, 1339)
 
         actual = str(box)
 
-        if sys.hexversion < 0x03000000:
-            expected = fixtures.text_gbr_27
-        elif sys.hexversion < 0x03040000:
-            expected = fixtures.text_gbr_33
-        elif sys.hexversion < 0x03050000:
+        if sys.hexversion < 0x03050000:
             expected = fixtures.text_gbr_34
         else:
             expected = fixtures.text_gbr_35

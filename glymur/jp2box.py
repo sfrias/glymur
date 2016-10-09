@@ -408,16 +408,10 @@ class ColourSpecificationBox(Jp2kBox):
                 dispvalue = dispvalue.format(colorspace=self.colorspace)
             text = 'Colorspace:  {0}'.format(dispvalue)
         else:
-            # 2.7 has trouble pretty-printing ordered dicts so we just have
-            # to print as a regular dict in this case.
             if self.icc_profile is None:
                 text = 'ICC Profile:  None'
             else:
-                if sys.hexversion < 0x03000000:
-                    icc_profile = dict(self.icc_profile)
-                else:
-                    icc_profile = self.icc_profile
-                text = pprint.pformat(icc_profile)
+                text = pprint.pformat(self.icc_profile)
                 text = self._indent(text)
                 text = '\n'.join(['ICC Profile:', text])
 

@@ -1596,7 +1596,7 @@ class Jp2k(Jp2kBox):
         return dtype
 
     def get_codestream(self, header_only=True):
-        """Returns a codestream object.
+        """Retrieve codestream.
 
         Parameters
         ----------

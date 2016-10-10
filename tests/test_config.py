@@ -23,32 +23,6 @@ from glymur import Jp2k
 from .fixtures import WINDOWS_TMP_FILE_MSG
 
 
-def openjp2_not_found_by_ctypes():
-    """
-    Need to know if openjp2 library can be picked right up by ctypes for one
-    of the tests.
-    """
-    if ctypes.util.find_library('openjp2') is None:
-        return True
-    else:
-        return False
-
-
-def openjpeg_not_found_by_ctypes():
-    """
-    Need to know if openjpeg library can be picked right up by ctypes for one
-    of the tests.
-    """
-    if ctypes.util.find_library('openjpeg') is None:
-        return True
-    else:
-        return False
-
-
-def no_openjpeg_libraries_found_by_ctypes():
-    return openjpeg_not_found_by_ctypes() and openjp2_not_found_by_ctypes()
-
-
 @contextlib.contextmanager
 def chdir(dirname=None):
     """
@@ -167,12 +141,13 @@ class TestSuiteConfigFile(unittest.TestCase):
                             imp.reload(glymur.lib.openjp2)
                         self.assertIsNone(glymur.lib.openjp2.OPENJP2)
 
-    @unittest.skipIf((openjpeg_not_found_by_ctypes() or
-                      openjp2_not_found_by_ctypes()),
-                     "Needs openjp2 and openjpeg before this test make sense.")
+    @unittest.skipIf(load_openjpeg_library('openjpeg') is None,
+                     "Needs openjpeg before this test make sense.")
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
-    def test_library_specified_as_None(self):
-        """Verify that we can stop library from being loaded by using None."""
+    def test_openjpeg_specified_by_config(self):
+        """
+        Verify that we get openjpeg 1.x if specified in config file.
+        """
         with tempfile.TemporaryDirectory() as tdir:
             configdir = os.path.join(tdir, 'glymur')
             os.mkdir(configdir)
@@ -182,13 +157,14 @@ class TestSuiteConfigFile(unittest.TestCase):
                 # openjpeg instead.
                 fptr.write('[library]\n')
                 fptr.write('openjp2: None\n')
-                openjpeg_lib = ctypes.util.find_library('openjpeg')
+                openjpeg_lib = load_openjpeg_library('openjpeg')
                 msg = 'openjpeg: {openjpeg}\n'
-                msg = msg.format(openjpeg=openjpeg_lib)
+                msg = msg.format(openjpeg=openjpeg_lib._name)
                 fptr.write(msg)
                 fptr.flush()
                 with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
                     imp.reload(glymur.lib.openjp2)
+                    imp.reload(glymur.lib.openjpeg)
                     self.assertIsNone(glymur.lib.openjp2.OPENJP2)
                     self.assertIsNotNone(glymur.lib.openjpeg.OPENJPEG)
 

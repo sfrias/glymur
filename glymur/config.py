@@ -66,18 +66,13 @@ def load_openjpeg_library(libname):
 
     if 'Anaconda' in sys.version or 'Continuum Analytics, Inc.' in sys.version:
         # If Anaconda, then openjpeg may have been installed via conda.
-        if platform.system() == 'Linux':
-            suffix = '.so'
-            basedir = os.path.dirname(os.path.dirname(sys.executable))
-            lib = os.path.join(basedir, 'lib', 'lib' + libname + suffix)
-        elif platform.system() == 'Darwin':
-            suffix = '.dylib'
+        if platform.system() in ['Linux', 'Darwin']:
+            suffix = '.so' if platform.system() == 'Linux' else '.dylib'
             basedir = os.path.dirname(os.path.dirname(sys.executable))
             lib = os.path.join(basedir, 'lib', 'lib' + libname + suffix)
         elif platform.system() == 'Windows':
-            suffix = '.dll'
             basedir = os.path.dirname(sys.executable)
-            lib = os.path.join(basedir, 'Library', 'bin', libname + suffix)
+            lib = os.path.join(basedir, 'Library', 'bin', libname + '.dll')
 
         if os.path.exists(lib):
             path = lib

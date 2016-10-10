@@ -1526,22 +1526,14 @@ class Jp2k(Jp2kBox):
         builtins.type
             numpy datatype to be used to construct an image array
         """
+        if component.prec > 16:
+            msg = "Unhandled precision: {0} bits.".format(component.prec)
+            raise IOError(msg)
+
         if component.sgnd:
-            if component.prec <= 8:
-                dtype = np.int8
-            elif component.prec <= 16:
-                dtype = np.int16
-            else:
-                msg = "Unhandled precision: {0} bits.".format(component.prec)
-                raise RuntimeError(msg)
+            dtype = np.int8 if component.prec <=8 else np.int16
         else:
-            if component.prec <= 8:
-                dtype = np.uint8
-            elif component.prec <= 16:
-                dtype = np.uint16
-            else:
-                msg = "Unhandled precision: {0} bits.".format(component.prec)
-                raise RuntimeError(msg)
+            dtype = np.uint8 if component.prec <=8 else np.uint16
 
         return dtype
 
@@ -1610,6 +1602,8 @@ class Jp2k(Jp2kBox):
         """
 
         numrows, numcols, num_comps = imgdata.shape
+        for k in range(num_comps):
+            self._validate_nonzero_image_size(numrows, numcols, k)
 
         # set image offset and reference grid
         image.contents.x0 = self._cparams.image_offset_x0

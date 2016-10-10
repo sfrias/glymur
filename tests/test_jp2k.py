@@ -1,6 +1,7 @@
 """
 Tests for general glymur functionality.
 """
+# Standard library imports ...
 import datetime
 import doctest
 from io import BytesIO
@@ -12,16 +13,17 @@ import tempfile
 import unittest
 import uuid
 import warnings
-
-if sys.hexversion <= 0x03030000:
-    from mock import patch
-else:
+if sys.hexversion >= 0x03030000:
     from unittest.mock import patch
-
+else:
+    from mock import patch
 from xml.etree import cElementTree as ET
-import numpy as np
-import pkg_resources
 
+# Third party library imports ...
+import numpy as np
+import pkg_resources as pkg
+
+# Local imports
 import glymur
 from glymur import Jp2k
 from glymur.core import COLOR, RED, GREEN, BLUE, RESTRICTED_ICC_PROFILE
@@ -435,7 +437,7 @@ class TestJp2k(unittest.TestCase):
 
     def test_not_jpeg2000(self):
         """Should error out appropriately if not given a JPEG 2000 file."""
-        filename = pkg_resources.resource_filename(glymur.__name__, "jp2k.py")
+        filename = pkg.resource_filename(glymur.__name__, "jp2k.py")
         with self.assertRaises(IOError):
             Jp2k(filename)
 
@@ -839,6 +841,7 @@ class TestJp2k(unittest.TestCase):
                 with self.assertRaises(exp_error):
                     glymur.Jp2k(self.jp2file).read_bands()
 
+        
     @unittest.skipIf(sys.platform == 'win32', WINDOWS_TMP_FILE_MSG)
     def test_zero_length_reserved_segment(self):
         """
@@ -954,6 +957,38 @@ class TestJp2k(unittest.TestCase):
                                        decimal=6)
 
         self.assertEqual(profile['Creator'], 'JPEG')
+
+    def test_different_layers(self):
+        """
+        Verify that setting the layer property results in different images.
+        """
+        file = os.path.join('data', 'p0_03.j2k')
+        file = pkg.resource_filename(__name__, file)
+        j = Jp2k(file)
+        d0 = j[:]
+        
+        j.layer = 1
+        d1 = j[:]
+
+        np.alltrue(d0 != d1)
+
+    def test_default_verbosity(self):
+        """
+        By default, verbosity should be false.
+        """
+        file = os.path.join('data', 'p0_03.j2k')
+        file = pkg.resource_filename(__name__, file)
+        j = Jp2k(file)
+        self.assertFalse(j.verbose)
+
+    def test_default_layer(self):
+        """
+        By default, the layer should be 0
+        """
+        file = os.path.join('data', 'p0_03.j2k')
+        file = pkg.resource_filename(__name__, file)
+        j = Jp2k(file)
+        self.assertEqual(j.layer, 0)
 
 
 class CinemaBase(fixtures.MetadataBase):
@@ -1089,6 +1124,27 @@ class TestJp2k_write(fixtures.MetadataBase):
     def tearDownClass(cls):
         os.unlink(cls.single_channel_j2k.name)
         os.unlink(cls.single_channel_jp2.name)
+
+    def test_no_jp2c_box_in_outermost_jp2_list(self):
+        """
+        There must be a JP2C box in the outermost list of boxes.
+        """
+        j = glymur.Jp2k(self.jp2file)
+
+        # Remove the last box, which is a codestream.
+        boxes = j.box[:-1]
+
+        with tempfile.NamedTemporaryFile(suffix=".jp2") as tfile:
+            with self.assertRaises(IOError):
+                j2 = j.wrap(tfile.name, boxes=boxes)
+
+    def test_null_data(self):
+        """
+        Verify that we prevent trying to write images with one dimension zero.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=np.zeros((0, 256), dtype=np.uint8))
 
     def test_NR_ENC_Bretagne1_ppm_2_encode(self):
         """

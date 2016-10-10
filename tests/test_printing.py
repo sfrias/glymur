@@ -442,8 +442,7 @@ class TestPrinting(unittest.TestCase):
     def test_siz_segment(self):
         """verify printing of SIZ segment"""
         j = glymur.Jp2k(self.jp2file)
-        codestream = j.get_codestream()
-        actual = str(codestream.segment[1])
+        actual = str(j.codestream.segment[1])
 
         exp = ('SIZ marker segment @ (3233, 47)\n'
                '    Profile:  no profile\n'

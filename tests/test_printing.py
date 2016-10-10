@@ -86,6 +86,11 @@ class TestPrinting(unittest.TestCase):
                     '    Size:  (256 x 3)')
         self.assertEqual(actual, expected)
 
+        glymur.set_option('print.short', True)
+        actual = str(box)
+        expected = ('Palette Box (pclr) @ (66, 782)')
+        self.assertEqual(actual, expected)
+
     def test_component_mapping(self):
         """
         verify printing of cmap box
@@ -122,6 +127,11 @@ class TestPrinting(unittest.TestCase):
                     '    Channel 2 (color) ==> (1)')
         self.assertEqual(actual, expected)
 
+        glymur.set_option('print.short', True)
+        actual = str(cdef)
+        expected = ('Channel Definition Box (cdef) @ (81, 28)')
+        self.assertEqual(actual, expected)
+
     @unittest.skipIf('lxml' not in sys.modules.keys(), "No lxml")
     def test_xml(self):
         """
@@ -135,6 +145,12 @@ class TestPrinting(unittest.TestCase):
         actual = str(box)
         expected = fixtures.file1_xml_box
         self.assertEqual(actual, expected)
+
+        glymur.set_option('print.short', True)
+        actual = str(box)
+        expected = fixtures.file1_xml_box.splitlines()[0]
+        self.assertEqual(actual, expected)
+
 
     def test_uuid(self):
         """
@@ -217,6 +233,10 @@ class TestPrinting(unittest.TestCase):
                                   length=12, offset=62)
         actual = str(box)
         self.assertEqual(actual, fixtures.bpcc)
+
+        glymur.set_option('print.short', True)
+        actual = str(box)
+        self.assertEqual(actual, fixtures.bpcc.splitlines()[0])
 
     def test_cinema_profile(self):
         """
@@ -640,10 +660,10 @@ class TestPrinting(unittest.TestCase):
                 tfile.flush()
 
             jp2k = glymur.Jp2k(tfile.name)
-            with patch('sys.stdout', new=StringIO()) as fake_out:
+            with patch('sys.stdout', new=StringIO()) as stdout:
                 print(jp2k.box[3])
                 print(jp2k.box[4])
-                actual = fake_out.getvalue().strip()
+                actual = stdout.getvalue().strip()
             exp = ('UUIDInfo Box (uinf) @ (77, 50)\n'
                    '    UUID List Box (ulst) @ (85, 26)\n'
                    '        UUID[0]:  00000000-0000-0000-0000-000000000000\n'
@@ -661,15 +681,37 @@ class TestPrinting(unittest.TestCase):
 
             self.assertEqual(actual, exp)
 
+            glymur.set_option('print.short', True)
+            with patch('sys.stdout', new=StringIO()) as stdout:
+                print(jp2k.box[3])
+                print(jp2k.box[4])
+                actual = stdout.getvalue().strip()
+            exp = ('UUIDInfo Box (uinf) @ (77, 50)\n'
+                   '    UUID List Box (ulst) @ (85, 26)\n'
+                   '    Data Entry URL Box (url ) @ (111, 16)\n'
+                   'Resolution Box (res ) @ (127, 44)\n'
+                   '    Capture Resolution Box (resc) @ (135, 18)\n'
+                   '    Display Resolution Box (resd) @ (153, 18)')
+
+            self.assertEqual(actual, exp)
+
     def test_flst(self):
         """Verify printing of fragment list box."""
         flst = glymur.jp2box.FragmentListBox([89], [1132288], [0])
         actual = str(flst)
         self.assertEqual(actual, fixtures.fragment_list_box)
 
+        glymur.set_option('print.short', True)
+        actual = str(flst)
+        self.assertEqual(actual, fixtures.fragment_list_box.splitlines()[0])
+
     def test_dref(self):
         """Verify printing of data reference box."""
         dref = glymur.jp2box.DataReferenceBox()
+        actual = str(dref)
+        self.assertEqual(actual, 'Data Reference Box (dtbl) @ (-1, 0)')
+
+        glymur.set_option('print.short', True)
         actual = str(dref)
         self.assertEqual(actual, 'Data Reference Box (dtbl) @ (-1, 0)')
 
@@ -691,6 +733,10 @@ class TestPrinting(unittest.TestCase):
         nlst = glymur.jp2box.NumberListBox(assn)
         actual = str(nlst)
         self.assertEqual(actual, fixtures.number_list_box)
+
+        glymur.set_option('print.short', True)
+        actual = str(nlst)
+        self.assertEqual(actual, fixtures.number_list_box.splitlines()[0])
 
     def test_ftbl(self):
         """Verify printing of fragment table box."""
@@ -925,6 +971,11 @@ class TestPrinting(unittest.TestCase):
         actual = str(cmap)
         self.assertEqual(actual, fixtures.issue_182_cmap)
 
+        glymur.set_option('print.short', True)
+        actual = str(cmap)
+        expected = fixtures.issue_182_cmap.splitlines()[0]
+        self.assertEqual(actual, expected)
+
     def test_issue183(self):
         """
         Broken ICC profile
@@ -959,6 +1010,10 @@ class TestPrinting(unittest.TestCase):
                                                   length=109, offset=40)
         actual = str(box)
         self.assertEqual(actual, fixtures.text_GBR_rreq)
+
+        glymur.set_option('print.short', True)
+        actual = str(box)
+        self.assertEqual(actual, fixtures.text_GBR_rreq.splitlines()[0])
 
     @unittest.skipIf('lxml' not in sys.modules.keys(), "No lxml")
     def test_bom(self):

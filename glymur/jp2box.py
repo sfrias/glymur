@@ -886,11 +886,11 @@ class ComponentMappingBox(Jp2kBox):
             zip(self.mapping_type, self.component_index, self.palette_index)
         ):
             if mapping_type == 1:
-                # Direct use
+                # palette mapping
                 text = 'Component {0} ==> palette column {1}'
                 text = text.format(component_idx, palette_idx)
             else:
-                # palette mapping
+                # Direct use
                 text = 'Component {0} ==> {1}'
                 text = text.format(component_idx, k)
             lst.append(text)
@@ -1084,11 +1084,10 @@ class DataReferenceBox(Jp2kBox):
 
     def _write_validate(self):
         """Verify that the box obeys the specifications for writing.
+
+        The only tests for writing the data reference box are actually handled
+        elsewhere, so just do validation for reading.
         """
-        if len(self.DR) == 0:
-            msg = ("A data reference box cannot be empty when written to a "
-                   "file.")
-            self._dispatch_validation_error(msg, writing=True)
         self._validate(writing=True)
 
     def write(self, fptr):

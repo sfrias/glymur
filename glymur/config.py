@@ -358,7 +358,7 @@ def set_printoptions(**kwargs):
                   DeprecationWarning)
     for key, value in kwargs.items():
         if key not in ['short', 'xml', 'codestream']:
-            raise TypeError('"{0}" not a valid keyword parameter.'.format(key))
+            raise KeyError('"{0}" not a valid keyword parameter.'.format(key))
         set_option('print.' + key, value)
 
 

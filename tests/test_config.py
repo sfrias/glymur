@@ -59,6 +59,22 @@ class TestSuiteOptions(unittest.TestCase):
         glymur.reset_option('print.codestream')
         self.assertTrue(glymur.get_option('print.codestream'))
 
+    def test_bad_reset(self):
+        """
+        Verify exception when a bad option is given to reset
+        """
+        with self.assertRaises(KeyError):
+            glymur.reset_option('blah')
+
+    def test_bad_deprecated_print_option(self):
+        """
+        Verify exception when a bad option is given to old set_printoption
+        """
+        with self.assertRaises(KeyError):
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                glymur.config.set_printoptions(blah='value-blah')
+
 
 @unittest.skipIf(sys.hexversion < 0x03020000,
                  "TemporaryDirectory introduced in 3.2.")

@@ -10,15 +10,12 @@ License:  MIT
 from collections import Counter
 try:
     from contextlib import ExitStack
+    from itertools import filterfalse
 except ImportError:
     # v2.7, third party library import ...
     from contextlib2 import ExitStack
-import ctypes
-try:
-    from itertools import filterfalse
-except ImportError:
-    # v2.7
     from itertools import ifilterfalse as filterfalse
+import ctypes
 import math
 import os
 import re

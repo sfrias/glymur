@@ -186,39 +186,22 @@ class TestSuite(unittest.TestCase):
 
         buffer = struct.pack(e + 'HHII', 33922, TIFF_DOUBLE, 6, offset + 40)
         b.write(buffer)
-        tag_payloads.append((e + 'd', 0.0))
-        tag_payloads.append((e + 'd', 0.0))
-        tag_payloads.append((e + 'd', 0.0))
-        tag_payloads.append((e + 'd', 444650.0))
-        tag_payloads.append((e + 'd', 4640510.0))
-        tag_payloads.append((e + 'd', 0.0))
+        datums = [0.0, 0.0, 0.0, 44650.0, 4640510.0, 0.0]
+        for data in datums:
+            tag_payloads.append((e + 'd', data))
 
         buffer = struct.pack(e + 'HHII', 34735, TIFF_SHORT, 24, offset + 88)
         b.write(buffer)
-        tag_payloads.append((e + 'H', 1))
-        tag_payloads.append((e + 'H', 1))
-        tag_payloads.append((e + 'H', 0))
-        tag_payloads.append((e + 'H', 5))
-        tag_payloads.append((e + 'H', 1024))
-        tag_payloads.append((e + 'H', 0))
-        tag_payloads.append((e + 'H', 1))
-        tag_payloads.append((e + 'H', 1))
-        tag_payloads.append((e + 'H', 1025))
-        tag_payloads.append((e + 'H', 0))
-        tag_payloads.append((e + 'H', 1))
-        tag_payloads.append((e + 'H', 1))
-        tag_payloads.append((e + 'H', 1026))
-        tag_payloads.append((e + 'H', 34737))
-        tag_payloads.append((e + 'H', 20))
-        tag_payloads.append((e + 'H', 0))
-        tag_payloads.append((e + 'H', 2049))
-        tag_payloads.append((e + 'H', 34737))
-        tag_payloads.append((e + 'H', 24))
-        tag_payloads.append((e + 'H', 20))
-        tag_payloads.append((e + 'H', 3072))
-        tag_payloads.append((e + 'H', 0))
-        tag_payloads.append((e + 'H', 1))
-        tag_payloads.append((e + 'H', 26716))
+        datums = [
+            1, 1, 0, 5,
+            1024, 0, 1, 1,
+            1025, 0, 1, 1,
+            1026, 34737, 20, 0,
+            2049, 34737, 24, 20,
+            3072, 0, 1, 26716,
+        ]
+        for data in datums:
+            tag_payloads.append((e + 'H', data))
 
         buffer = struct.pack(e + 'HHII', 34737, TIFF_ASCII, 45, offset + 136)
         b.write(buffer)

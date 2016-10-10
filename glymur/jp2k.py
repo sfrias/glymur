@@ -35,7 +35,7 @@ from . import core, version
 from .jp2box import (Jp2kBox, JPEG2000SignatureBox, FileTypeBox,
                      JP2HeaderBox, ColourSpecificationBox,
                      ContiguousCodestreamBox, ImageHeaderBox)
-from .lib import openjpeg as opj, openjp2 as opj2, c as libc
+from .lib import openjpeg as opj, openjp2 as opj2
 
 
 class Jp2k(Jp2kBox):

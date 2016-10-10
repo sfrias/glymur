@@ -52,10 +52,10 @@ def main():
 
     filename = args.filename
 
+    # JP2 metadata can be extensive, so don't print any warnings until we
+    # are done with the metadata.
     with warnings.catch_warnings(record=True) as wctx:
 
-        # JP2 metadata can be extensive, so don't print any warnings until we
-        # are done with the metadata.
         jp2 = Jp2k(filename)
         if jp2._codec_format == lib.openjp2.CODEC_J2K:
             if codestream_level == 0:
@@ -68,7 +68,7 @@ def main():
         else:
             print(jp2)
 
-        # Re-emit any warnings that may have been suppressed.
+        # Now re-emit any suppressed warnings.
         if len(wctx) > 0:
             print("\n")
         for warning in wctx:

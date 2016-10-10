@@ -704,7 +704,8 @@ number_list_box = r"""Number List Box (nlst) @ (-1, 0)
     Association[2]:  compositing layer 0"""
 
 
-goodstuff_codestream_header = r"""Codestream:
+goodstuff_codestream_header = r"""File:  goodstuff.j2k
+Codestream:
     SOC marker segment @ (0, 0)
     SIZ marker segment @ (2, 47)
         Profile:  no profile

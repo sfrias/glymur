@@ -1238,6 +1238,16 @@ class TestJp2dump(unittest.TestCase):
             actual = fake_out.getvalue().strip()
         self.assertRegex(actual, "File:  .*")
 
+    def test_j2k_codestream_1(self):
+        """-c 1 should print the codestream header"""
+        sys.argv = ['', '-c', '1', self.j2kfile]
+        with patch('sys.stdout', new=StringIO()) as stdout:
+            command_line.main()
+            actual = stdout.getvalue().strip()
+
+        expected = fixtures.goodstuff_codestream_header
+        self.assertEqual(expected, actual)
+
     def test_j2k_codestream_2(self):
         """Verify dumping with -c 2, full details."""
         with patch('sys.stdout', new=StringIO()) as fake_out:
@@ -1271,3 +1281,19 @@ class TestJp2dump(unittest.TestCase):
         expected.extend(lines[104:140])
         expected = '\n'.join(expected)
         self.assertEqual(actual, expected)
+
+    def test_suppress_warnings_until_end(self):
+        """
+        Warnings about invalid JP2/J2K syntax should be suppressed until end
+        """
+        file = os.path.join('data', 'edf_c2_1178956.jp2')
+        file = pkg.resource_filename(__name__, file)
+        actual = self.run_jp2dump(['', '-x', file])
+
+        expected = fixtures
+
+        # The "CME marker segment" part is the last segment in the codestream
+        # header.
+        pattern = 'JPEG\s2000.*?CME\smarker\ssegment.*?UserWarning'
+        r = re.compile(pattern, re.DOTALL)
+        self.assertRegex(actual, r)

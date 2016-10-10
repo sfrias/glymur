@@ -177,9 +177,9 @@ class Jp2k(Jp2kBox):
 
     @layer.setter
     def layer(self, layer):
-        if version.openjpeg_version_tuple[0] < 2:
+        if version.openjpeg_version < '2.1.0':
             msg = ("The layer property not supported unless the OpenJPEG "
-                   "library version is 2.0 or higher.  The installed version "
+                   "library version is 2.1 or higher.  The installed version "
                    "is {version}.")
             msg = msg.format(version=version.openjpeg_version)
             raise IOError(msg)
@@ -346,9 +346,9 @@ class Jp2k(Jp2kBox):
         fps : {24, 48}
             Frames per second.
         """
-        if re.match("1.5|2.0.0", version.openjpeg_version) is not None:
+        if re.match("1.5|2.0", version.openjpeg_version) is not None:
             msg = ("Writing Cinema2K or Cinema4K files is not supported with "
-                   "OpenJPEG library versions less than 2.0.1.  The installed "
+                   "OpenJPEG library versions less than 2.1.0.  The installed "
                    "version of OpenJPEG is {version}.")
             msg = msg.format(version=version.openjpeg_version)
             raise IOError(msg)
@@ -361,31 +361,18 @@ class Jp2k(Jp2kBox):
                 msg = 'Cinema2K frame rate must be either 24 or 48.'
                 raise IOError(msg)
 
-            if re.match("2.0", version.openjpeg_version) is not None:
-                # 2.0 API
-                if fps == 24:
-                    self._cparams.cp_cinema = core.OPJ_CINEMA2K_24
-                else:
-                    self._cparams.cp_cinema = core.OPJ_CINEMA2K_48
+            if fps == 24:
+                self._cparams.rsiz = core.OPJ_PROFILE_CINEMA_2K
+                self._cparams.max_comp_size = core.OPJ_CINEMA_24_COMP
+                self._cparams.max_cs_size = core.OPJ_CINEMA_24_CS
             else:
-                # 2.1 API
-                if fps == 24:
-                    self._cparams.rsiz = core.OPJ_PROFILE_CINEMA_2K
-                    self._cparams.max_comp_size = core.OPJ_CINEMA_24_COMP
-                    self._cparams.max_cs_size = core.OPJ_CINEMA_24_CS
-                else:
-                    self._cparams.rsiz = core.OPJ_PROFILE_CINEMA_2K
-                    self._cparams.max_comp_size = core.OPJ_CINEMA_48_COMP
-                    self._cparams.max_cs_size = core.OPJ_CINEMA_48_CS
+                self._cparams.rsiz = core.OPJ_PROFILE_CINEMA_2K
+                self._cparams.max_comp_size = core.OPJ_CINEMA_48_COMP
+                self._cparams.max_cs_size = core.OPJ_CINEMA_48_CS
 
         else:
             # cinema4k
-            if re.match("2.0", version.openjpeg_version) is not None:
-                # 2.0 API
-                self._cparams.cp_cinema = core.OPJ_CINEMA4K_24
-            else:
-                # 2.1 API
-                self._cparams.rsiz = core.OPJ_PROFILE_CINEMA_4K
+            self._cparams.rsiz = core.OPJ_PROFILE_CINEMA_4K
 
     def _populate_cparams(self, img_array, mct=None, cratios=None, psnr=None,
                           cinema2k=None, cinema4k=None, irreversible=None,
@@ -674,19 +661,6 @@ class Jp2k(Jp2kBox):
             msg = "{0}D imagery is not allowed.".format(img_array.ndim)
             raise IOError(msg)
 
-    def _validate_v2_0_0_images(self, img_array):
-        """
-        Version 2.0.0 is restricted to only the most common images.
-        """
-        if re.match("2.0.0", version.openjpeg_version) is not None:
-            if (((img_array.ndim != 2) and
-                 (img_array.shape[2] != 1 and img_array.shape[2] != 3))):
-                msg = ("Writing images is restricted to single-channel "
-                       "greyscale images or three-channel RGB images when "
-                       "the OpenJPEG library version is the official 2.0.0 "
-                       "release.")
-                raise IOError(msg)
-
     def _validate_image_datatype(self, img_array):
         """
         Only uint8 and uint16 images are currently supported.
@@ -710,7 +684,6 @@ class Jp2k(Jp2kBox):
         self._validate_codeblock_size(cparams)
         self._validate_precinct_size(cparams)
         self._validate_image_rank(img_array)
-        self._validate_v2_0_0_images(img_array)
         self._validate_image_datatype(img_array)
 
     def _determine_colorspace(self, colorspace=None, **kwargs):
@@ -781,16 +754,9 @@ class Jp2k(Jp2kBox):
 
             opj2.setup_encoder(codec, self._cparams, image)
 
-            if re.match("2.0", version.openjpeg_version) is not None:
-                fptr = libc.fopen(self.filename, 'wb')
-                strm = opj2.stream_create_default_file_stream(fptr, False)
-                stack.callback(opj2.stream_destroy, strm)
-                stack.callback(libc.fclose, fptr)
-            else:
-                # Introduced in 2.1 devel series.
-                strm = opj2.stream_create_default_file_stream(self.filename,
-                                                              False)
-                stack.callback(opj2.stream_destroy, strm)
+            strm = opj2.stream_create_default_file_stream(self.filename,
+                                                          False)
+            stack.callback(opj2.stream_destroy, strm)
 
             opj2.start_compress(codec, image, strm)
             opj2.encode(codec, strm)
@@ -1309,15 +1275,9 @@ class Jp2k(Jp2kBox):
         self._populate_dparams(rlevel, tile=tile, area=area)
 
         with ExitStack() as stack:
-            if re.match("2.1", version.openjpeg_version):
-                filename = self.filename
-                stream = opj2.stream_create_default_file_stream(filename, True)
-                stack.callback(opj2.stream_destroy, stream)
-            else:
-                fptr = libc.fopen(self.filename, 'rb')
-                stack.callback(libc.fclose, fptr)
-                stream = opj2.stream_create_default_file_stream(fptr, True)
-                stack.callback(opj2.stream_destroy, stream)
+            filename = self.filename
+            stream = opj2.stream_create_default_file_stream(filename, True)
+            stack.callback(opj2.stream_destroy, stream)
             codec = opj2.create_decompress(self._codec_format)
             stack.callback(opj2.destroy_codec, codec)
 
@@ -1458,8 +1418,8 @@ class Jp2k(Jp2kBox):
         >>> jp = glymur.Jp2k(jfile)
         >>> components_lst = jp.read_bands(rlevel=1)
         """
-        if version.openjpeg_version_tuple[0] < 2:
-            msg = ("You must have at least version 2.0.0 of OpenJPEG "
+        if version.openjpeg_version < '2.1.0':
+            msg = ("You must have at least version 2.1.0 of OpenJPEG "
                    "installed before using this method.  Your version of "
                    "OpenJPEG is {version}.")
             msg = msg.format(version=version.openjpeg_version)
@@ -1471,16 +1431,9 @@ class Jp2k(Jp2kBox):
         self._populate_dparams(rlevel, tile=tile, area=area)
 
         with ExitStack() as stack:
-            if re.match("2.1", version.openjpeg_version):
-                # API change in 2.1
-                filename = self.filename
-                stream = opj2.stream_create_default_file_stream(filename, True)
-                stack.callback(opj2.stream_destroy, stream)
-            else:
-                fptr = libc.fopen(self.filename, 'rb')
-                stack.callback(libc.fclose, fptr)
-                stream = opj2.stream_create_default_file_stream(fptr, True)
-                stack.callback(opj2.stream_destroy, stream)
+            filename = self.filename
+            stream = opj2.stream_create_default_file_stream(filename, True)
+            stack.callback(opj2.stream_destroy, stream)
             codec = opj2.create_decompress(self._codec_format)
             stack.callback(opj2.destroy_codec, codec)
 
@@ -1671,17 +1624,10 @@ class Jp2k(Jp2kBox):
 
         # Stage the image data to the openjpeg data structure.
         for k in range(0, num_comps):
-            if re.match("2.0", version.openjpeg_version) is not None:
-                # 2.0 API
-                if self._cparams.cp_cinema:
-                    image.contents.comps[k].prec = 12
-                    image.contents.comps[k].bpp = 12
-            else:
-                # 2.1 API
-                if self._cparams.rsiz in (core.OPJ_PROFILE_CINEMA_2K,
-                                          core.OPJ_PROFILE_CINEMA_4K):
-                    image.contents.comps[k].prec = 12
-                    image.contents.comps[k].bpp = 12
+            if self._cparams.rsiz in (core.OPJ_PROFILE_CINEMA_2K,
+                                      core.OPJ_PROFILE_CINEMA_4K):
+                image.contents.comps[k].prec = 12
+                image.contents.comps[k].bpp = 12
 
             layer = np.ascontiguousarray(imgdata[:, :, k], dtype=np.int32)
             dest = image.contents.comps[k].data

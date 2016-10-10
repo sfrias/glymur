@@ -1876,20 +1876,6 @@ class TestJp2k_1_x(unittest.TestCase):
                     j2k.layer = 1
 
 
-@unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
-@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
-class Test_2p0_official(unittest.TestCase):
-    """Tests specific to v2.0.0"""
-
-    def test_extra_components_on_v2(self):
-        """Can only write 4 components on 2.0+, should error out otherwise."""
-        with patch('glymur.version.openjpeg_version', new="2.0.0"):
-            with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-                data = np.zeros((128, 128, 4), dtype=np.uint8)
-                with self.assertRaises(IOError):
-                    Jp2k(tfile.name, data=data)
-
-
 @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
                  "Requires as least v2.0")
 class TestJp2k_2_0(unittest.TestCase):

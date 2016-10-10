@@ -20,18 +20,6 @@ else:
 _macports_default_location = {'openjp2': '/opt/local/lib/libopenjp2.dylib',
                               'openjpeg': '/opt/local/lib/libopenjpeg.dylib'}
 
-# default library locations on Windows
-_windows_default_location = {'openjp2': os.path.join('C:\\',
-                                                     'Program files',
-                                                     'OpenJPEG 2.0',
-                                                     'bin',
-                                                     'openjp2.dll'),
-                             'openjpeg': os.path.join('C:\\',
-                                                      'Program files',
-                                                      'OpenJPEG 1.5',
-                                                      'bin',
-                                                      'openjpeg.dll')}
-
 
 def glymurrc_fname():
     """Return the path to the configuration file.
@@ -85,9 +73,6 @@ def load_openjpeg_library(libname):
         if platform.system() == 'Darwin':
             # OpenJPEG may have been installed via MacPorts
             path = _macports_default_location[libname]
-        elif platform.system == 'Windows':
-            # OpenJPEG may have been installed via windows installer
-            path = _windows_default_location[libname]
 
         if path is not None and not os.path.exists(path):
             # the mac/win default location does not exist.

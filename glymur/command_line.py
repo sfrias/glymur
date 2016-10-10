@@ -1,10 +1,12 @@
 """
 Entry point for console script jp2dump.
 """
+# Standard library imports ...
 import argparse
 import os
 import warnings
 
+# Local imports ...
 from . import Jp2k, set_option, lib
 
 

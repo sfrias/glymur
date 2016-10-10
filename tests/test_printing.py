@@ -1282,6 +1282,7 @@ class TestJp2dump(unittest.TestCase):
         expected = '\n'.join(expected)
         self.assertEqual(actual, expected)
 
+    @unittest.skipIf(sys.hexversion < 0x03000000, "assertRegex not in 2.7")
     def test_suppress_warnings_until_end(self):
         """
         Warnings about invalid JP2/J2K syntax should be suppressed until end

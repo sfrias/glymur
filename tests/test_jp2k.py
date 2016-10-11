@@ -958,6 +958,7 @@ class TestJp2k(unittest.TestCase):
 
         self.assertEqual(profile['Creator'], 'JPEG')
 
+    @unittest.skipIf(glymur.lib.openjp2.OPENJP2 is None, "Needs openjp2")
     def test_different_layers(self):
         """
         Verify that setting the layer property results in different images.
@@ -1138,6 +1139,8 @@ class TestJp2k_write(fixtures.MetadataBase):
             with self.assertRaises(IOError):
                 j2 = j.wrap(tfile.name, boxes=boxes)
 
+    @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
+                     "Requires as least v2.0")
     def test_null_data(self):
         """
         Verify that we prevent trying to write images with one dimension zero.

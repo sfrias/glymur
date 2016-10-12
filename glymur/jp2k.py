@@ -1137,6 +1137,7 @@ class Jp2k(Jp2kBox):
 
         if 'ignore_pclr_cmap_cdef' in kwargs:
             self.ignore_pclr_cmap_cdef = kwargs['ignore_pclr_cmap_cdef']
+            kwargs.pop('ignore_pclr_cmap_cdef')
         warnings.warn("Use array-style slicing instead.", DeprecationWarning)
         img = self._read(**kwargs)
         return img

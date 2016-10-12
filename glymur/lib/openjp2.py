@@ -1250,33 +1250,7 @@ def start_compress(codec, image, stream):
     OPENJP2.opj_start_compress(codec, image, stream)
 
 
-def _stream_create_default_file_stream_2p0(fptr, isa_read_stream):
-    """Wraps openjp2 library function opj_stream_create_default_vile_stream.
-
-    Sets the stream to be a file stream.  This is valid only for version 2.0.0
-    of OpenJPEG.
-
-    Parameters
-    ----------
-    fptr : ctypes.c_void_p
-        Corresponds to C file pointer.  Must be obtained from libc.fopen.
-    isa_read_stream:  bool
-        True (read) or False (write)
-
-    Returns
-    -------
-    stream : stream_t
-        An OpenJPEG file stream.
-    """
-    ARGTYPES = [ctypes.c_void_p, ctypes.c_int32]
-    OPENJP2.opj_stream_create_default_file_stream.argtypes = ARGTYPES
-    OPENJP2.opj_stream_create_default_file_stream.restype = STREAM_TYPE_P
-    read_stream = 1 if isa_read_stream else 0
-    stream = OPENJP2.opj_stream_create_default_file_stream(fptr, read_stream)
-    return stream
-
-
-def _stream_create_default_file_stream_2p1(fname, isa_read_stream):
+def stream_create_default_file_stream(fname, isa_read_stream):
     """Wraps openjp2 library function opj_stream_create_default_vile_stream.
 
     Sets the stream to be a file stream.  This function is only valid for the
@@ -1302,11 +1276,6 @@ def _stream_create_default_file_stream_2p1(fname, isa_read_stream):
     stream = OPENJP2.opj_stream_create_default_file_stream(file_argument,
                                                            read_stream)
     return stream
-
-if re.match(r'''2.0''', version()):
-    stream_create_default_file_stream = _stream_create_default_file_stream_2p0
-else:
-    stream_create_default_file_stream = _stream_create_default_file_stream_2p1
 
 
 def stream_destroy(stream):

@@ -26,7 +26,7 @@ import glymur
 from glymur import Jp2k
 from glymur.jp2box import ColourSpecificationBox, ContiguousCodestreamBox
 from glymur.jp2box import FileTypeBox, ImageHeaderBox, JP2HeaderBox
-from glymur.jp2box import JPEG2000SignatureBox
+from glymur.jp2box import JPEG2000SignatureBox, BitsPerComponentBox
 from glymur.core import COLOR, OPACITY, SRGB, GREYSCALE
 from glymur.core import RED, GREEN, BLUE, GREY, WHOLE_IMAGE
 from .fixtures import WINDOWS_TMP_FILE_MSG, MetadataBase
@@ -991,6 +991,17 @@ class TestRepr(MetadataBase):
         newbox = eval(repr(jp2k))
         self.assertTrue(isinstance(newbox, glymur.jp2box.JPEG2000SignatureBox))
         self.assertEqual(newbox.signature, (13, 10, 135, 10))
+
+    def test_bpcc(self):
+        """Should be able to instantiate a bpcc box"""
+        box = BitsPerComponentBox((5, 5, 5, 1),
+                                  (False, False, False, False),
+                                  length=12, offset=62)
+
+        # Test the representation instantiation.
+        newbox = eval(repr(box))
+        self.assertEqual(box.bpc, newbox.bpc)
+        self.assertEqual(box.signed, newbox.signed)
 
     def test_free(self):
         """Should be able to instantiate a free box"""

@@ -1818,7 +1818,8 @@ class BitsPerComponentBox(Jp2kBox):
         self.signed = signed
 
     def __repr__(self):
-        msg = "glymur.jp2box.BitsPerComponentBox(box={0})".format(self.box)
+        msg = "glymur.jp2box.BitsPerComponentBox({0}, {1})"
+        msg = msg.format(self.bpc, self.signed)
         return msg
 
     def __str__(self):
@@ -1826,11 +1827,9 @@ class BitsPerComponentBox(Jp2kBox):
         if config.get_option('print.short') is True:
             return title
 
-        body = 'Bits per component:  ['
-        body += ', '.join(str(x) for x in self.bpc)
-        body += ']'
-        body += '\n'
-        body += 'Signed:  [' + ', '.join(str(x) for x in self.signed) + ']'
+        body = 'Bits per component:  [{bpc}]\nSigned:  [{sgn}]'
+        body = body.format(bpc=', '.join(str(x) for x in self.bpc),
+                           sgn=', '.join(str(x) for x in self.signed))
 
         body = self._indent(body)
 

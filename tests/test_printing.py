@@ -91,9 +91,9 @@ class TestPrinting(unittest.TestCase):
         expected = ('Palette Box (pclr) @ (66, 782)')
         self.assertEqual(actual, expected)
 
-    def test_component_mapping(self):
+    def test_component_mapping_palette(self):
         """
-        verify printing of cmap box
+        verify printing of cmap box tied to a palette
 
         Original file tested was input/conformance/file9.jp2
         """
@@ -106,6 +106,21 @@ class TestPrinting(unittest.TestCase):
                     '    Component 0 ==> palette column 0\n'
                     '    Component 0 ==> palette column 1\n'
                     '    Component 0 ==> palette column 2')
+        self.assertEqual(actual, expected)
+
+    def test_component_mapping_non_palette(self):
+        """
+        verify printing of cmap box where there is no palette
+        """
+        cmap = glymur.jp2box.ComponentMappingBox(component_index=(0, 1, 2),
+                                                 mapping_type=(0, 0, 0),
+                                                 palette_index=(0, 0, 0),
+                                                 length=20, offset=848)
+        actual = str(cmap)
+        expected = ('Component Mapping Box (cmap) @ (848, 20)\n'
+                    '    Component 0 ==> 0\n'
+                    '    Component 1 ==> 1\n'
+                    '    Component 2 ==> 2')
         self.assertEqual(actual, expected)
 
     def test_channel_definition(self):

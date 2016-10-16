@@ -2069,6 +2069,7 @@ class PaletteBox(Jp2kBox):
         write_buffer = struct.pack('>I4s', int(box_length), b'pclr')
         fptr.write(write_buffer)
 
+        # NE, NPC
         write_buffer = struct.pack('>HB', self.palette.shape[0],
                                    self.palette.shape[1])
         fptr.write(write_buffer)
@@ -2081,14 +2082,8 @@ class PaletteBox(Jp2kBox):
                                    *bps_signed)
         fptr.write(write_buffer)
 
-        # All components are the same.  Writing is straightforward.
-        if self.bits_per_component[0] <= 8:
-            write_buffer = memoryview(self.palette.astype(np.uint8))
-        elif self.bits_per_component[0] <= 16:
-            write_buffer = memoryview(self.palette.astype(np.uint16))
-        elif self.bits_per_component[0] <= 32:
-            write_buffer = memoryview(self.palette.astype(np.uint32))
-        fptr.write(write_buffer)
+        # C(i,j)
+        fptr.write(memoryview(self.palette))
 
     @classmethod
     def parse(cls, fptr, offset, length):

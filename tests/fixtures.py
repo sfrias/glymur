@@ -693,11 +693,6 @@ jplh_color_group_box = r"""Compositing Layer Header Box (jplh) @ (314227, 31)
             Precedence:  0
             Colorspace:  sRGB"""
 
-fragment_list_box = r"""Fragment List Box (flst) @ (-1, 0)
-    Offset 0:  89
-    Fragment Length 0:  1132288
-    Data Reference 0:  0"""
-
 number_list_box = r"""Number List Box (nlst) @ (-1, 0)
     Association[0]:  the rendered result
     Association[1]:  codestream 0

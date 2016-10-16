@@ -1023,7 +1023,8 @@ class TestRepr(MetadataBase):
 
     def test_ftbl(self):
         """Should be able to instantiate a fragment table box"""
-        ftbl = glymur.jp2box.FragmentTableBox()
+        flst = glymur.jp2box.FragmentListBox([89], [1132288], [0])
+        ftbl = glymur.jp2box.FragmentTableBox([flst])
 
         # Test the representation instantiation.
         newbox = eval(repr(ftbl))

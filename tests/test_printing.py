@@ -713,17 +713,32 @@ class TestPrinting(unittest.TestCase):
         """Verify printing of fragment list box."""
         flst = glymur.jp2box.FragmentListBox([89], [1132288], [0])
         actual = str(flst)
-        self.assertEqual(actual, fixtures.fragment_list_box)
+        expected = ("Fragment List Box (flst) @ (-1, 0)\n"
+                    "    Offset 0:  89\n"
+                    "    Fragment Length 0:  1132288\n"
+                    "    Data Reference 0:  0")
+        self.assertEqual(actual, expected)
 
         glymur.set_option('print.short', True)
         actual = str(flst)
-        self.assertEqual(actual, fixtures.fragment_list_box.splitlines()[0])
+        self.assertEqual(actual, expected.splitlines()[0])
 
     def test_dref(self):
         """Verify printing of data reference box."""
-        dref = glymur.jp2box.DataReferenceBox()
+
+        version = 0
+        flag = (0, 0, 0)
+        url = "http://readthedocs.glymur.org"
+        deu = glymur.jp2box.DataEntryURLBox(version, flag, url)
+
+        dref = glymur.jp2box.DataReferenceBox([deu])
         actual = str(dref)
-        self.assertEqual(actual, 'Data Reference Box (dtbl) @ (-1, 0)')
+        expected = ("Data Reference Box (dtbl) @ (-1, 0)\n"
+                    "    Data Entry URL Box (url ) @ (-1, 0)\n"
+                    "        Version:  0\n"
+                    "        Flag:  0 0 0\n"
+                    '        URL:  "http://readthedocs.glymur.org"')
+        self.assertEqual(actual, expected)
 
         glymur.set_option('print.short', True)
         actual = str(dref)
@@ -754,9 +769,16 @@ class TestPrinting(unittest.TestCase):
 
     def test_ftbl(self):
         """Verify printing of fragment table box."""
-        ftbl = glymur.jp2box.FragmentTableBox()
+        flst = glymur.jp2box.FragmentListBox([89], [1132288], [0])
+        ftbl = glymur.jp2box.FragmentTableBox([flst])
         actual = str(ftbl)
-        self.assertEqual(actual, 'Fragment Table Box (ftbl) @ (-1, 0)')
+
+        expected = ("Fragment Table Box (ftbl) @ (-1, 0)\n"
+                    "    Fragment List Box (flst) @ (-1, 0)\n"
+                    "        Offset 0:  89\n"
+                    "        Fragment Length 0:  1132288\n"
+                    "        Data Reference 0:  0")
+        self.assertEqual(actual, expected)
 
     def test_jpch(self):
         """Verify printing of JPCH box."""

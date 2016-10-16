@@ -1455,6 +1455,8 @@ class FragmentTableBox(Jp2kBox):
         offset of the box from the start of the file.
     longname : str
         more verbose description of the box.
+    box : list
+        List containing exactly one FragmentListBox
     """
     box_id = 'ftbl'
     longname = 'Fragment Table'
@@ -1467,10 +1469,7 @@ class FragmentTableBox(Jp2kBox):
 
     def __repr__(self):
         msg = "glymur.jp2box.FragmentTableBox(box={0})"
-        if len(self.box) == 0:
-            msg = msg.format(None)
-        else:
-            msg = msg.format(self.box)
+        msg = msg.format(self.box)
         return msg
 
     def __str__(self):

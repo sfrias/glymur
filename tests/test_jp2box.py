@@ -357,6 +357,9 @@ class TestChannelDefinition(unittest.TestCase):
 class TestFileTypeBox(unittest.TestCase):
     """Test suite for ftyp box issues."""
 
+    def setUp(self):
+        self.jp2file = glymur.data.nemo()
+
     def test_bad_brand_on_parse(self):
         """The JP2 file file type box does not contain a valid brand.
         
@@ -389,6 +392,21 @@ class TestFileTypeBox(unittest.TestCase):
             with self.assertRaises(IOError):
                 ftyp.write(tfile)
 
+    @unittest.skipIf(sys.hexversion < 0x03000000,
+                     "assertWarns not introduced until 3.2")
+    def test_cl_entry_not_utf8(self):
+        """A ftyp box cl list entry must be utf-8 decodable."""
+        with open(self.jp2file, mode='rb') as f:
+            data = f.read()
+
+        # Replace bytes 28-32 with bad utf-8 data
+        data = data[:28] + b'\xff\xff\xff\xff' + data[32:]
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            tfile.write(data)
+            tfile.flush()
+
+            with self.assertWarns(UserWarning):
+                jp2 = Jp2k(tfile.name)
 
 class TestColourSpecificationBox(unittest.TestCase):
     """Test suite for colr box instantiation."""

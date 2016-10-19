@@ -4,6 +4,7 @@ Test suite specifically targeting JPX box layout.
 """
 # Standard library imports ...
 import ctypes
+from io import BytesIO
 import os
 import struct
 import tempfile
@@ -518,8 +519,8 @@ class TestJPX(unittest.TestCase):
             with self.assertRaises(IOError):
                 jpx1.wrap(tfile.name, boxes=boxes)
 
-    def test_dtbl(self):
-        """Verify that we can interpret Data Reference boxes."""
+    def test_dtbl_free(self):
+        """Verify that we can interpret Data Reference and Free boxes."""
         # Copy the existing JPX file, add a data reference box onto the end.
         flag = 0
         version = (0, 0, 0)
@@ -534,14 +535,20 @@ class TestJPX(unittest.TestCase):
                 dref = glymur.jp2box.DataReferenceBox([deurl1, deurl2])
                 dref.write(tfile)
 
+                # Free box.  The content does not matter.
+                tfile.write(struct.pack('>I4s', 12, b'free'))
+                tfile.write(struct.pack('>I', 0))
+
             tfile.flush()
 
             jpx = Jp2k(tfile.name)
 
-            self.assertEqual(jpx.box[-1].box_id, 'dtbl')
-            self.assertEqual(len(jpx.box[-1].DR), 2)
-            self.assertEqual(jpx.box[-1].DR[0].url, url1)
-            self.assertEqual(jpx.box[-1].DR[1].url, url2.rstrip('\0'))
+            self.assertEqual(jpx.box[-2].box_id, 'dtbl')
+            self.assertEqual(len(jpx.box[-2].DR), 2)
+            self.assertEqual(jpx.box[-2].DR[0].url, url1)
+            self.assertEqual(jpx.box[-2].DR[1].url, url2.rstrip('\0'))
+
+            self.assertEqual(jpx.box[-1].box_id, 'free')
 
     def test_ftbl(self):
         """Verify that we can interpret Fragment Table boxes."""

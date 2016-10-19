@@ -1564,6 +1564,9 @@ class FreeBox(Jp2kBox):
         FreeBox
             Instance of the current free box.
         """
+        # Must seek to end of box.
+        nbytes = offset + length - fptr.tell()
+        fptr.read(nbytes)
         return cls(length=length, offset=offset)
 
 

@@ -3313,7 +3313,7 @@ class UnknownBox(Jp2kBox):
         self.offset = offset
 
     def __repr__(self):
-        msg = "glymur.jp2box.UnknownBox({0})".format(self.box_id)
+        msg = "glymur.jp2box.UnknownBox('{0}')".format(self.box_id)
         return msg
 
     def __str__(self):

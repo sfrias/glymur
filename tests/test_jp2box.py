@@ -27,6 +27,7 @@ from glymur import Jp2k
 from glymur.jp2box import ColourSpecificationBox, ContiguousCodestreamBox
 from glymur.jp2box import FileTypeBox, ImageHeaderBox, JP2HeaderBox
 from glymur.jp2box import JPEG2000SignatureBox, BitsPerComponentBox
+from glymur.jp2box import UnknownBox
 from glymur.core import COLOR, OPACITY, SRGB, GREYSCALE
 from glymur.core import RED, GREEN, BLUE, GREY, WHOLE_IMAGE
 from .fixtures import WINDOWS_TMP_FILE_MSG, MetadataBase
@@ -1009,6 +1010,14 @@ class TestRepr(MetadataBase):
         newbox = eval(repr(jp2k))
         self.assertTrue(isinstance(newbox, glymur.jp2box.JPEG2000SignatureBox))
         self.assertEqual(newbox.signature, (13, 10, 135, 10))
+
+    def test_unknown(self):
+        """Should be able to instantiate an unknown box"""
+        box = UnknownBox('bpcc')
+
+        # Test the representation instantiation.
+        newbox = eval(repr(box))
+        self.assertTrue(isinstance(newbox, glymur.jp2box.UnknownBox))
 
     def test_bpcc(self):
         """Should be able to instantiate a bpcc box"""

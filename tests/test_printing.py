@@ -35,8 +35,8 @@ except ImportError:
 import glymur
 from glymur.core import RESTRICTED_ICC_PROFILE, ANY_ICC_PROFILE
 from glymur.core import COLOR, RED, GREEN, BLUE
-from glymur.jp2box import BitsPerComponentBox
-from glymur.jp2box import ColourSpecificationBox
+from glymur.jp2box import BitsPerComponentBox, ColourSpecificationBox
+from glymur.jp2box import LabelBox
 from glymur import Jp2k, command_line
 from . import fixtures
 from .fixtures import (WINDOWS_TMP_FILE_MSG,
@@ -238,6 +238,16 @@ class TestPrinting(unittest.TestCase):
         colr = ColourSpecificationBox(colorspace=276)
         colr.colorspace = 276
         str(colr)
+
+    def test_label_box_short(self):
+        """
+        Test the short option for the LabelBox
+        """
+        box = LabelBox('test')
+        glymur.set_option('print.short', True)
+        actual = str(box)
+        expected = "Label Box (lbl ) @ (-1, 0)"
+        self.assertEqual(actual, expected)
 
     def test_bpcc(self):
         """

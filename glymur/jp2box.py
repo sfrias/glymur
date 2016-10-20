@@ -2960,11 +2960,7 @@ class XMLBox(Jp2kBox):
         """
         Write an XML box to file.
         """
-        try:
-            read_buffer = ET.tostring(self.xml, encoding='utf-8')
-        except AttributeError:
-            # xml.etree.ElementTree.Element case
-            read_buffer = ET.tostring(self.xml.getroot(), encoding='utf-8')
+        read_buffer = ET.tostring(self.xml, encoding='utf-8')
         fptr.write(struct.pack('>I4s', len(read_buffer) + 8, b'xml '))
         fptr.write(read_buffer)
 

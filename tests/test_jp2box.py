@@ -1021,14 +1021,14 @@ class TestRepr(MetadataBase):
 
     def test_bpcc(self):
         """Should be able to instantiate a bpcc box"""
-        box = BitsPerComponentBox((5, 5, 5, 1),
-                                  (False, False, False, False),
-                                  length=12, offset=62)
+        bpc = (5, 5, 5, 1)
+        signed = (False, False, True, False)
+        box = BitsPerComponentBox(bpc, signed, length=12, offset=62)
 
         # Test the representation instantiation.
         newbox = eval(repr(box))
-        self.assertEqual(box.bpc, newbox.bpc)
-        self.assertEqual(box.signed, newbox.signed)
+        self.assertEqual(bpc, newbox.bpc)
+        self.assertEqual(signed, newbox.signed)
 
     def test_free(self):
         """Should be able to instantiate a free box"""

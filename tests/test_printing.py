@@ -243,15 +243,20 @@ class TestPrinting(unittest.TestCase):
         """
         BPCC boxes are rare :-)
         """
-        box = BitsPerComponentBox((5, 5, 5, 1),
-                                  (False, False, False, False),
-                                  length=12, offset=62)
+        bpcc = (5, 5, 5, 1)
+        signed = (False, False, True, False)
+        box = BitsPerComponentBox(bpcc, signed, length=12, offset=62)
         actual = str(box)
-        self.assertEqual(actual, fixtures.bpcc)
+
+        expected = ("Bits Per Component Box (bpcc) @ (62, 12)\n"
+                     "    Bits per component:  [5, 5, 5, 1]\n"
+                     "    Signed:  [False, False, True, False]")
+
+        self.assertEqual(actual, expected)
 
         glymur.set_option('print.short', True)
         actual = str(box)
-        self.assertEqual(actual, fixtures.bpcc.splitlines()[0])
+        self.assertEqual(actual, expected.splitlines()[0])
 
     def test_cinema_profile(self):
         """
@@ -740,9 +745,18 @@ class TestPrinting(unittest.TestCase):
                     '        URL:  "http://readthedocs.glymur.org"')
         self.assertEqual(actual, expected)
 
+        # Test the short version.
         glymur.set_option('print.short', True)
         actual = str(dref)
         self.assertEqual(actual, 'Data Reference Box (dtbl) @ (-1, 0)')
+
+    def test_empty_dref(self):
+        """Verify printing of data reference box with no content."""
+
+        dref = glymur.jp2box.DataReferenceBox()
+        actual = str(dref)
+        expected = "Data Reference Box (dtbl) @ (-1, 0)"
+        self.assertEqual(actual, expected)
 
     def test_jplh_cgrp(self):
         """Verify printing of compositing layer header box, color group box."""

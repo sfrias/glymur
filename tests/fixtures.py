@@ -815,10 +815,6 @@ goodstuff_with_full_header = r"""Codestream:
     SOD marker segment @ (164, 0)
     EOC marker segment @ (115218, 0)"""
 
-bpcc = """Bits Per Component Box (bpcc) @ (62, 12)
-    Bits per component:  [5, 5, 5, 1]
-    Signed:  [False, False, False, False]"""
-
 # manually verified via gdalinfo
 geotiff_uuid = """UUID Box (uuid) @ (149, 523)
     UUID:  b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)

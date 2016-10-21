@@ -161,11 +161,31 @@ class TestPrinting(unittest.TestCase):
         expected = fixtures.file1_xml_box
         self.assertEqual(actual, expected)
 
+    def test_xml_short_option(self):
+        """
+        verify printing of XML box when print.xml option set to false
+        """
+        elt = ET.fromstring(fixtures.file1_xml)
+        xml = ET.ElementTree(elt)
+        box = glymur.jp2box.XMLBox(xml=xml, length=439, offset=36)
         glymur.set_option('print.short', True)
+
         actual = str(box)
         expected = fixtures.file1_xml_box.splitlines()[0]
         self.assertEqual(actual, expected)
 
+    def test_xml_no_xml_option(self):
+        """
+        verify printing of XML box when print.xml option set to false
+        """
+        elt = ET.fromstring(fixtures.file1_xml)
+        xml = ET.ElementTree(elt)
+        box = glymur.jp2box.XMLBox(xml=xml, length=439, offset=36)
+
+        glymur.set_option('print.xml', False)
+        actual = str(box)
+        expected = fixtures.file1_xml_box.splitlines()[0]
+        self.assertEqual(actual, expected)
 
     def test_uuid(self):
         """

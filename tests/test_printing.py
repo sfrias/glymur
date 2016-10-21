@@ -187,6 +187,17 @@ class TestPrinting(unittest.TestCase):
         expected = fixtures.file1_xml_box.splitlines()[0]
         self.assertEqual(actual, expected)
 
+    def test_xml_no_xml(self):
+        """
+        verify printing of XML box when there is no XML
+        """
+        box = glymur.jp2box.XMLBox()
+
+        actual = str(box)
+        expected = ("XML Box (xml ) @ (-1, 0)\n"
+                    "    None")
+        self.assertEqual(actual, expected)
+
     def test_uuid(self):
         """
         verify printing of UUID box

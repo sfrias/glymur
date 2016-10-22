@@ -2115,38 +2115,20 @@ class PaletteBox(Jp2kBox):
         bps = [((x & 0x7f) + 1) for x in bps_signed]
         signed = [((x & 0x80) > 1) for x in bps_signed]
 
-        if all(b == bps_signed[0] for b in bps_signed):
-            # Ok the palette has the same datatype for all columns.  We should
-            # be able to efficiently read it.
-            if bps[0] <= 8:
-                dtype = np.uint8
-            elif bps[0] <= 16:
-                dtype = np.uint16
-            elif bps[0] <= 32:
-                dtype = np.uint32
+        # Are any components signed or differently sized?  We don't handle
+        # that.
+        if any(signed) or len(set(bps)) != 1:
+            msg = ("Palettes with signed components or differently sized "
+                   "components are not supported.")
+            raise IOError(msg)
 
-            palette = np.frombuffer(read_buffer[3 + ncols:], dtype=dtype)
-            palette = np.reshape(palette, (nrows, ncols))
+        # The palette is unsigned and all components have the same width.
+        # This should cover all but a vanishingly small share of palettes.
+        b = bps[0]
+        dtype = np.uint8 if b <=8 else np.uint16 if b <= 16 else np.uint32
 
-        else:
-            # General case where the columns may not be the same width.
-            fmt = '>'
-            for bits in bps:
-                if bits <= 8:
-                    fmt += 'B'
-                elif bits <= 16:
-                    fmt += 'H'
-                elif bits <= 32:
-                    fmt += 'I'
-
-            # Each palette component is padded out to the next largest byte.
-            # That means a list comprehension does this in one shot.
-            row_nbytes = sum([int(math.ceil(x / 8.0)) for x in bps])
-
-            palette = np.zeros((nrows, ncols), dtype=np.int32)
-            for j in range(nrows):
-                poff = 3 + ncols + j * row_nbytes
-                palette[j] = struct.unpack_from(fmt, read_buffer, offset=poff)
+        palette = np.frombuffer(read_buffer[3 + ncols:], dtype=dtype)
+        palette = np.reshape(palette, (nrows, ncols))
 
         return cls(palette, bps, signed, length=length, offset=offset)
 

@@ -813,14 +813,28 @@ class TestPrinting(unittest.TestCase):
 
     def test_nlst(self):
         """Verify printing of number list box."""
+        assn = (0, 16777216, 33554432, 50331648)
+        nlst = glymur.jp2box.NumberListBox(assn)
+
+        actual = str(nlst)
+        expected = ("Number List Box (nlst) @ (-1, 0)\n"
+                    "    Association[0]:  the rendered result\n"
+                    "    Association[1]:  codestream 0\n"
+                    "    Association[2]:  compositing layer 0\n"
+                    "    Association[3]:  unrecognized")
+
+        self.assertEqual(actual, expected)
+
+
+    def test_nlst_short(self):
+        glymur.set_option('print.short', True)
+
         assn = (0, 16777216, 33554432)
         nlst = glymur.jp2box.NumberListBox(assn)
-        actual = str(nlst)
-        self.assertEqual(actual, fixtures.number_list_box)
 
-        glymur.set_option('print.short', True)
         actual = str(nlst)
-        self.assertEqual(actual, fixtures.number_list_box.splitlines()[0])
+        expected = "Number List Box (nlst) @ (-1, 0)"
+        self.assertEqual(actual, expected)
 
     def test_ftbl(self):
         """Verify printing of fragment table box."""

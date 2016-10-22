@@ -994,7 +994,9 @@ class TestJp2Boxes(unittest.TestCase):
         self.assertIsNone(box.codestream)
 
     def test_codestream_main_header_offset(self):
-        """main_header_offset is an attribute of the CCS box"""
+        """
+        main_header_offset is an attribute of the ContiguousCodesStream box
+        """
         j = Jp2k(self.jpxfile)
         self.assertEqual(j.box[5].main_header_offset,
                          j.box[5].offset + 8)

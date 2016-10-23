@@ -3236,11 +3236,7 @@ class UnknownBox(Jp2kBox):
         return msg
 
     def __str__(self):
-        if len(self.box) > 0:
-            msg = self._str_superbox()
-        else:
-            msg = Jp2kBox.__str__(self)
-        return msg
+        return Jp2kBox.__str__(self)
 
 
 class UUIDBox(Jp2kBox):

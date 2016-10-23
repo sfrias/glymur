@@ -36,7 +36,7 @@ import glymur
 from glymur.core import RESTRICTED_ICC_PROFILE, ANY_ICC_PROFILE
 from glymur.core import COLOR, RED, GREEN, BLUE
 from glymur.jp2box import BitsPerComponentBox, ColourSpecificationBox
-from glymur.jp2box import LabelBox
+from glymur.jp2box import LabelBox, UnknownBox
 from glymur import Jp2k, command_line
 from . import fixtures
 from .fixtures import (WINDOWS_TMP_FILE_MSG,

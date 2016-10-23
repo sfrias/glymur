@@ -3307,7 +3307,7 @@ class UUIDBox(Jp2kBox):
         """
         Private function for parsing UUID payloads if possible.
         """
-        if self.uuid == UUID('be7acfcb-97a9-42e8-9c71-999491e3afac'):
+        if self.uuid == _XMP_UUID:
             txt = self.raw_data.decode('utf-8')
             elt = ET.fromstring(txt)
             self.data = ET.ElementTree(elt)
@@ -3330,11 +3330,11 @@ class UUIDBox(Jp2kBox):
             return title
 
         text = 'UUID:  {0}'.format(self.uuid)
-        if self.uuid == UUID('be7acfcb-97a9-42e8-9c71-999491e3afac'):
+        if self.uuid == _XMP_UUID:
             text += ' (XMP)'
-        elif self.uuid == UUID('b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03'):
+        elif self.uuid == _GEOTIFF_UUID:
             text += ' (GeoTIFF)'
-        elif self.uuid.bytes == b'JpgTiffExif->JP2':
+        elif self.uuid == _EXIF_UUID:
             text += ' (EXIF)'
         else:
             text += ' (unknown)'
@@ -3342,27 +3342,25 @@ class UUIDBox(Jp2kBox):
         lst = [text]
 
         if (((config.get_option('print.xml') is False) and
-             (self.uuid == UUID('be7acfcb-97a9-42e8-9c71-999491e3afac')))):
+            (self.uuid == _XMP_UUID))):
             # If it's an XMP UUID, don't print the XML contents.
             pass
 
-        elif self.uuid == UUID('be7acfcb-97a9-42e8-9c71-999491e3afac'):
+        elif self.uuid == _XMP_UUID:
             line = 'UUID Data:\n{0}'
-            kwargs = {'encoding': 'utf-8', 'pretty_print': True}
             try:
-                b = ET.tostring(self.data, **kwargs)
+                b = ET.tostring(self.data, encoding='utf-8', pretty_print=True)
             except TypeError:
-                # No lxml, have to fall back onto stdlib xml.etree.ElementTree
-                # Cannot do pretty print.
-                kwargs.pop('pretty_print')
-                b = ET.tostring(self.data.getroot(), **kwargs)
+                # No lxml, have to fall back onto stdlib xml.etree.ElementTree,
+                # but that cannot do pretty print.
+                b = ET.tostring(self.data.getroot(), encoding='utf-8')
             s = b.decode('utf-8').strip()
             text = line.format(s)
             lst.append(text)
-        elif self.uuid.bytes == b'JpgTiffExif->JP2':
+        elif self.uuid == _EXIF_UUID:
             text = 'UUID Data:  {0}'.format(str(self.data))
             lst.append(text)
-        elif self.uuid == UUID('b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03'):
+        elif self.uuid == _GEOTIFF_UUID:
             if _HAVE_GDAL:
                 txt = self._print_geotiff()
             else:

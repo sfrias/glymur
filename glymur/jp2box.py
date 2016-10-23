@@ -2345,9 +2345,6 @@ class ReaderRequirementsBox(Jp2kBox):
         read_buffer = fptr.read(num_bytes)
         mask_length, = struct.unpack_from('>B', read_buffer, offset=0)
 
-        if mask_length == 3:
-            return _parse_rreq3(read_buffer, length, offset)
-
         # Fully Understands Aspect Mask
         # Decodes Completely Mask
         fuam = dcm = standard_flag = standard_mask = []
@@ -2379,60 +2376,6 @@ class ReaderRequirementsBox(Jp2kBox):
         return cls(fuam, dcm, standard_flag, standard_mask,
                    vendor_feature, vendor_mask,
                    length=length, offset=offset)
-
-
-def _parse_rreq3(read_buffer, length, offset):
-    """Parse a reader requirements box.  Special case when mask length is 3."""
-    # Fully Understands Aspect Mask
-    # Decodes Completely Mask
-    fuam = dcm = standard_flag = standard_mask = []
-    vendor_feature = vendor_mask = []
-
-    # The mask length tells us the format string to use when unpacking
-    # from the buffer read from file.
-    lst = struct.unpack_from('>BBBBBB', read_buffer, offset=1)
-    fuam = lst[0] << 16 | lst[1] << 8 | lst[2]
-    dcm = lst[3] << 16 | lst[4] << 8 | lst[5]
-
-    num_standard_features, = struct.unpack_from('>H', read_buffer, offset=7)
-
-    fmt = '>' + 'HBBB' * num_standard_features
-    lst = struct.unpack_from(fmt, read_buffer, offset=9)
-
-    standard_flag = lst[0::4]
-    standard_mask = []
-    for j in range(num_standard_features):
-        items = lst[slice(j * 4 + 1, j * 4 + 4)]
-        mask = items[0] << 16 | items[1] << 8 | items[2]
-        standard_mask.append(mask)
-
-    boffset = 9 + num_standard_features * 5
-    num_vendor_features, = struct.unpack_from('>H', read_buffer,
-                                              offset=boffset)
-
-    fmt = '>' + 'HBBB' * num_vendor_features
-    buffer_offset = 11 + num_standard_features * 5
-    lst = struct.unpack_from(fmt, read_buffer, offset=buffer_offset)
-
-    # Each vendor feature consists of a 16-byte UUID plus a mask whose
-    # length is specified by, you guessed it, "mask_length".
-    entry_length = 16 + 3
-    vendor_feature = []
-    vendor_mask = []
-    read_buffer = read_buffer[9 + num_standard_features * 10:]
-    for j in range(num_vendor_features):
-        uslice = slice(j * entry_length, (j + 1) * entry_length)
-        ubuffer = read_buffer[uslice]
-        vendor_feature.append(UUID(bytes=ubuffer[0:16]))
-
-        lst = struct.unpack('>BBB', ubuffer[16:])
-        vmask = lst[0] << 16 | lst[1] << 8 | lst[2]
-        vendor_mask.append(vmask)
-
-    box = ReaderRequirementsBox(fuam, dcm, standard_flag, standard_mask,
-                                vendor_feature, vendor_mask,
-                                length=length, offset=offset)
-    return box
 
 
 def _parse_standard_flag(read_buffer, mask_length):

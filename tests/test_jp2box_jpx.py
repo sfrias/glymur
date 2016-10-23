@@ -578,7 +578,9 @@ class TestJPX(unittest.TestCase):
             self.assertEqual(jpx.box[-1].box[0].data_reference, (3,))
 
     def test_rreq3(self):
-        """Verify that we can read a rreq box with mask length 3 bytes"""
+        """
+        Verify that we warn with RREQ box with an unsupported mask length.
+        """
         rreq_buffer = ctypes.create_string_buffer(74)
         struct.pack_into('>I4s', rreq_buffer, 0, 74, b'rreq')
 
@@ -614,13 +616,8 @@ class TestJPX(unittest.TestCase):
                 ofile.write(ifile.read())
                 ofile.flush()
 
-            jpx = Jp2k(ofile.name)
-
-        self.assertEqual(jpx.box[2].box_id, 'rreq')
-        self.assertEqual(type(jpx.box[2]),
-                         glymur.jp2box.ReaderRequirementsBox)
-        self.assertEqual(jpx.box[2].standard_flag,
-                         (5, 42, 45, 2, 18, 19, 1, 8, 12, 31, 20))
+            with self.assertWarns(UserWarning):
+                Jp2k(ofile.name)
 
     def test_nlst(self):
         """Verify that we can handle a number list box."""

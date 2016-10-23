@@ -2068,7 +2068,7 @@ class PaletteBox(Jp2kBox):
         bytes_per_palette = bytes_per_row * self.palette.shape[0]
         box_length = 8 + 3 + self.palette.shape[1] + bytes_per_palette
 
-        # Write the usual header.
+        # Write the usual (L, T) header.
         write_buffer = struct.pack('>I4s', int(box_length), b'pclr')
         fptr.write(write_buffer)
 
@@ -2077,10 +2077,8 @@ class PaletteBox(Jp2kBox):
                                    self.palette.shape[1])
         fptr.write(write_buffer)
 
+        # Bits Per Sample.  Signed components aren't supported.
         bps_signed = [x - 1 for x in self.bits_per_component]
-        for j, _ in enumerate(bps_signed):
-            if self.signed[j]:
-                bps_signed[j] |= 0x80
         write_buffer = struct.pack('>' + 'B' * self.palette.shape[1],
                                    *bps_signed)
         fptr.write(write_buffer)

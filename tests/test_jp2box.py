@@ -2,6 +2,7 @@
 """
 # Standard library imports ...
 import doctest
+from io import BytesIO
 import os
 import re
 import shutil
@@ -27,7 +28,7 @@ from glymur import Jp2k
 from glymur.jp2box import ColourSpecificationBox, ContiguousCodestreamBox
 from glymur.jp2box import FileTypeBox, ImageHeaderBox, JP2HeaderBox
 from glymur.jp2box import JPEG2000SignatureBox, BitsPerComponentBox
-from glymur.jp2box import UnknownBox
+from glymur.jp2box import PaletteBox, UnknownBox
 from glymur.core import COLOR, OPACITY, SRGB, GREYSCALE
 from glymur.core import RED, GREEN, BLUE, GREY, WHOLE_IMAGE
 from .fixtures import WINDOWS_TMP_FILE_MSG, MetadataBase
@@ -516,6 +517,36 @@ class TestPaletteBox(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
             with self.assertRaises(IOError):
                 pclr.write(tfile)
+
+    def test_signed_components(self):
+        """
+        Palettes with signed components are not supported.
+        """
+        b = BytesIO()
+
+        # L, T
+        b.write(struct.pack('>I4s', 20, b'pclr'))
+
+        # Palette is 2 rows, 3 columns
+        ncols = 3
+        nrows = 2
+        b.write(struct.pack('>HB', nrows, ncols))
+
+        # bits per sample is 8, but signed
+        bps = (np.int8(7), np.int8(7), np.int8(7))
+        bps_signed = (x | 0x80 for x in bps)
+        b.write(struct.pack('BBB', *bps_signed))
+
+        # Write the palette itself.
+        #
+        buffer = np.int8([[0, 0, 0], [127, 127, 127]])
+        b.write(struct.pack('BBB', *buffer[0]))
+        b.write(struct.pack('BBB', *buffer[1]))
+
+        # Seek back to point after L, T
+        b.seek(8)
+        with self.assertRaises(IOError):
+            PaletteBox.parse(b, 8, 20)
 
 
 @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)

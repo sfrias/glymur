@@ -180,7 +180,8 @@ class Jp2k(Jp2kBox):
                    "is {version}.")
             msg = msg.format(version=version.openjpeg_version)
             raise IOError(msg)
-        self._layer = layer
+
+        self._layer = 0 if layer is None else layer
 
     @property
     def codestream(self):
@@ -1265,8 +1266,7 @@ class Jp2k(Jp2kBox):
         RuntimeError
             If the image has differing subsample factors.
         """
-        if layer is not None:
-            self._layer = layer
+        self.layer = layer
 
         self._subsampling_sanity_check()
 
@@ -1424,8 +1424,7 @@ class Jp2k(Jp2kBox):
             raise IOError(msg)
 
         self.ignore_pclr_cmap_cdef = ignore_pclr_cmap_cdef
-        if layer is not None:
-            self._layer = layer
+        self.layer = layer
         self._populate_dparams(rlevel, tile=tile, area=area)
 
         with ExitStack() as stack:
@@ -1711,7 +1710,6 @@ class Jp2k(Jp2kBox):
     def _validate_jpx_box_sequence(self, boxes):
         """Run through series of tests for JPX box legality."""
         self._validate_label(boxes)
-        self._validate_jpx_brand(boxes, boxes[1].brand)
         self._validate_jpx_compatibility(boxes, boxes[1].compatibility_list)
         self._validate_singletons(boxes)
         self._validate_top_level(boxes)
@@ -1866,21 +1864,6 @@ class Jp2k(Jp2kBox):
         multiples = [box_id for box_id, bcount in count.items() if bcount > 1]
         if 'dtbl' in multiples:
             raise IOError('There can only be one dtbl box in a file.')
-
-    def _validate_jpx_brand(self, boxes, brand):
-        """
-        If there is a JPX box then the brand must be 'jpx '.
-        """
-        JPX_IDS = ['asoc', 'nlst']
-        for box in boxes:
-            if box.box_id in JPX_IDS:
-                if brand != 'jpx ':
-                    msg = ("A JPX box requires that the file type box brand "
-                           "be 'jpx '.")
-                    raise RuntimeError(msg)
-            if hasattr(box, 'box') != 0:
-                # Same set of checks on any child boxes.
-                self._validate_jpx_brand(box.box, brand)
 
     def _validate_jpx_compatibility(self, boxes, compatibility_list):
         """

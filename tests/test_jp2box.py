@@ -567,7 +567,7 @@ class TestAppend(unittest.TestCase):
 
             jp2 = Jp2k(tfile.name)
             the_xml = ET.fromstring('<?xml version="1.0"?><data>0</data>')
-            xmlbox = glymur.jp2box.XMLBox(xml=ET.ElementTree(the_xml))
+            xmlbox = glymur.jp2box.XMLBox(xml=the_xml)
             jp2.append(xmlbox)
 
             # The sequence of box IDs should be the same as before, but with an

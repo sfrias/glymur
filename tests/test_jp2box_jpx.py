@@ -251,8 +251,9 @@ class TestJPXWrap(unittest.TestCase):
 
         numbers = (0, 1)
         nlst = glymur.jp2box.NumberListBox(numbers)
-        the_xml = ET.fromstring('<?xml version="1.0"?><data>0</data>')
-        xmlb = glymur.jp2box.XMLBox(xml=the_xml)
+        b = BytesIO(b'<?xml version="1.0"?><data>0</data>')
+        doc = ET.parse(b)
+        xmlb = glymur.jp2box.XMLBox(xml=doc)
         asoc = glymur.jp2box.AssociationBox([nlst, xmlb])
         boxes.append(asoc)
 
@@ -280,8 +281,9 @@ class TestJPXWrap(unittest.TestCase):
         lblb = glymur.jp2box.LabelBox(label)
         numbers = (0, 1)
         nlst = glymur.jp2box.NumberListBox(numbers)
-        the_xml = ET.fromstring('<?xml version="1.0"?><data>0</data>')
-        xmlb = glymur.jp2box.XMLBox(xml=the_xml)
+        b = BytesIO(b'<?xml version="1.0"?><data>0</data>')
+        doc = ET.parse(b)
+        xmlb = glymur.jp2box.XMLBox(xml=doc)
         asoc = glymur.jp2box.AssociationBox([nlst, xmlb, lblb])
         boxes.append(asoc)
 

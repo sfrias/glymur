@@ -566,8 +566,9 @@ class TestAppend(unittest.TestCase):
             shutil.copyfile(self.jp2file, tfile.name)
 
             jp2 = Jp2k(tfile.name)
-            the_xml = ET.fromstring('<?xml version="1.0"?><data>0</data>')
-            xmlbox = glymur.jp2box.XMLBox(xml=the_xml)
+            b = BytesIO(b'<?xml version="1.0"?><data>0</data>')
+            doc = ET.parse(b)
+            xmlbox = glymur.jp2box.XMLBox(xml=doc)
             jp2.append(xmlbox)
 
             # The sequence of box IDs should be the same as before, but with an
@@ -615,8 +616,9 @@ class TestAppend(unittest.TestCase):
                 tfile.flush()
 
             jp2 = Jp2k(tfile.name)
-            the_xml = ET.fromstring('<?xml version="1.0"?><data>0</data>')
-            xmlbox = glymur.jp2box.XMLBox(xml=the_xml)
+            b = BytesIO(b'<?xml version="1.0"?><data>0</data>')
+            doc = ET.parse(b)
+            xmlbox = glymur.jp2box.XMLBox(xml=doc)
             jp2.append(xmlbox)
 
             # The sequence of box IDs should be the same as before, but with an

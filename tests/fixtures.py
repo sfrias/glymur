@@ -14,7 +14,7 @@ import numpy as np
 import glymur
 
 # If openjpeg is not installed, many tests cannot be run.
-if glymur.version.openjpeg_version == '0.0.0':
+if glymur.version.openjpeg_version < '1.5.0':
     OPENJPEG_NOT_AVAILABLE = True
     OPENJPEG_NOT_AVAILABLE_MSG = 'OpenJPEG library not installed'
 else:

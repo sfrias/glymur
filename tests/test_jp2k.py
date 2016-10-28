@@ -1966,7 +1966,9 @@ class TestJp2k_1_x(unittest.TestCase):
                     j2k.layer = 1
 
     @unittest.skipIf(glymur.config.load_openjpeg_library('openjpeg') is None,
-                     "Needs openjpeg before this test make sense.")
+                     "Needs openjpeg 1.5 before this test make sense.")
+    @unittest.skipIf(glymur.lib.openjpeg.version() < '1.5.0',
+                     "Needs openjpeg 1.5 before this test make sense.")
     def test_read_version_15(self):
         """
         Test read using version 1.5

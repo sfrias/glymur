@@ -248,40 +248,86 @@ class TestSuite(unittest.TestCase):
                 self.assertTrue(isinstance(jp2.box[-1].data,
                                            ET.ElementTree))
 
+    @unittest.skipIf(sys.hexversion < 0x03000000, "assertWarns is PY3K")
+    def test_bad_exif_tag(self):
+        """
+        Corrupt the Exif IFD with an invalid tag should produce a warning.
+        """
+        b = self._create_exif_uuid('<')
+
+        b.seek(0)
+        buffer = b.read()
+
+        # The first tag should begin at byte 32.  Replace the entire IDF
+        # entry with zeros.
+        # import pdb; pdb.set_trace()
+        tag = struct.pack('<HHII', 0, 3, 0, 0)
+        buffer = buffer[:40] + tag + buffer[52:]
+
+        b = BytesIO()
+        b.write(buffer)
+        b.seek(8)
+
+        with self.assertWarns(UserWarning):
+            box = glymur.jp2box.UUIDBox.parse(b, 0, 418)
+
+        self.assertEqual(box.box_id, 'uuid')
+
+        # Should still get the IFD.  16 tags.
+        self.assertEqual(len(box.data.keys()), 16)
+
     def test_exif(self):
-        """Verify read of Exif IFDs."""
+        """
+        Verify read of both big and little endian Exif IFDs.
+        """
         # Check both little and big endian.
         for endian in ['<', '>']:
             self._test_endian_exif(endian)
 
+    def _create_exif_uuid(self, endian):
+        """
+        Create a buffer that can be parsed as an Exif UUID.
+
+        Parameters
+        ----------
+        endian : str
+            Either '<' for little endian or '>' for big endian
+        """
+        b = BytesIO()
+        # Write L, T, UUID identifier.
+        # 388 = length of degenerate tiff
+        # 6 = Exif\x0\x0
+        # 16 = length of UUID identifier
+        # 8 = length of L, T
+        # 388 + 6 + 16 + 8 = 418
+        b.write(struct.pack('>I4s', 418, b'uuid'))
+        b.write(b'JpgTiffExif->JP2')
+
+        b.write(b'Exif\x00\x00')
+
+        buffer = self._create_degenerate_geotiff(endian)
+        b.write(buffer)
+
+        b.seek(8)
+
+        return b
+
     def _test_endian_exif(self, endian):
+        """
+        Test Exif IFDs.
 
-        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
+        Parameters
+        ----------
+        endian : str
+            Either '<' for little endian or '>' for big endian
+        """
+        bptr = self._create_exif_uuid(endian)
 
-            with open(self.jp2file, 'rb') as ifptr:
-                tfile.write(ifptr.read())
+        box = glymur.jp2box.UUIDBox.parse(bptr, 0, 418)
+        self.assertEqual(box.data['XResolution'], 75)
 
-            # Write L, T, UUID identifier.
-            # 388 = length of degenerate tiff
-            # 6 = Exif\x0\x0
-            # 16 = length of UUID identifier
-            # 8 = length of L, T
-            # 388 + 6 + 16 + 8 = 418
-            tfile.write(struct.pack('>I4s', 418, b'uuid'))
-            tfile.write(b'JpgTiffExif->JP2')
-
-            tfile.write(b'Exif\x00\x00')
-
-            buffer = self._create_degenerate_geotiff(endian)
-            tfile.write(buffer)
-
-            tfile.flush()
-
-            jp2 = glymur.Jp2k(tfile.name)
-            self.assertEqual(jp2.box[-1].data['XResolution'], 75)
-
-            expected = 'UTM Zone 16N NAD27"|Clarke, 1866 by Default| '
-            self.assertEqual(jp2.box[-1].data['GeoAsciiParams'], expected)
+        expected = 'UTM Zone 16N NAD27"|Clarke, 1866 by Default| '
+        self.assertEqual(box.data['GeoAsciiParams'], expected)
 
 
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

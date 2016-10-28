@@ -3292,9 +3292,6 @@ class UUIDBox(Jp2kBox):
 
         try:
             self._parse_raw_data()
-        except KeyError as error:
-            # Such as when an Exif tag is unrecognized.
-            warnings.warn(str(error))
         except IOError as error:
             # Such as when Exif byte order is unrecognized.
             warnings.warn(str(error))

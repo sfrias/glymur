@@ -401,9 +401,7 @@ class TestSuiteHiRISE(unittest.TestCase):
 
     def test_printing(self):
         jp2 = Jp2k(self.hirise_jp2file_name)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
-            print(jp2.box[4])
-            actual = fake_out.getvalue().strip()
+        actual = str(jp2.box[4])
         if fixtures.HAVE_GDAL:
             expected = fixtures.geotiff_uuid
         else:

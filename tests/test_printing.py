@@ -33,6 +33,7 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 import glymur
+from glymur.codestream import LRCP, WAVELET_XFORM_5X3_REVERSIBLE
 from glymur.core import RESTRICTED_ICC_PROFILE, ANY_ICC_PROFILE
 from glymur.core import COLOR, RED, GREEN, BLUE
 from glymur.jp2box import BitsPerComponentBox, ColourSpecificationBox
@@ -428,6 +429,93 @@ class TestPrinting(unittest.TestCase):
                '            Selective arithmetic coding bypass:  False\n'
                '            Reset context probabilities '
                'on coding pass boundaries:  False\n'
+               '            Termination on each coding pass:  False\n'
+               '            Vertically stripe causal context:  False\n'
+               '            Predictable termination:  False\n'
+               '            Segmentation symbols:  False')
+
+        self.assertEqual(actual, exp)
+
+    def test_cod_segment_unknown(self):
+        """
+        Verify printing of transform when it's actually unknown
+        """
+        scod = 0
+        prog_order = LRCP
+        num_layers = 2
+        mct = 4
+        nr = 1
+        xcb = ycb = 4
+        cstyle = 0
+        xform = WAVELET_XFORM_5X3_REVERSIBLE
+        precinct_size = None
+        length = 12
+        offset = 3282
+        pargs = (scod, prog_order, num_layers, mct, nr, xcb, ycb, cstyle,
+                 xform, precinct_size, length, offset)
+        segment = glymur.codestream.CODsegment(*pargs)
+        actual = str(segment)
+        exp = ('COD marker segment @ (3282, 12)\n'
+               '    Coding style:\n'
+               '        Entropy coder, without partitions\n'
+               '        SOP marker segments:  False\n'
+               '        EPH marker segments:  False\n'
+               '    Coding style parameters:\n'
+               '        Progression order:  LRCP\n'
+               '        Number of layers:  2\n'
+               '        Multiple component transformation usage:  unknown\n'
+               '        Number of resolutions:  2\n'
+               '        Code block height, width:  (64 x 64)\n'
+               '        Wavelet transform:  5-3 reversible\n'
+               '        Precinct size:  (32768, 32768)\n'
+               '        Code block context:\n'
+               '            Selective arithmetic coding bypass:  False\n'
+               '            Reset context probabilities on coding '
+               'pass boundaries:  False\n'
+               '            Termination on each coding pass:  False\n'
+               '            Vertically stripe causal context:  False\n'
+               '            Predictable termination:  False\n'
+               '            Segmentation symbols:  False')
+
+        self.assertEqual(actual, exp)
+
+    def test_cod_segment_irreversible(self):
+        """
+        Verify printing of irreversible transform
+        """
+        scod = 0
+        prog_order = LRCP
+        num_layers = 2
+        mct = 2
+        nr = 1
+        xcb = ycb = 4
+        cstyle = 0
+        xform = WAVELET_XFORM_5X3_REVERSIBLE
+        precinct_size = None
+        length = 12
+        offset = 3282
+        pargs = (scod, prog_order, num_layers, mct, nr, xcb, ycb, cstyle,
+                 xform, precinct_size, length, offset)
+        segment = glymur.codestream.CODsegment(*pargs)
+        actual = str(segment)
+        exp = ('COD marker segment @ (3282, 12)\n'
+               '    Coding style:\n'
+               '        Entropy coder, without partitions\n'
+               '        SOP marker segments:  False\n'
+               '        EPH marker segments:  False\n'
+               '    Coding style parameters:\n'
+               '        Progression order:  LRCP\n'
+               '        Number of layers:  2\n'
+               '        Multiple component transformation usage:  '
+               'irreversible\n'
+               '        Number of resolutions:  2\n'
+               '        Code block height, width:  (64 x 64)\n'
+               '        Wavelet transform:  5-3 reversible\n'
+               '        Precinct size:  (32768, 32768)\n'
+               '        Code block context:\n'
+               '            Selective arithmetic coding bypass:  False\n'
+               '            Reset context probabilities on coding '
+               'pass boundaries:  False\n'
                '            Termination on each coding pass:  False\n'
                '            Vertically stripe causal context:  False\n'
                '            Predictable termination:  False\n'

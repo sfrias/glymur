@@ -3354,10 +3354,8 @@ class UUIDBox(Jp2kBox):
             text = 'UUID Data:  {0}'.format(str(self.data))
             lst.append(text)
         elif self.uuid == _GEOTIFF_UUID:
-            if _HAVE_GDAL:
-                txt = self._print_geotiff()
-            else:
-                txt = 'UUID Data:  {0}'.format(str(self.data))
+            item = self._print_geotiff() if _HAVE_GDAL else str(self.data)
+            txt = 'UUID Data:  {0}'.format(item)
             lst.append(txt)
         else:
             text = 'UUID Data:  {0} bytes'.format(len(self.raw_data))

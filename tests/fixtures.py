@@ -812,7 +812,7 @@ goodstuff_with_full_header = r"""Codestream:
 # manually verified via gdalinfo
 geotiff_uuid = """UUID Box (uuid) @ (149, 523)
     UUID:  b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)
-    Coordinate System =
+    UUID Data:  Coordinate System =
         PROJCS["Equirectangular MARS",
             GEOGCS["GCS_MARS",
                 DATUM["unknown",

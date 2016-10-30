@@ -1846,10 +1846,6 @@ class Jp2k(Jp2kBox):
                 self._check_superbox_for_top_levels(box.box)
 
         count = self._collect_box_count(boxes)
-        # Which boxes occur more than once?
-        multiples = [box_id for box_id, bcount in count.items() if bcount > 1]
-        if 'dtbl' in multiples:
-            raise IOError('There can only be one dtbl box in a file.')
 
         # If there is one data reference box, then there must also be one ftbl.
         if 'dtbl' in count and 'ftbl' not in count:

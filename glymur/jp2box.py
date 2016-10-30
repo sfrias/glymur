@@ -3378,31 +3378,17 @@ class UUIDBox(Jp2kBox):
         # Report projection
         proj_ref = gtif.GetProjectionRef()
         sref = osr.SpatialReference()
-        if sref.ImportFromWkt(proj_ref) == gdal.CE_None:
-            psz_pretty_wkt = sref.ExportToPrettyWkt(False)
-        else:
-            psz_pretty_wkt = proj_ref
+        sref.ImportFromWkt(proj_ref)
+        psz_pretty_wkt = sref.ExportToPrettyWkt(False)
 
         # report geotransform
         geo_transform = gtif.GetGeoTransform(can_return_null=True)
-        if geo_transform is not None:
-
-            if geo_transform[2] == 0.0 and geo_transform[4] == 0.0:
-                fmt = ('Origin = ({origin_x:.15f},{origin_y:.15f})\n'
-                       'Pixel Size = ({pixel_x:.15f},{pixel_y:.15f})')
-                geotransform_str = fmt.format(origin_x=geo_transform[0],
-                                              origin_y=geo_transform[3],
-                                              pixel_x=geo_transform[1],
-                                              pixel_y=geo_transform[5])
-            else:
-                fmt = ('GeoTransform =   '
-                       '{:.16g}, {:16g}, {:.16g}, {:.16g}, {:16g} {:16g}')
-                geotransform_str = fmt.format(geo_transform[0],
-                                              geo_transform[1],
-                                              geo_transform[2],
-                                              geo_transform[3],
-                                              geo_transform[4],
-                                              geo_transform[5])
+        fmt = ('Origin = ({origin_x:.15f},{origin_y:.15f})\n'
+               'Pixel Size = ({pixel_x:.15f},{pixel_y:.15f})')
+        geotransform_str = fmt.format(origin_x=geo_transform[0],
+                                      origin_y=geo_transform[3],
+                                      pixel_x=geo_transform[1],
+                                      pixel_y=geo_transform[5])
 
         # setup projected to lat/long transform if appropriate
         if proj_ref is not None and len(proj_ref) > 0:
@@ -3415,8 +3401,6 @@ class UUIDBox(Jp2kBox):
                 hTransform = osr.CoordinateTransformation(hProj, hLatLong)
                 gdal.PopErrorHandler()
                 msg = 'Unable to load PROJ.4 library'
-                if gdal.GetLastErrorMsg().find(msg) != -1:
-                    hTransform = None
 
         # report corners
         uleft = self.GDALInfoReportCorner(gtif, hTransform, "Upper Left", 0, 0)
@@ -3452,20 +3436,13 @@ class UUIDBox(Jp2kBox):
 
         # transform the point into georeferenced coordinates
         geo_transform = hDataset.GetGeoTransform(can_return_null=True)
-        if geo_transform is not None:
-            dfGeoX = (geo_transform[0] + geo_transform[1] * x +
-                      geo_transform[2] * y)
-            dfGeoY = geo_transform[3] + geo_transform[4] * x
-            dfGeoY += geo_transform[5] * y
-        else:
-            line += '({:12.7f},{:12.7f})'.format(x, y)
-            return line
+        dfGeoX = (geo_transform[0] + geo_transform[1] * x +
+                  geo_transform[2] * y)
+        dfGeoY = geo_transform[3] + geo_transform[4] * x
+        dfGeoY += geo_transform[5] * y
 
         # report the georeferenced coordinates
-        if abs(dfGeoX) < 181 and abs(dfGeoY) < 91:
-            line += '({:12.7f},{:12.7f}) '.format(dfGeoX, dfGeoY)
-        else:
-            line += '({:12.3f},{:12.3f}) '.format(dfGeoX, dfGeoY)
+        line += '({:12.3f},{:12.3f}) '.format(dfGeoX, dfGeoY)
 
         # transform to latlong and report
         if hTransform is not None:

@@ -26,11 +26,8 @@ def version():
     except:
         return "0.0.0"
 
-    library_version = OPENJP2.opj_version()
-    if sys.hexversion >= 0x03000000:
-        return library_version.decode('utf-8')
-    else:
-        return library_version
+    v = OPENJP2.opj_version()
+    return v.decode('utf-8') if sys.hexversion >= 0x03000000 else v
 
 if OPENJP2 is not None:
     _MAJOR, _MINOR, _PATCH = version().split('.')
@@ -412,9 +409,6 @@ class CompressionParametersType(ctypes.Structure):
 
             if field_name == 'poc':
                 msg += "    numpocs: {0}\n".format(self.numpocs)
-                for j in range(self.numpocs):
-                    msg += "        [#{0}]:".format(j)
-                    msg += "            {0}".format(str(self.poc[j]))
 
             elif field_name in ['tcp_rates', 'tcp_distoratio']:
                 lst = []

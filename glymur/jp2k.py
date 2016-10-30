@@ -189,10 +189,6 @@ class Jp2k(Jp2kBox):
             self._codestream = self.get_codestream(header_only=True)
         return self._codestream
 
-    @codestream.setter
-    def codestream(self, the_codestream):
-        self._codestream = the_codestream
-
     @property
     def verbose(self):
         return self._verbose
@@ -1190,11 +1186,8 @@ class Jp2k(Jp2kBox):
                 dinfo = opj.create_decompress(self._dparams.decod_format)
 
                 event_mgr = opj.EventMgrType()
-                info_handler = ctypes.cast(_INFO_CALLBACK, ctypes.c_void_p)
-                if verbose or self._verbose:
-                    event_mgr.info_handler = info_handler
-                else:
-                    event_mgr.info_handler = None
+                handler = ctypes.cast(_INFO_CALLBACK, ctypes.c_void_p)
+                event_mgr.info_handler = handler if self.verbose else None
                 event_mgr.warning_handler = ctypes.cast(_WARNING_CALLBACK,
                                                         ctypes.c_void_p)
                 event_mgr.error_handler = ctypes.cast(_ERROR_CALLBACK,
@@ -1227,8 +1220,7 @@ class Jp2k(Jp2kBox):
             x0, y0, x1, y1 = area
             extent = 2 ** rlevel
             if x1 - x0 < extent or y1 - y0 < extent:
-                msg = "Decoded area is too small."
-                raise IOError(msg)
+                raise IOError("Decoded area is too small.")
 
             area = [int(round(float(x) / extent + 2 ** -20)) for x in area]
             rows = slice(area[0], area[2], None)
@@ -1272,6 +1264,23 @@ class Jp2k(Jp2kBox):
 
         self._populate_dparams(rlevel, tile=tile, area=area)
 
+        image = self._read_openjp2_common()
+
+        if image.shape[2] == 1:
+            image.shape = image.shape[0:2]
+
+        return image
+
+    def _read_openjp2_common(self):
+        """
+        Read a JPEG 2000 image using libopenjp2.
+
+        Returns
+        -------
+        ndarray or lst
+            Either the image as an ndarray or a list of ndarrays, each item
+            corresponding to one band.
+        """
         with ExitStack() as stack:
             filename = self.filename
             stream = opj2.stream_create_default_file_stream(filename, True)
@@ -1282,7 +1291,7 @@ class Jp2k(Jp2kBox):
             opj2.set_error_handler(codec, _ERROR_CALLBACK)
             opj2.set_warning_handler(codec, _WARNING_CALLBACK)
 
-            if self._verbose or verbose:
+            if self._verbose:
                 opj2.set_info_handler(codec, _INFO_CALLBACK)
             else:
                 opj2.set_info_handler(codec, None)
@@ -1303,9 +1312,6 @@ class Jp2k(Jp2kBox):
             opj2.end_decompress(codec, stream)
 
             image = self._extract_image(raw_image)
-
-        if image.shape[2] == 1:
-            image.shape = image.shape[0:2]
 
         return image
 
@@ -1427,36 +1433,7 @@ class Jp2k(Jp2kBox):
         self.layer = layer
         self._populate_dparams(rlevel, tile=tile, area=area)
 
-        with ExitStack() as stack:
-            filename = self.filename
-            stream = opj2.stream_create_default_file_stream(filename, True)
-            stack.callback(opj2.stream_destroy, stream)
-            codec = opj2.create_decompress(self._codec_format)
-            stack.callback(opj2.destroy_codec, codec)
-
-            opj2.set_error_handler(codec, _ERROR_CALLBACK)
-            opj2.set_warning_handler(codec, _WARNING_CALLBACK)
-            if verbose:
-                opj2.set_info_handler(codec, _INFO_CALLBACK)
-            else:
-                opj2.set_info_handler(codec, None)
-
-            opj2.setup_decoder(codec, self._dparams)
-            image = opj2.read_header(stream, codec)
-            stack.callback(opj2.image_destroy, image)
-
-            if self._dparams.nb_tile_to_decode:
-                opj2.get_decoded_tile(codec, stream, image,
-                                      self._dparams.tile_index)
-            else:
-                opj2.set_decode_area(codec, image,
-                                     self._dparams.DA_x0, self._dparams.DA_y0,
-                                     self._dparams.DA_x1, self._dparams.DA_y1)
-                opj2.decode(codec, stream, image)
-                opj2.end_decompress(codec, stream)
-
-            lst = self._extract_image(image)
-
+        lst = self._read_openjp2_common()
         return lst
 
     def _extract_image(self, raw_image):

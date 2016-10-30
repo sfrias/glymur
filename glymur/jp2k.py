@@ -1211,16 +1211,9 @@ class Jp2k(Jp2kBox):
             except ValueError:
                 opj2.check_error(0)
 
-        if image.shape[2] == 1:
-            # The third dimension has just a single layer.  Make the image
-            # data 2D instead of 3D.
-            image.shape = image.shape[0:2]
-
         if area is not None:
             x0, y0, x1, y1 = area
             extent = 2 ** rlevel
-            if x1 - x0 < extent or y1 - y0 < extent:
-                raise IOError("Decoded area is too small.")
 
             area = [int(round(float(x) / extent + 2 ** -20)) for x in area]
             rows = slice(area[0], area[2], None)
@@ -1259,16 +1252,9 @@ class Jp2k(Jp2kBox):
             If the image has differing subsample factors.
         """
         self.layer = layer
-
         self._subsampling_sanity_check()
-
         self._populate_dparams(rlevel, tile=tile, area=area)
-
         image = self._read_openjp2_common()
-
-        if image.shape[2] == 1:
-            image.shape = image.shape[0:2]
-
         return image
 
     def _read_openjp2_common(self):
@@ -1432,7 +1418,6 @@ class Jp2k(Jp2kBox):
         self.ignore_pclr_cmap_cdef = ignore_pclr_cmap_cdef
         self.layer = layer
         self._populate_dparams(rlevel, tile=tile, area=area)
-
         lst = self._read_openjp2_common()
         return lst
 
@@ -1487,6 +1472,11 @@ class Jp2k(Jp2kBox):
                 else:
                     image.append(np.reshape(band.astype(dtypes[k]),
                                  (nrows[k], ncols[k])))
+
+        if is_cube and image.shape[2] == 1:
+            # The third dimension has just a single layer.  Make the image
+            # data 2D instead of 3D.
+            image.shape = image.shape[0:2]
 
         return image
 

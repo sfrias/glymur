@@ -452,6 +452,22 @@ class TestJPX(unittest.TestCase):
             j = Jp2k(file)
             self.assertEqual(len(j.box[2].vendor_feature), 4)
 
+    @unittest.skipIf(sys.hexversion < 0x03000000, "assertWarns is PY3K")
+    def test_reader_requirements_box_writing(self):
+        """
+        If a box does not have writing specifically enabled, must error out.
+        """
+        file = os.path.join('data', 'text_GBR.jp2')
+        file = pkg.resource_filename(__name__, file)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            j = Jp2k(file)
+            box = j.box[2]
+
+            b = BytesIO()
+            with self.assertRaises(NotImplementedError):
+                box.write(b)
+
     def test_flst_lens_not_the_same(self):
         """A fragment list box items must be the same length."""
         offset = [89]

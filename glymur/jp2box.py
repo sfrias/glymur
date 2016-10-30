@@ -109,7 +109,7 @@ class Jp2kBox(object):
     def write(self, _):
         """Must be implemented in a subclass.
         """
-        msg = "Not supported for {0} box.".format(self.longname)
+        msg = "Writing not supported for {0} box.".format(self.longname)
         raise NotImplementedError(msg)
 
     def _str_superbox(self):

@@ -817,6 +817,19 @@ class TestJp2k(unittest.TestCase):
         data = jpx[:]
         self.assertEqual(data.shape, (1024, 1024, 3))
 
+    def test_openjpeg_library_error(self):
+        """
+        required COD marker not found in main header
+        """
+        file = os.path.join('data', 'edf_c2_1178956.jp2')
+        file = pkg.resource_filename(__name__, file)
+        exp_error = glymur.lib.openjp2.OpenJPEGLibraryError
+        with self.assertRaises(exp_error):
+            with warnings.catch_warnings():
+                # Suppress a UserWarning for bad file type compatibility
+                warnings.simplefilter("ignore")
+                Jp2k(file)[:]
+
     def test_read_without_openjpeg(self):
         """
         Don't have openjpeg or openjp2 library?  Must error out.
@@ -830,6 +843,36 @@ class TestJp2k(unittest.TestCase):
                         glymur.Jp2k(self.jp2file).read()
                 with self.assertRaises(RuntimeError):
                     glymur.Jp2k(self.jp2file)[:]
+
+    def test_read_bands(self):
+        """
+        Have to use read_bands if the subsampling is not uniform
+        """
+        file = os.path.join('data', 'p0_06.j2k')
+        file = pkg.resource_filename(__name__, file)
+        bands = glymur.Jp2k(file).read_bands()
+        self.assertEqual(bands[0].shape, (129, 513))
+        self.assertEqual(bands[1].shape, (129, 257))
+        self.assertEqual(bands[2].shape, (65, 513))
+        self.assertEqual(bands[3].shape, (65, 257))
+        
+    @unittest.skipIf(re.match(r'''0|1|2.0.0''',
+                              glymur.version.openjpeg_version) is not None,
+                     "Only supported in 2.0.1 or higher")
+    def test_read_tile_backwards_compatibility(self):
+        """
+        Test ability to read specified tiles.  Requires 2.0.1 or higher.
+
+        0.7.x read usage deprecated, should use slicing
+        """
+        file = os.path.join('data', 'p0_03.j2k')
+        file = pkg.resource_filename(__name__, file)
+        jp2k = Jp2k(file)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            tdata = jp2k.read(tile=3, rlevel=1)  # last tile
+        odata = jp2k[::2, ::2]
+        np.testing.assert_array_equal(tdata, odata[64:128, 64:128])
 
     def test_read_bands_without_openjp2(self):
         """

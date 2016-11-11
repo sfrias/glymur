@@ -4,6 +4,7 @@ Test suite for codestream oddities
 """
 
 # Standard library imports ...
+from io import BytesIO
 import os
 import struct
 import tempfile
@@ -15,7 +16,7 @@ import pkg_resources as pkg
 
 # Local imports ...
 import glymur
-from glymur import Jp2k
+from glymur import Jp2k, codestream
 
 
 class TestSuite(unittest.TestCase):
@@ -82,6 +83,31 @@ class TestSuite(unittest.TestCase):
         self.assertEqual(c.segment[-1].crgn, 0)
         self.assertEqual(c.segment[-1].srgn, 0)
         self.assertEqual(c.segment[-1].sprgn, 11)
+
+    def test_tlm_segment(self):
+        """
+        Verify parsing of the TLM segment
+
+        This TLM segment taken from p1_04.j2k.
+        """
+        relpath = os.path.join('data', 'tlm_segment.bin')
+        filename = pkg.resource_filename(__name__, relpath)
+        with open(filename, 'rb') as f:
+            data = f.read()
+        b = BytesIO(data)
+        b.seek(2)
+
+        tlm = codestream.Codestream._parse_tlm_segment(b)
+
+        self.assertEqual(tlm.ztlm, 0)
+        self.assertIsNone(tlm.ttlm)
+        ptlm = (350, 356, 402, 245, 402, 564, 675, 283, 317, 299, 330, 333,
+                346, 403, 839, 667, 328, 349, 274, 325, 501, 561, 756, 710,
+                779, 620, 628, 675, 600, 66195, 721, 719, 565, 565, 546, 586,
+                574, 641, 713, 634, 573, 528, 544, 597, 771, 665, 624, 706,
+                568, 537, 554, 546, 542, 635, 826, 667, 617, 606, 813, 586,
+                641, 654, 669, 623)
+        self.assertEqual(tlm.ptlm, ptlm) 
 
 
 class TestCodestreamRepr(unittest.TestCase):

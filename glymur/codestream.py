@@ -798,7 +798,8 @@ class Codestream(object):
 
         return segment
 
-    def _parse_tlm_segment(self, fptr):
+    @classmethod
+    def _parse_tlm_segment(kls, fptr):
         """Parse the TLM segment.
 
         Parameters
@@ -827,21 +828,11 @@ class Codestream(object):
         else:
             ntiles = nbytes / (ttlm_st + (ptlm_sp + 1) * 2)
 
-        if ttlm_st == 0:
-            ttlm = None
-            fmt = ''
-        elif ttlm_st == 1:
-            fmt = 'B'
-        elif ttlm_st == 2:
-            fmt = 'H'
+        fmt1 = '' if ttlm_st == 0 else 'B' if ttlm_st == 1 else 'H'
+        fmt2 = 'H' if ptlm_sp == 0 else 'I'
+        fmt = '>' + (fmt1 + fmt2) * int(ntiles)
+        data = struct.unpack_from(fmt, read_buffer, offset=2)
 
-        if ptlm_sp == 0:
-            fmt += 'H'
-        else:
-            fmt += 'I'
-
-        data = struct.unpack_from('>' + fmt * int(ntiles), read_buffer,
-                                  offset=2)
         if ttlm_st == 0:
             ttlm = None
             ptlm = data

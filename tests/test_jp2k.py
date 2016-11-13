@@ -340,30 +340,12 @@ class TestJp2k(unittest.TestCase):
         on an image with differing subsamples
 
         Issue 86.
-
-        Copy nemo.jp2 but change the SIZ segment to have differing subsamples.
         """
-        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as ofile:
-            with open(self.jp2file, 'rb') as ifile:
-                # Copy up until codestream box.
-                ofile.write(ifile.read(3223))
-
-                # Write the jp2c header and SOC marker.
-                ofile.write(ifile.read(10))
-
-                # Read the SIZ segment, modify the last y subsampling value,
-                # and write it back out
-                buffer = bytearray(ifile.read(49))
-                buffer[-1] = 2
-                ofile.write(buffer)
-
-                # Write the rest of the file.
-                ofile.write(ifile.read())
-                ofile.flush()
-
-            j = Jp2k(ofile.name)
-            with self.assertRaises(IOError):
-                j[:]
+        file = os.path.join('data', 'p0_06.j2k')
+        file = pkg.resource_filename(__name__, file)
+        j = Jp2k(file)
+        with self.assertRaises(IOError):
+            j[:]
 
     def test_shape_jp2(self):
         """verify shape attribute for JP2 file

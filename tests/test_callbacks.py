@@ -66,7 +66,7 @@ class TestSuite(unittest.TestCase):
                      "Missing openjpeg/openjp2 library.")
     def test_info_callbacks_on_read(self):
         """stdio output when info callback handler is enabled
-        
+
         Verify that we get the expected stdio output when our internal info
         callback handler is enabled.
         """

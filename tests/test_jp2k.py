@@ -855,7 +855,7 @@ class TestJp2k(unittest.TestCase):
         self.assertEqual(bands[1].shape, (129, 257))
         self.assertEqual(bands[2].shape, (65, 513))
         self.assertEqual(bands[3].shape, (65, 257))
-        
+
     @unittest.skipIf(re.match(r'''0|1|2.0.0''',
                               glymur.version.openjpeg_version) is not None,
                      "Only supported in 2.0.1 or higher")
@@ -884,7 +884,6 @@ class TestJp2k(unittest.TestCase):
                 with self.assertRaises(exp_error):
                     glymur.Jp2k(self.jp2file).read_bands()
 
-        
     @unittest.skipIf(sys.platform == 'win32', WINDOWS_TMP_FILE_MSG)
     def test_zero_length_reserved_segment(self):
         """
@@ -1010,7 +1009,7 @@ class TestJp2k(unittest.TestCase):
         file = pkg.resource_filename(__name__, file)
         j = Jp2k(file)
         d0 = j[:]
-        
+
         j.layer = 1
         d1 = j[:]
 
@@ -1180,7 +1179,7 @@ class TestJp2k_write(fixtures.MetadataBase):
 
         with tempfile.NamedTemporaryFile(suffix=".jp2") as tfile:
             with self.assertRaises(IOError):
-                j2 = j.wrap(tfile.name, boxes=boxes)
+                j.wrap(tfile.name, boxes=boxes)
 
     @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
                      "Requires as least v2.0")
@@ -1262,7 +1261,8 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         data = self.jp2_data
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with patch('glymur.jp2k.version.openjpeg_version_tuple', new=(1, 5, 0)):
+            with patch('glymur.jp2k.version.openjpeg_version_tuple',
+                       new=(1, 5, 0)):
                 with patch('glymur.jp2k.opj2.OPENJP2', new=None):
                     j = Jp2k(tfile.name, shape=data.shape)
                     j[:] = data
@@ -2023,6 +2023,7 @@ class TestJp2k_1_x(unittest.TestCase):
 
             actual = j._read_openjpeg(area=(0, 0, 250, 250))
             np.testing.assert_array_equal(actual, expected[:250, :250])
+
 
 @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
                  "Requires as least v2.0")

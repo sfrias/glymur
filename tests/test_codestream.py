@@ -110,7 +110,7 @@ class TestSuite(unittest.TestCase):
                 574, 641, 713, 634, 573, 528, 544, 597, 771, 665, 624, 706,
                 568, 537, 554, 546, 542, 635, 826, 667, 617, 606, 813, 586,
                 641, 654, 669, 623)
-        self.assertEqual(tlm.ptlm, ptlm) 
+        self.assertEqual(tlm.ptlm, ptlm)
 
     def test_soc(self):
         """Test SOC segment repr"""

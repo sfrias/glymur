@@ -1,7 +1,6 @@
 """
 Test suite for warnings issued by glymur.
 """
-import codecs
 import imp
 from io import BytesIO
 import os
@@ -1058,7 +1057,9 @@ class TestConfigurationWarnings(unittest.TestCase):
 
     @unittest.skipIf(sys.platform == 'win32', WINDOWS_TMP_FILE_MSG)
     def test_xdg_env_config_file_is_bad(self):
-        """A non-existant library location should be rejected."""
+        """
+        A non-existant library location should be rejected.
+        """
         with tempfile.TemporaryDirectory() as tdir:
             configdir = os.path.join(tdir, 'glymur')
             os.mkdir(configdir)
@@ -1072,34 +1073,3 @@ class TestConfigurationWarnings(unittest.TestCase):
                         # Warn about a bad library being rejected.
                         with self.assertWarns(UserWarning):
                             imp.reload(glymur.lib.openjp2)
-
-
-class TestSuiteXML(unittest.TestCase):
-    """
-    This test should be run on both python2 and python3.
-    """
-    def test_bom(self):
-        """
-        Byte order markers are illegal in UTF-8.  Issue 185
-
-        Original test file was input/nonregression/issue171.jp2
-        """
-        fptr = BytesIO()
-
-        buffer = b"<?xpacket "
-        buffer += b"begin='" + codecs.BOM_UTF8 + b"' "
-        buffer += b"id='W5M0MpCehiHzreSzNTczkc9d'?>"
-        buffer += b"<stuff>goes here</stuff>"
-        buffer += b"<?xpacket end='w'?>"
-
-        fptr.write(buffer)
-        num_bytes = fptr.tell()
-        fptr.seek(0)
-
-        with warnings.catch_warnings(record=True) as w:
-            glymur.jp2box.XMLBox.parse(fptr, 0, 8 + num_bytes)
-            if sys.hexversion < 0x03000000:
-                assert issubclass(w[-1].category, UserWarning)
-            else:
-                # Python3 handles the BOM just fine.
-                self.assertEqual(len(w), 0)

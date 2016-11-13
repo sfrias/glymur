@@ -2,6 +2,7 @@
 """Test suite for printing.
 """
 # Standard library imports
+from io import BytesIO
 import os
 import pkg_resources as pkg
 import shutil
@@ -13,11 +14,8 @@ import uuid
 import warnings
 if sys.hexversion >= 0x03000000:
     from unittest.mock import patch
-    from io import BytesIO, StringIO
 else:
     from mock import patch
-    from StringIO import StringIO
-    from io import BytesIO
 
 # Third party library imports ...
 try:
@@ -474,32 +472,37 @@ class TestSuiteWarns(unittest.TestCase):
 
     def test_bad_tiff_header_byte_order_indication(self):
         """Only b'II' and b'MM' are allowed."""
-        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
+        f = BytesIO()
 
-            with open(self.jp2file, 'rb') as f:
-                tfile.write(f.read())
+        # Write L, T, UUID identifier.
+        f.write(struct.pack('>I4s', 52, b'uuid'))
+        f.write(b'JpgTiffExif->JP2')
 
-            # Write L, T, UUID identifier.
-            tfile.write(struct.pack('>I4s', 52, b'uuid'))
-            tfile.write(b'JpgTiffExif->JP2')
+        f.write(b'Exif\x00\x00')
+        xbuffer = struct.pack('<BBHI', 74, 73, 42, 8)
+        f.write(xbuffer)
 
-            tfile.write(b'Exif\x00\x00')
-            xbuffer = struct.pack('<BBHI', 74, 73, 42, 8)
-            tfile.write(xbuffer)
+        # We will write just a single tag.
+        f.write(struct.pack('<H', 1))
 
-            # We will write just a single tag.
-            tfile.write(struct.pack('<H', 1))
+        # 271 is the Make.
+        f.write(struct.pack('<HHI4s', 271, 2, 3, b'HTC\x00'))
 
-            # 271 is the Make.
-            tfile.write(struct.pack('<HHI4s', 271, 2, 3, b'HTC\x00'))
-            tfile.flush()
+        # Write the null offset to the next IFD.
+        f.write(struct.pack('<I', 0))
 
-            with warnings.catch_warnings():
-                # Ignore the warning about the endian order, we test for that
-                # elsewhere.
-                warnings.simplefilter('ignore')
-                jp2 = glymur.Jp2k(tfile.name)
+        f.flush()
 
-            # We should still get a UUID box out of it.  But we get no data.
-            self.assertEqual(jp2.box[-1].box_id, 'uuid')
-            self.assertIsNone(jp2.box[-1].data)
+        f.seek(8)
+
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                box = glymur.jp2box.UUIDBox.parse(f, -1, 56)
+                assert issubclass(w[-1].category, UserWarning)
+        else:
+            with self.assertWarns(UserWarning):
+                box = glymur.jp2box.UUIDBox.parse(f, -1, 56)
+
+        # We should still get a UUID box out of it.  But we get no data.
+        self.assertEqual(box.box_id, 'uuid')
+        self.assertIsNone(box.data)

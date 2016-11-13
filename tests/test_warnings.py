@@ -1,5 +1,5 @@
 """
-Test suite for warnings issued by glymur.
+Test suite for warnings not specifically tested elsewhere.
 """
 import imp
 from io import BytesIO
@@ -714,32 +714,6 @@ class TestSuite(unittest.TestCase):
 
             # 2000 is not an allowable TIFF datatype.
             tfile.write(struct.pack('<HHI4s', 271, 2000, 3, b'HTC\x00'))
-            tfile.flush()
-
-            with self.assertWarns(UserWarning):
-                glymur.Jp2k(tfile.name)
-
-    @unittest.skipIf(sys.platform == 'win32', WINDOWS_TMP_FILE_MSG)
-    def test_bad_tiff_header_byte_order_indication(self):
-        """Only b'II' and b'MM' are allowed."""
-        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
-
-            with open(self.jp2file, 'rb') as f:
-                tfile.write(f.read())
-
-            # Write L, T, UUID identifier.
-            tfile.write(struct.pack('>I4s', 52, b'uuid'))
-            tfile.write(b'JpgTiffExif->JP2')
-
-            tfile.write(b'Exif\x00\x00')
-            xbuffer = struct.pack('<BBHI', 74, 73, 42, 8)
-            tfile.write(xbuffer)
-
-            # We will write just a single tag.
-            tfile.write(struct.pack('<H', 1))
-
-            # 271 is the Make.
-            tfile.write(struct.pack('<HHI4s', 271, 2, 3, b'HTC\x00'))
             tfile.flush()
 
             with self.assertWarns(UserWarning):

@@ -18,15 +18,12 @@ import glymur
 from glymur import Jp2k
 
 
-class TestAppend(unittest.TestCase):
+class TestSuite(unittest.TestCase):
     """Tests for append method."""
 
     def setUp(self):
         self.j2kfile = glymur.data.goodstuff()
         self.jp2file = glymur.data.nemo()
-
-    def tearDown(self):
-        pass
 
     def test_append_xml(self):
         """Should be able to append an XML box."""

@@ -1,6 +1,7 @@
 """Test suite specifically targeting JP2 box layout.
 """
 # Standard library imports ...
+import ctypes
 import doctest
 from io import BytesIO
 import os
@@ -43,6 +44,7 @@ def load_tests(loader, tests, ignore):
 @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
 class TestDataEntryURL(unittest.TestCase):
     """Test suite for DataEntryURL boxes."""
+
     def setUp(self):
         self.jp2file = glymur.data.nemo()
 
@@ -553,10 +555,11 @@ class TestPaletteBox(unittest.TestCase):
             PaletteBox.parse(b, 8, 20)
 
 
-class TestJp2Boxes(unittest.TestCase):
-    """Tests for canonical JP2 boxes."""
+class TestSuite(unittest.TestCase):
+    """Tests for other JP2, JPX boxes."""
 
     def setUp(self):
+        self.jp2file = glymur.data.nemo()
         self.jpxfile = glymur.data.jpxfile()
 
     def test_default_jp2k(self):
@@ -602,3 +605,217 @@ class TestJp2Boxes(unittest.TestCase):
         j = Jp2k(self.jpxfile)
         self.assertEqual(j.box[5].main_header_offset,
                          j.box[5].offset + 8)
+
+    def test_reader_requirements_box(self):
+        """
+        Simple test for parsing a reader requirements box.
+        """
+        file = os.path.join('data', 'text_GBR.jp2')
+        file = pkg.resource_filename(__name__, file)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            j = Jp2k(file)
+            self.assertEqual(len(j.box[2].vendor_feature), 4)
+
+    @unittest.skipIf(sys.hexversion < 0x03000000, "assertWarns is PY3K")
+    def test_reader_requirements_box_writing(self):
+        """
+        If a box does not have writing specifically enabled, must error out.
+        """
+        file = os.path.join('data', 'text_GBR.jp2')
+        file = pkg.resource_filename(__name__, file)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            j = Jp2k(file)
+            box = j.box[2]
+
+            b = BytesIO()
+            with self.assertRaises(NotImplementedError):
+                box.write(b)
+
+    def test_flst_lens_not_the_same(self):
+        """A fragment list box items must be the same length."""
+        offset = [89]
+        length = [1132288]
+        reference = [0, 0]
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            flst = glymur.jp2box.FragmentListBox(offset, length, reference)
+        with tempfile.TemporaryFile() as tfile:
+            with self.assertRaises(IOError):
+                flst.write(tfile)
+
+    def test_flst_offsets_not_positive(self):
+        """A fragment list box offsets must be positive."""
+        offset = [0]
+        length = [1132288]
+        reference = [0]
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            flst = glymur.jp2box.FragmentListBox(offset, length, reference)
+        with tempfile.TemporaryFile() as tfile:
+            with self.assertRaises((IOError, OSError)):
+                flst.write(tfile)
+
+    def test_flst_lengths_not_positive(self):
+        """A fragment list box lengths must be positive."""
+        offset = [89]
+        length = [0]
+        reference = [0]
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            flst = glymur.jp2box.FragmentListBox(offset, length, reference)
+        with tempfile.TemporaryFile() as tfile:
+            with self.assertRaises(IOError):
+                flst.write(tfile)
+
+    def test_ftbl_boxes_empty(self):
+        """A fragment table box must have at least one child box."""
+        ftbl = glymur.jp2box.FragmentTableBox()
+        with tempfile.TemporaryFile() as tfile:
+            with self.assertRaises(IOError):
+                ftbl.write(tfile)
+
+    def test_ftbl_child_not_flst(self):
+        """A fragment table box can only contain a fragment list."""
+        free = glymur.jp2box.FreeBox()
+        ftbl = glymur.jp2box.FragmentTableBox(box=[free])
+        with tempfile.TemporaryFile() as tfile:
+            with self.assertRaises(IOError):
+                ftbl.write(tfile)
+
+    def test_data_reference_requires_dtbl(self):
+        """The existance of data reference box requires a ftbl box as well."""
+        flag = 0
+        version = (0, 0, 0)
+        url1 = 'file:////usr/local/bin'
+        url2 = 'http://glymur.readthedocs.org'
+        jpx1 = glymur.Jp2k(self.jp2file)
+        boxes = jpx1.box
+        boxes[1].brand = 'jpx '
+
+        deurl1 = glymur.jp2box.DataEntryURLBox(flag, version, url1)
+        deurl2 = glymur.jp2box.DataEntryURLBox(flag, version, url2)
+        dref = glymur.jp2box.DataReferenceBox([deurl1, deurl2])
+        boxes.append(dref)
+
+        with tempfile.NamedTemporaryFile(suffix='.jpx') as tfile:
+            with self.assertRaises(IOError):
+                jpx1.wrap(tfile.name, boxes=boxes)
+
+    def test_dtbl_free(self):
+        """Verify that we can interpret Data Reference and Free boxes."""
+        # Copy the existing JPX file, add a data reference box onto the end.
+        flag = 0
+        version = (0, 0, 0)
+        url1 = 'file:////usr/local/bin'
+        url2 = 'http://glymur.readthedocs.org' + chr(0) * 3
+        with tempfile.NamedTemporaryFile(suffix='.jpx') as tfile:
+            with open(self.jpxfile, 'rb') as ifile:
+                tfile.write(ifile.read())
+
+                deurl1 = glymur.jp2box.DataEntryURLBox(flag, version, url1)
+                deurl2 = glymur.jp2box.DataEntryURLBox(flag, version, url2)
+                dref = glymur.jp2box.DataReferenceBox([deurl1, deurl2])
+                dref.write(tfile)
+
+                # Free box.  The content does not matter.
+                tfile.write(struct.pack('>I4s', 12, b'free'))
+                tfile.write(struct.pack('>I', 0))
+
+            tfile.flush()
+
+            jpx = Jp2k(tfile.name)
+
+            self.assertEqual(jpx.box[-2].box_id, 'dtbl')
+            self.assertEqual(len(jpx.box[-2].DR), 2)
+            self.assertEqual(jpx.box[-2].DR[0].url, url1)
+            self.assertEqual(jpx.box[-2].DR[1].url, url2.rstrip('\0'))
+
+            self.assertEqual(jpx.box[-1].box_id, 'free')
+
+    def test_ftbl(self):
+        """Verify that we can interpret Fragment Table boxes."""
+        # Copy the existing JPX file, add a fragment table box onto the end.
+        with tempfile.NamedTemporaryFile(suffix='.jpx') as tfile:
+            with open(self.jpxfile, 'rb') as ifile:
+                tfile.write(ifile.read())
+            write_buffer = struct.pack('>I4s', 32, b'ftbl')
+            tfile.write(write_buffer)
+
+            # Just one fragment list box
+            write_buffer = struct.pack('>I4s', 24, b'flst')
+            tfile.write(write_buffer)
+
+            # Simple offset, length, reference
+            write_buffer = struct.pack('>HQIH', 1, 4237, 170246, 3)
+            tfile.write(write_buffer)
+
+            tfile.flush()
+
+            jpx = Jp2k(tfile.name)
+
+            self.assertEqual(jpx.box[-1].box_id, 'ftbl')
+            self.assertEqual(jpx.box[-1].box[0].box_id, 'flst')
+            self.assertEqual(jpx.box[-1].box[0].fragment_offset, (4237,))
+            self.assertEqual(jpx.box[-1].box[0].fragment_length, (170246,))
+            self.assertEqual(jpx.box[-1].box[0].data_reference, (3,))
+
+    @unittest.skipIf(sys.hexversion < 0x03000000, "assertWarns is PY3K")
+    def test_rreq3(self):
+        """
+        Verify that we warn with RREQ box with an unsupported mask length.
+        """
+        rreq_buffer = ctypes.create_string_buffer(74)
+        struct.pack_into('>I4s', rreq_buffer, 0, 74, b'rreq')
+
+        # mask length
+        struct.pack_into('>B', rreq_buffer, 8, 3)
+
+        # fuam, dcm.  6 bytes, two sets of 3.
+        lst = (255, 224, 0, 0, 31, 252)
+        struct.pack_into('>BBBBBB', rreq_buffer, 9, *lst)
+
+        # number of standard features: 11
+        struct.pack_into('>H', rreq_buffer, 15, 11)
+
+        standard_flags = [5, 42, 45, 2, 18, 19, 1, 8, 12, 31, 20]
+        standard_masks = [8388608, 4194304, 2097152, 1048576, 524288, 262144,
+                          131072, 65536, 32768, 16384, 8192]
+        for j in range(len(standard_flags)):
+            mask = (standard_masks[j] >> 16,
+                    standard_masks[j] & 0x0000ffff >> 8,
+                    standard_masks[j] & 0x000000ff)
+            struct.pack_into('>HBBB', rreq_buffer, 17 + j * 5,
+                             standard_flags[j], *mask)
+
+        # num vendor features: 0
+        struct.pack_into('>H', rreq_buffer, 72, 0)
+
+        # Ok, done with the box, we can now insert it into the jpx file after
+        # the ftyp box.
+        with tempfile.NamedTemporaryFile(suffix=".jpx") as ofile:
+            with open(self.jpxfile, 'rb') as ifile:
+                ofile.write(ifile.read(40))
+                ofile.write(rreq_buffer)
+                ofile.write(ifile.read())
+                ofile.flush()
+
+            with self.assertWarns(UserWarning):
+                Jp2k(ofile.name)
+
+    def test_nlst(self):
+        """Verify that we can handle a number list box."""
+        j = Jp2k(self.jpxfile)
+        nlst = j.box[12].box[0].box[0]
+        self.assertEqual(nlst.box_id, 'nlst')
+        self.assertEqual(type(nlst), glymur.jp2box.NumberListBox)
+
+        # Two associations.
+        self.assertEqual(len(nlst.associations), 2)
+
+        # Codestream 0
+        self.assertEqual(nlst.associations[0], 1 << 24)
+
+        # Compositing Layer 0
+        self.assertEqual(nlst.associations[1], 2 << 24)

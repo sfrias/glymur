@@ -23,8 +23,9 @@ from glymur.core import COLOR, RED, GREEN, BLUE
 from .fixtures import MetadataBase
 
 
-class TestRepr(MetadataBase):
+class TestSuite(MetadataBase):
     """Tests for __repr__ methods."""
+
     def test_default_jp2k(self):
         """Should be able to eval a JPEG2000SignatureBox"""
         jp2k = glymur.jp2box.JPEG2000SignatureBox()

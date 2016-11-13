@@ -112,6 +112,19 @@ class TestSuite(unittest.TestCase):
             j2k.wrap(tfile.name)
             self.verify_wrapped_raw(tfile.name)
 
+    def test_no_jp2c_box_in_outermost_jp2_list(self):
+        """
+        There must be a JP2C box in the outermost list of boxes.
+        """
+        j = glymur.Jp2k(self.jp2file)
+
+        # Remove the last box, which is a codestream.
+        boxes = j.box[:-1]
+
+        with tempfile.NamedTemporaryFile(suffix=".jp2") as tfile:
+            with self.assertRaises(IOError):
+                j.wrap(tfile.name, boxes=boxes)
+
     def test_jpx_to_jp2(self):
         """basic test for rewrapping a jpx file"""
         jpx = Jp2k(self.jpxfile)

@@ -1058,19 +1058,6 @@ class TestJp2k_write(fixtures.MetadataBase):
         os.unlink(cls.single_channel_j2k.name)
         os.unlink(cls.single_channel_jp2.name)
 
-    def test_no_jp2c_box_in_outermost_jp2_list(self):
-        """
-        There must be a JP2C box in the outermost list of boxes.
-        """
-        j = glymur.Jp2k(self.jp2file)
-
-        # Remove the last box, which is a codestream.
-        boxes = j.box[:-1]
-
-        with tempfile.NamedTemporaryFile(suffix=".jp2") as tfile:
-            with self.assertRaises(IOError):
-                j.wrap(tfile.name, boxes=boxes)
-
     @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
                      "Requires as least v2.0")
     def test_null_data(self):

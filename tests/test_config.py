@@ -154,8 +154,6 @@ class TestSuite(unittest.TestCase):
 
     @unittest.skipIf(glymur.lib.openjp2.OPENJP2 is None,
                      "Needs openjp2 before this test make sense.")
-    @unittest.skipIf(load_openjpeg_library('openjp2') is None,
-                     "OpenJP2 must be found before this test can work.")
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_config_dir_but_no_config_file(self):
 

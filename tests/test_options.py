@@ -1,5 +1,5 @@
-"""These tests are for edge cases where OPENJPEG does not exist, but
-OPENJP2 may be present in some form or other.
+"""
+Tests for setting/getting options from inside python
 """
 # Standard library imports ...
 import unittest

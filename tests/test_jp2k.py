@@ -2079,25 +2079,3 @@ class TestJp2k_2_1(unittest.TestCase):
                 j = Jp2k(tfile.name)
                 with self.assertRaises((IOError, OSError)):
                     j[::2, ::2]
-
-
-class TestParsing(unittest.TestCase):
-    """
-    Tests for verifying how parsing may be altered.
-    """
-    def setUp(self):
-        self.jp2file = glymur.data.nemo()
-        # Reset parseoptions for every test.
-        glymur.set_option('parse.full_codestream', False)
-
-    def tearDown(self):
-        glymur.set_option('parse.full_codestream', False)
-
-    def test_main_header(self):
-        """verify that the main header isn't loaded during normal parsing"""
-        # The hidden _main_header attribute should show up after accessing it.
-        jp2 = Jp2k(self.jp2file)
-        jp2c = jp2.box[4]
-        self.assertIsNone(jp2c._codestream)
-        jp2c.codestream
-        self.assertIsNotNone(jp2c._codestream)

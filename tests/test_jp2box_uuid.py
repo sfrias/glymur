@@ -348,6 +348,72 @@ class TestSuite(unittest.TestCase):
                     "    UUID Data:  corrupt")
         self.assertEqual(actual, expected)
 
+    def test_bad_tag_datatype(self):
+        """Only certain datatypes are allowable"""
+        f = BytesIO()
+
+        # Write L, T, UUID identifier.
+        f.write(struct.pack('>I4s', 52, b'uuid'))
+        f.write(b'JpgTiffExif->JP2')
+
+        f.write(b'Exif\x00\x00')
+        xbuffer = struct.pack('<BBHI', 74, 73, 42, 8)
+        f.write(xbuffer)
+
+        # We will write just a single tag.
+        f.write(struct.pack('<H', 1))
+
+        # 2000 is not an allowable TIFF datatype.
+        f.write(struct.pack('<HHI4s', 271, 2000, 3, b'HTC\x00'))
+
+        f.seek(8)
+        
+        # We should still get a UUID box out of it.  But we get no data.
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                box = glymur.jp2box.UUIDBox.parse(f, -1, 56)
+                assert issubclass(w[-1].category, UserWarning)
+        else:
+            with self.assertWarns(UserWarning):
+                box = glymur.jp2box.UUIDBox.parse(f, -1, 56)
+
+        self.assertEqual(box.box_id, 'uuid')
+        self.assertIsNone(box.data)
+
+    def test_bad_tiff_header_byte_order_indication(self):
+        """Only b'II' and b'MM' are allowed."""
+        f = BytesIO()
+
+        # Write L, T, UUID identifier.
+        f.write(struct.pack('>I4s', 52, b'uuid'))
+        f.write(b'JpgTiffExif->JP2')
+
+        f.write(b'Exif\x00\x00')
+        xbuffer = struct.pack('<BBHI', 74, 73, 42, 8)
+        f.write(xbuffer)
+
+        # We will write just a single tag.
+        f.write(struct.pack('<H', 1))
+
+        # 271 is the Make.
+        f.write(struct.pack('<HHI4s', 271, 2, 3, b'HTC\x00'))
+
+        # Write the null offset to the next IFD.
+        f.write(struct.pack('<I', 0))
+
+        f.seek(8)
+
+        if sys.hexversion < 0x03000000:
+            with warnings.catch_warnings(record=True) as w:
+                box = glymur.jp2box.UUIDBox.parse(f, -1, 56)
+                assert issubclass(w[-1].category, UserWarning)
+        else:
+            with self.assertWarns(UserWarning):
+                box = glymur.jp2box.UUIDBox.parse(f, -1, 56)
+
+        # We should still get a UUID box out of it.  But we get no data.
+        self.assertEqual(box.box_id, 'uuid')
+        self.assertIsNone(box.data)
 
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestSuiteHiRISE(unittest.TestCase):
@@ -426,83 +492,3 @@ class TestSuiteHiRISE(unittest.TestCase):
         else:
             expected = fixtures.geotiff_uuid_without_gdal
         self.assertEqual(actual, expected)
-
-
-@unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
-class TestSuiteWarns(unittest.TestCase):
-    """Tests for XMP, Exif UUIDs, issues warnings."""
-
-    def setUp(self):
-        self.jp2file = glymur.data.nemo()
-
-    def tearDown(self):
-        pass
-
-    def test_bad_tag_datatype(self):
-        """Only certain datatypes are allowable"""
-        with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
-
-            with open(self.jp2file, 'rb') as f:
-                tfile.write(f.read())
-
-            # Write L, T, UUID identifier.
-            tfile.write(struct.pack('>I4s', 52, b'uuid'))
-            tfile.write(b'JpgTiffExif->JP2')
-
-            tfile.write(b'Exif\x00\x00')
-            xbuffer = struct.pack('<BBHI', 73, 73, 42, 8)
-            tfile.write(xbuffer)
-
-            # We will write just a single tag.
-            tfile.write(struct.pack('<H', 1))
-
-            # 2000 is not an allowable TIFF datatype.
-            tfile.write(struct.pack('<HHI4s', 271, 2000, 3, b'HTC\x00'))
-            tfile.flush()
-
-            with warnings.catch_warnings():
-                # Ignore the invalid datatype warnings.
-                warnings.simplefilter('ignore')
-                j = glymur.Jp2k(tfile.name)
-
-            self.assertEqual(j.box[-1].box_id, 'uuid')
-
-            # Invalid tag, so no data
-            self.assertIsNone(j.box[-1].data)
-
-    def test_bad_tiff_header_byte_order_indication(self):
-        """Only b'II' and b'MM' are allowed."""
-        f = BytesIO()
-
-        # Write L, T, UUID identifier.
-        f.write(struct.pack('>I4s', 52, b'uuid'))
-        f.write(b'JpgTiffExif->JP2')
-
-        f.write(b'Exif\x00\x00')
-        xbuffer = struct.pack('<BBHI', 74, 73, 42, 8)
-        f.write(xbuffer)
-
-        # We will write just a single tag.
-        f.write(struct.pack('<H', 1))
-
-        # 271 is the Make.
-        f.write(struct.pack('<HHI4s', 271, 2, 3, b'HTC\x00'))
-
-        # Write the null offset to the next IFD.
-        f.write(struct.pack('<I', 0))
-
-        f.flush()
-
-        f.seek(8)
-
-        if sys.hexversion < 0x03000000:
-            with warnings.catch_warnings(record=True) as w:
-                box = glymur.jp2box.UUIDBox.parse(f, -1, 56)
-                assert issubclass(w[-1].category, UserWarning)
-        else:
-            with self.assertWarns(UserWarning):
-                box = glymur.jp2box.UUIDBox.parse(f, -1, 56)
-
-        # We should still get a UUID box out of it.  But we get no data.
-        self.assertEqual(box.box_id, 'uuid')
-        self.assertIsNone(box.data)

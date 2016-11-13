@@ -30,6 +30,13 @@ _WAVELET_TRANSFORM_DISPLAY = {
     WAVELET_XFORM_5X3_REVERSIBLE: '5-3 reversible'
 }
 
+# Only to be used with QCC and QCD segments.
+_QUANTIZATION_STYLE = {
+    0: '\n    Quantization style:  no quantization, ',
+    1: '\n    Quantization style:  scalar implicit, ',
+    2: '\n    Quantization style:  scalar explicit, ',
+}            
+
 _NO_PROFILE = 0
 _PROFILE_0 = 1
 _PROFILE_1 = 2
@@ -1406,7 +1413,7 @@ class QCCsegment(Segment):
         msg = Segment.__str__(self)
 
         msg += '\n    Associated Component:  {0}'.format(self.cqcc)
-        msg += _print_quantization_style(self.sqcc)
+        msg += _QUANTIZATION_STYLE[self.sqcc & 0x01f]
         msg += '{0} guard bits'.format(self.guard_bits)
 
         step_size = zip(self.mantissa, self.exponent)
@@ -1456,9 +1463,7 @@ class QCDsegment(Segment):
 
     def __str__(self):
         msg = Segment.__str__(self)
-
-        msg += _print_quantization_style(self.sqcd)
-
+        msg += _QUANTIZATION_STYLE[self.sqcd & 0x01f]
         msg += '{0} guard bits'.format(self.guard_bits)
 
         step_size = zip(self.mantissa, self.exponent)
@@ -1892,16 +1897,3 @@ def parse_quantization(read_buffer, sqcd):
             mantissa.append(data[j] & 0x07ff)
 
     return mantissa, exponent
-
-
-def _print_quantization_style(sqcc):
-    """Only to be used with QCC and QCD segments."""
-
-    msg = '\n    Quantization style:  '
-    if sqcc & 0x1f == 0:
-        msg += 'no quantization, '
-    elif sqcc & 0x1f == 1:
-        msg += 'scalar implicit, '
-    elif sqcc & 0x1f == 2:
-        msg += 'scalar explicit, '
-    return msg

@@ -81,20 +81,20 @@ class TestSuite(unittest.TestCase):
         Original test file was
         26ccf3651020967f7778238ef5af08af.SIGFPE.d25.527.jp2
         """
-        fptr = BytesIO()
+        f = BytesIO()
 
         payload = b'\xees'
-        fptr.write(payload)
-        fptr.seek(0)
+        f.write(payload)
+        f.seek(0)
 
         if sys.hexversion < 0x03000000:
             pass
             with warnings.catch_warnings(record=True) as w:
-                box = glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(payload))
+                box = glymur.jp2box.XMLBox.parse(f, 0, 8 + len(payload))
             assert issubclass(w[-1].category, UserWarning)
         else:
             with self.assertWarns(UserWarning):
-                box = glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(payload))
+                box = glymur.jp2box.XMLBox.parse(f, 0, 8 + len(payload))
 
         self.assertIsNone(box.xml)
 
@@ -655,7 +655,7 @@ class TestSuite(unittest.TestCase):
                 glymur.jp2box.FragmentListBox(offset, length, reference)
 
     def test_flst_lengths_not_positive(self):
-        """A fragment list box lengths must be positive."""
+        """Fragment list box lengths must be positive."""
         offset = [89]
         length = [0]
         reference = [0]
@@ -672,8 +672,8 @@ class TestSuite(unittest.TestCase):
         """Verify warning in case of unrecognized tag."""
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
 
-            with open(self.jp2file, 'rb') as ifptr:
-                tfile.write(ifptr.read())
+            with open(self.jp2file, 'rb') as f:
+                tfile.write(f.read())
 
             # Write L, T, UUID identifier.
             tfile.write(struct.pack('>I4s', 52, b'uuid'))
@@ -698,8 +698,8 @@ class TestSuite(unittest.TestCase):
         """Only certain datatypes are allowable"""
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
 
-            with open(self.jp2file, 'rb') as ifptr:
-                tfile.write(ifptr.read())
+            with open(self.jp2file, 'rb') as f:
+                tfile.write(f.read())
 
             # Write L, T, UUID identifier.
             tfile.write(struct.pack('>I4s', 52, b'uuid'))
@@ -724,8 +724,8 @@ class TestSuite(unittest.TestCase):
         """Only b'II' and b'MM' are allowed."""
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
 
-            with open(self.jp2file, 'rb') as ifptr:
-                tfile.write(ifptr.read())
+            with open(self.jp2file, 'rb') as f:
+                tfile.write(f.read())
 
             # Write L, T, UUID identifier.
             tfile.write(struct.pack('>I4s', 52, b'uuid'))
@@ -1064,11 +1064,11 @@ class TestConfigurationWarnings(unittest.TestCase):
             configdir = os.path.join(tdir, 'glymur')
             os.mkdir(configdir)
             fname = os.path.join(configdir, 'glymurrc')
-            with open(fname, 'w') as fptr:
+            with open(fname, 'w') as f:
                 with tempfile.NamedTemporaryFile(suffix='.dylib') as tfile:
-                    fptr.write('[library]\n')
-                    fptr.write('openjp2: {0}.not.there\n'.format(tfile.name))
-                    fptr.flush()
+                    f.write('[library]\n')
+                    f.write('openjp2: {0}.not.there\n'.format(tfile.name))
+                    f.flush()
                     with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
                         # Warn about a bad library being rejected.
                         with self.assertWarns(UserWarning):

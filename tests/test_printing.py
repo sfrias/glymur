@@ -972,8 +972,8 @@ class TestPrinting(unittest.TestCase):
         """Verify printing of exif information"""
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
 
-            with open(self.jp2file, 'rb') as ifptr:
-                tfile.write(ifptr.read())
+            with open(self.jp2file, 'rb') as f:
+                tfile.write(f.read())
 
             # Write L, T, UUID identifier.
             tfile.write(struct.pack('>I4s', 76, b'uuid'))
@@ -1238,18 +1238,18 @@ class TestPrinting(unittest.TestCase):
 
         Original test file was input/nonregression/issue171.jp2
         """
-        fptr = BytesIO()
+        f = BytesIO()
 
         s = "<?xpacket begin='\ufeff' id='W5M0MpCehiHzreSzNTczkc9d'?>"
         s += "<stuff>goes here</stuff>"
         s += "<?xpacket end='w'?>"
         data = s.encode('utf-8')
-        fptr.write(data)
-        fptr.seek(0)
+        f.write(data)
+        f.seek(0)
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            box = glymur.jp2box.XMLBox.parse(fptr, 0, 8 + len(data))
+            box = glymur.jp2box.XMLBox.parse(f, 0, 8 + len(data))
             # No need to verify, it's enough that we don't error out.
             str(box)
 

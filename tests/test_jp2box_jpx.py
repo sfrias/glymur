@@ -57,8 +57,8 @@ class TestJPXWrap(unittest.TestCase):
     def test_jpx_ftbl_no_codestream(self):
         """Can have a jpx with no codestream."""
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile1:
-            with open(self.jp2file, 'rb') as fptr:
-                tfile1.write(fptr.read())
+            with open(self.jp2file, 'rb') as f:
+                tfile1.write(f.read())
             tfile1.flush()
             jp2_1 = Jp2k(tfile1.name)
             jp2h = jp2_1.box[2]

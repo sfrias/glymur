@@ -107,14 +107,12 @@ class TestDataEntryURL(unittest.TestCase):
 
             # Go to the last box.  Seek past the L, T, version,
             # and flag fields.
-            with open(tfile.name, 'rb') as fptr:
-                fptr.seek(jp22.box[-1].offset + 4 + 4 + 1 + 3)
+            with open(tfile.name, 'rb') as f:
+                f.seek(jp22.box[-1].offset + 4 + 4 + 1 + 3)
 
-                nbytes = (jp22.box[-1].offset +
-                          jp22.box[-1].length -
-                          fptr.tell())
-                read_buffer = fptr.read(nbytes)
-                read_url = read_buffer.decode('utf-8')
+                nbytes = jp22.box[-1].offset + jp22.box[-1].length - f.tell()
+                read_url = f.read(nbytes).decode('utf-8')
+
                 self.assertEqual(url + chr(0), read_url)
 
 

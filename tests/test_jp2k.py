@@ -2164,29 +2164,30 @@ class TestJp2k_2_1(unittest.TestCase):
         Verify the error message produced by the openjpeg library
         """
         # This will confirm that the error callback mechanism is working.
-        with open(self.jp2file, 'rb') as fptr:
-            data = fptr.read()
-            with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-                # Codestream starts at byte 3323. SIZ marker at 3233.
-                # COD marker at 3282.  Subsampling at 3276.
-                offset = 3223
-                tfile.write(data[0:offset + 52])
+        with open(self.jp2file, 'rb') as f:
+            data = f.read()
 
-                # Make the DY bytes of the SIZ segment zero.  That means that
-                # a subsampling factor is zero, which is illegal.
-                tfile.write(b'\x00')
-                tfile.write(data[offset + 53:offset + 55])
-                tfile.write(b'\x00')
-                tfile.write(data[offset + 57:offset + 59])
-                tfile.write(b'\x00')
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            # Codestream starts at byte 3323. SIZ marker at 3233.
+            # COD marker at 3282.  Subsampling at 3276.
+            offset = 3223
+            tfile.write(data[0:offset + 52])
 
-                tfile.write(data[offset + 59:])
-                tfile.flush()
-                with warnings.catch_warnings():
-                    warnings.simplefilter('ignore')
-                    j = Jp2k(tfile.name)
-                    with self.assertRaises((IOError, OSError)):
-                        j[::2, ::2]
+            # Make the DY bytes of the SIZ segment zero.  That means that
+            # a subsampling factor is zero, which is illegal.
+            tfile.write(b'\x00')
+            tfile.write(data[offset + 53:offset + 55])
+            tfile.write(b'\x00')
+            tfile.write(data[offset + 57:offset + 59])
+            tfile.write(b'\x00')
+
+            tfile.write(data[offset + 59:])
+            tfile.flush()
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                j = Jp2k(tfile.name)
+                with self.assertRaises((IOError, OSError)):
+                    j[::2, ::2]
 
 
 class TestParsing(unittest.TestCase):

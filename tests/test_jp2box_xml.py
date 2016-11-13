@@ -182,8 +182,8 @@ class TestXML(unittest.TestCase):
         Read JP2 file with XML box having encoding declaration
         """
         with tempfile.NamedTemporaryFile(suffix=".jp2") as ofile:
-            with open(self.jp2file, mode='rb') as ifile:
-                ofile.write(ifile.read())
+            with open(self.jp2file, mode='rb') as f:
+                ofile.write(f.read())
 
             # Write the additional box.
             write_buffer = struct.pack('>I4s', int(1777), b'xml ')
@@ -192,8 +192,8 @@ class TestXML(unittest.TestCase):
             relpath = os.path.join('data', 'encoding_declaration.xml')
             xml_file_path = pkg.resource_filename(__name__, relpath)
 
-            with open(xml_file_path, 'rb') as xfptr:
-                ofile.write(xfptr.read())
+            with open(xml_file_path, 'rb') as f:
+                ofile.write(f.read())
 
             ofile.flush()
             ofile.seek(0)

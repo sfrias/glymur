@@ -369,8 +369,8 @@ class TestSuiteHiRISE(unittest.TestCase):
 
         relpath = os.path.join('data', 'degenerate_geotiff.tif')
         path = pkg.resource_filename(__name__, relpath)
-        with open(path, 'rb') as fptr:
-            uuid_data = fptr.read()
+        with open(path, 'rb') as f:
+            uuid_data = f.read()
         the_uuid = uuid.UUID('b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03')
         geotiff_uuid = glymur.jp2box.UUIDBox(the_uuid, uuid_data)
 
@@ -444,8 +444,8 @@ class TestSuiteWarns(unittest.TestCase):
         """Only certain datatypes are allowable"""
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
 
-            with open(self.jp2file, 'rb') as ifptr:
-                tfile.write(ifptr.read())
+            with open(self.jp2file, 'rb') as f:
+                tfile.write(f.read())
 
             # Write L, T, UUID identifier.
             tfile.write(struct.pack('>I4s', 52, b'uuid'))
@@ -476,8 +476,8 @@ class TestSuiteWarns(unittest.TestCase):
         """Only b'II' and b'MM' are allowed."""
         with tempfile.NamedTemporaryFile(suffix='.jp2', mode='wb') as tfile:
 
-            with open(self.jp2file, 'rb') as ifptr:
-                tfile.write(ifptr.read())
+            with open(self.jp2file, 'rb') as f:
+                tfile.write(f.read())
 
             # Write L, T, UUID identifier.
             tfile.write(struct.pack('>I4s', 52, b'uuid'))

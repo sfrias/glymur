@@ -127,10 +127,10 @@ class TestSuiteConfigFile(unittest.TestCase):
             configdir = os.path.join(tdir, 'glymur')
             os.mkdir(configdir)
             fname = os.path.join(configdir, 'glymurrc')
-            with open(fname, 'w') as fptr:
-                fptr.write('[testing]\n')
-                fptr.write('opj_data_root: blah\n')
-                fptr.flush()
+            with open(fname, 'w') as f:
+                f.write('[testing]\n')
+                f.write('opj_data_root: blah\n')
+                f.flush()
                 with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
                     imp.reload(glymur.lib.openjp2)
                     # It's enough that we did not error out
@@ -143,11 +143,11 @@ class TestSuiteConfigFile(unittest.TestCase):
             configdir = os.path.join(tdir, 'glymur')
             os.mkdir(configdir)
             fname = os.path.join(configdir, 'glymurrc')
-            with open(fname, 'w') as fptr:
+            with open(fname, 'w') as f:
                 with tempfile.NamedTemporaryFile(suffix='.dylib') as tfile:
-                    fptr.write('[library]\n')
-                    fptr.write('openjp2: {0}.not.there\n'.format(tfile.name))
-                    fptr.flush()
+                    f.write('[library]\n')
+                    f.write('openjp2: {0}.not.there\n'.format(tfile.name))
+                    f.flush()
                     with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
                         # Misconfigured new configuration file should
                         # be rejected.
@@ -168,16 +168,16 @@ class TestSuiteConfigFile(unittest.TestCase):
             configdir = os.path.join(tdir, 'glymur')
             os.mkdir(configdir)
             fname = os.path.join(configdir, 'glymurrc')
-            with open(fname, 'w') as fptr:
+            with open(fname, 'w') as f:
                 # Essentially comment out openjp2 and preferentially load
                 # openjpeg instead.
-                fptr.write('[library]\n')
-                fptr.write('openjp2: None\n')
+                f.write('[library]\n')
+                f.write('openjp2: None\n')
                 openjpeg_lib = load_openjpeg_library('openjpeg')
                 msg = 'openjpeg: {openjpeg}\n'
                 msg = msg.format(openjpeg=openjpeg_lib._name)
-                fptr.write(msg)
-                fptr.flush()
+                f.write(msg)
+                f.flush()
                 with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
                     imp.reload(glymur.lib.openjp2)
                     imp.reload(glymur.lib.openjpeg)
@@ -206,10 +206,10 @@ class TestSuiteConfigFile(unittest.TestCase):
         libloc = glymur.lib.openjp2.OPENJP2._name
         with tempfile.TemporaryDirectory() as tdir1:
             fname = os.path.join(tdir1, 'glymurrc')
-            with open(fname, 'w') as fptr:
-                fptr.write('[library]\n')
-                fptr.write('openjp2: {0}\n'.format(libloc))
-                fptr.flush()
+            with open(fname, 'w') as f:
+                f.write('[library]\n')
+                f.write('openjp2: {0}\n'.format(libloc))
+                f.flush()
                 with chdir(tdir1):
                     # Should be able to load openjp2 as before.
                     imp.reload(glymur.lib.openjp2)

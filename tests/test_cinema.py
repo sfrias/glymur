@@ -1,5 +1,5 @@
 """
-Tests for general glymur functionality.
+Tests for writing cinema 2k/4k files
 """
 # Standard library imports ...
 import os

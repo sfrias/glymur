@@ -3,6 +3,7 @@ Tests for glymur that require openjp2
 """
 # Standard library imports ...
 import os
+import struct
 import tempfile
 import unittest
 import warnings
@@ -18,7 +19,7 @@ from . import fixtures
 
 @unittest.skipIf(glymur.version.openjpeg_version < '2.0.0',
                  "Not to be run until unless 2.0.1 or higher is present")
-class TestJp2k_2_1(unittest.TestCase):
+class TestSuite(unittest.TestCase):
     """Only to be run in 2.0+."""
 
     def setUp(self):
@@ -96,3 +97,71 @@ class TestJp2k_2_1(unittest.TestCase):
                 j = Jp2k(tfile.name)
                 with self.assertRaises((IOError, OSError)):
                     j[::2, ::2]
+
+    def test_bad_area_parameter(self):
+        """Should error out appropriately if given a bad area parameter."""
+        j = Jp2k(self.jp2file)
+        with self.assertRaises(IOError):
+            # Start corner must be >= 0
+            j[-1:1, -1:1]
+        with self.assertRaises(IOError):
+            # End corner must be > 0
+            j[10:0, 10:0]
+        with self.assertRaises(IOError):
+            # End corner must be >= start corner
+            j[10:8, 10:8]
+
+    @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
+    def test_unrecognized_jp2_clrspace(self):
+        """We only allow RGB and GRAYSCALE.  Should error out with others"""
+        data = np.zeros((128, 128, 3), dtype=np.uint8)
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=data, colorspace='cmyk')
+
+    @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
+    def test_asoc_label_box(self):
+        """Test asoc and label box"""
+        # Construct a fake file with an asoc and a label box, as
+        # OpenJPEG doesn't have such a file.
+        data = Jp2k(self.jp2file)[::2, ::2]
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            Jp2k(tfile.name, data=data)
+
+            with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile2:
+
+                # Offset of the codestream is where we start.
+                read_buffer = tfile.read(77)
+                tfile2.write(read_buffer)
+
+                # read the rest of the file, it's the codestream.
+                codestream = tfile.read()
+
+                # Write the asoc superbox.
+                # Length = 36, id is 'asoc'.
+                write_buffer = struct.pack('>I4s', int(56), b'asoc')
+                tfile2.write(write_buffer)
+
+                # Write the contained label box
+                write_buffer = struct.pack('>I4s', int(13), b'lbl ')
+                tfile2.write(write_buffer)
+                tfile2.write('label'.encode())
+
+                # Write the xml box
+                # Length = 36, id is 'xml '.
+                write_buffer = struct.pack('>I4s', int(35), b'xml ')
+                tfile2.write(write_buffer)
+
+                write_buffer = '<test>this is a test</test>'
+                write_buffer = write_buffer.encode()
+                tfile2.write(write_buffer)
+
+                # Now append the codestream.
+                tfile2.write(codestream)
+                tfile2.flush()
+
+                jasoc = Jp2k(tfile2.name)
+                self.assertEqual(jasoc.box[3].box_id, 'asoc')
+                self.assertEqual(jasoc.box[3].box[0].box_id, 'lbl ')
+                self.assertEqual(jasoc.box[3].box[0].label, 'label')
+                self.assertEqual(jasoc.box[3].box[1].box_id, 'xml ')

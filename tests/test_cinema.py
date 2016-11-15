@@ -4,9 +4,14 @@ Tests for writing cinema 2k/4k files
 # Standard library imports ...
 import os
 import re
+import sys
 import tempfile
 import unittest
 import warnings
+if sys.hexversion >= 0x03030000:
+    from unittest.mock import patch
+else:
+    from mock import patch
 
 # Third party library imports ...
 import numpy as np
@@ -124,3 +129,46 @@ class TestSuite(fixtures.MetadataBase):
 
             codestream = j.get_codestream()
             self.check_cinema4k_codestream(codestream, (4096, 2160))
+
+    def test_cinema_mode_with_too_old_version_of_openjpeg(self):
+        """
+        Cinema mode not allowed for anything less than 2.0.1
+
+        Origin file tested was
+
+            input/nonregression/X_4_2K_24_185_CBR_WB_000.tif
+
+        """
+        data = np.zeros((857, 2048, 3), dtype=np.uint8)
+        versions = ["1.5.0", "2.0.0"]
+        for version in versions:
+            with patch('glymur.version.openjpeg_version', new=version):
+                with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+                    with self.assertRaises(IOError):
+                        Jp2k(tfile.name, data=data, cinema2k=48)
+
+    def test_cinema2K_with_others(self):
+        """
+        Can't specify cinema2k with any other options.
+
+        Original test file was
+        input/nonregression/X_5_2K_24_235_CBR_STEM24_000.tif
+        """
+        data = np.zeros((857, 2048, 3), dtype=np.uint8)
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=data,
+                     cinema2k=48, cratios=[200, 100, 50])
+
+    def test_cinema4K_with_others(self):
+        """
+        Can't specify cinema4k with any other options.
+
+        Original test file was input/nonregression/ElephantDream_4K.tif
+        """
+        data = np.zeros((4096, 2160, 3), dtype=np.uint8)
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, data=data,
+                     cinema4k=True, cratios=[200, 100, 50])
+

@@ -339,7 +339,17 @@ class TestPrinting(unittest.TestCase):
                   'offset': 2}
         segment = glymur.codestream.SIZsegment(**kwargs)
         actual = str(segment)
-        self.assertEqual(actual, fixtures.cinema2k_profile)
+        expected = ("SIZ marker segment @ (2, 47)\n"
+                    "    Profile:  Cinema 2K\n"
+                    "    Reference Grid Height, Width:  (1080 x 1920)\n"
+                    "    Vertical, Horizontal Reference Grid Offset:  (0 x 0)\n"
+                    "    Reference Tile Height, Width:  (1080 x 1920)\n"
+                    "    Vertical, Horizontal Reference Tile Offset:  (0 x 0)\n"
+                    "    Bitdepth:  (12, 12, 12)\n"
+                    "    Signed:  (False, False, False)\n"
+                    "    Vertical, Horizontal Subsampling:  "
+                    "((1, 1), (1, 1), (1, 1))")
+        self.assertEqual(actual, expected)
 
     def test_version_info(self):
         """Should be able to print(glymur.version.info)"""
@@ -913,7 +923,13 @@ class TestPrinting(unittest.TestCase):
         """Verify printing of compositing layer header box, color group box."""
         jpx = glymur.Jp2k(self.jpxfile)
         actual = str(jpx.box[7])
-        self.assertEqual(actual, fixtures.jplh_color_group_box)
+        expected = ("Compositing Layer Header Box (jplh) @ (314227, 31)\n"
+                    "    Colour Group Box (cgrp) @ (314235, 23)\n"
+                    "        Colour Specification Box (colr) @ (314243, 15)\n"
+                    "            Method:  enumerated colorspace\n"
+                    "            Precedence:  0\n"
+                    "            Colorspace:  sRGB")
+        self.assertEqual(actual, expected)
 
     def test_free(self):
         """Verify printing of Free box."""

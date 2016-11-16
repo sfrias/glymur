@@ -61,12 +61,6 @@ class MetadataBase(unittest.TestCase):
     be subclassed and used easily.
     """
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def verify_codeblock_style(self, actual, style):
         """
         Verify the code-block style for SPcod and SPcoc parameters.
@@ -95,48 +89,6 @@ class MetadataBase(unittest.TestCase):
             expected |= 0x20
         self.assertEqual(actual, expected)
 
-    def verifySignatureBox(self, box):
-        """
-        The signature box is a constant.
-        """
-        self.assertEqual(box.signature, (13, 10, 135, 10))
-
-    def verify_filetype_box(self, actual, expected):
-        """
-        All JP2 files should have a brand reading 'jp2 ' and just a single
-        entry in the compatibility list, also 'jp2 '.  JPX files can have more
-        compatibility items.
-        """
-        self.assertEqual(actual.brand, expected.brand)
-        self.assertEqual(actual.minor_version, expected.minor_version)
-        self.assertEqual(actual.minor_version, 0)
-        for cl in expected.compatibility_list:
-            self.assertIn(cl, actual.compatibility_list)
-
-    def verifyRGNsegment(self, actual, expected):
-        """
-        verify the fields of a RGN segment
-        """
-        self.assertEqual(actual.crgn, expected.crgn)  # 0 = component
-        self.assertEqual(actual.srgn, expected.srgn)  # 0 = implicit
-        self.assertEqual(actual.sprgn, expected.sprgn)
-
-    def verifySOTsegment(self, actual, expected):
-        """
-        verify the fields of a SOT (start of tile) segment
-        """
-        self.assertEqual(actual.isot, expected.isot)
-        self.assertEqual(actual.psot, expected.psot)
-        self.assertEqual(actual.tpsot, expected.tpsot)
-        self.assertEqual(actual.tnsot, expected.tnsot)
-
-    def verifyCMEsegment(self, actual, expected):
-        """
-        verify the fields of a CME (comment) segment
-        """
-        self.assertEqual(actual.rcme, expected.rcme)
-        self.assertEqual(actual.ccme, expected.ccme)
-
     def verifySizSegment(self, actual, expected):
         """
         Verify the fields of the SIZ segment.
@@ -145,35 +97,6 @@ class MetadataBase(unittest.TestCase):
                       'ytsiz', 'xtosiz', 'ytosiz', 'bitdepth',
                       'xrsiz', 'yrsiz']:
             self.assertEqual(getattr(actual, field), getattr(expected, field))
-
-    def verifyImageHeaderBox(self, box1, box2):
-        self.assertEqual(box1.height, box2.height)
-        self.assertEqual(box1.width, box2.width)
-        self.assertEqual(box1.num_components, box2.num_components)
-        self.assertEqual(box1.bits_per_component, box2.bits_per_component)
-        self.assertEqual(box1.signed, box2.signed)
-        self.assertEqual(box1.compression, box2.compression)
-        self.assertEqual(box1.colorspace_unknown, box2.colorspace_unknown)
-        self.assertEqual(box1.ip_provided, box2.ip_provided)
-
-    def verifyColourSpecificationBox(self, actual, expected):
-        """
-        Does not currently check icc profiles.
-        """
-        self.assertEqual(actual.method, expected.method)
-        self.assertEqual(actual.precedence, expected.precedence)
-        self.assertEqual(actual.approximation, expected.approximation)
-
-        if expected.colorspace is None:
-            self.assertIsNone(actual.colorspace)
-            self.assertIsNotNone(actual.icc_profile)
-        else:
-            self.assertEqual(actual.colorspace, expected.colorspace)
-            self.assertIsNone(actual.icc_profile)
-
-
-NO_READ_BACKEND_MSG = "Matplotlib with the PIL backend must be available in "
-NO_READ_BACKEND_MSG += "order to run the tests in this suite."
 
 # The Cinema2K/4K tests seem to need the freeimage backend to skimage.io
 # in order to work.  Unfortunately, scikit-image/freeimage is about as wonky as
@@ -223,36 +146,6 @@ def _indent(textstr):
     else:
         lst = [('    ' + x) for x in textstr.split('\n')]
         return '\n'.join(lst)
-
-
-try:
-    import matplotlib
-    if not re.match('[1-9]\.[3-9]', matplotlib.__version__):
-        # Probably too old.  On Ubuntu 12.04.5, the old PIL
-        # is still used for the backend, and it can't read
-        # the images we need.
-        raise ImportError('MPL is too old')  
-    from matplotlib.pyplot import imread
-
-    # The whole point of trying to import PIL is to determine if it's there
-    # or not.  We won't use it directly.
-    import PIL
-
-    NO_READ_BACKEND = False
-except ImportError:
-    NO_READ_BACKEND = True
-
-
-def read_image(infile):
-    """Read image using matplotlib backend.
-
-    Hopefully PIL(low) is installed as matplotlib's backend.  It issues
-    warnings which we do not care about, so suppress them.
-    """
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        data = imread(infile)
-    return data
 
 
 def mse(amat, bmat):
@@ -674,24 +567,6 @@ issue_186_progression_order = """COD marker segment @ (174, 12)
             Vertically stripe causal context:  False
             Predictable termination:  False
             Segmentation symbols:  False"""
-
-# Cinema 2K profile
-cinema2k_profile = """SIZ marker segment @ (2, 47)
-    Profile:  Cinema 2K
-    Reference Grid Height, Width:  (1080 x 1920)
-    Vertical, Horizontal Reference Grid Offset:  (0 x 0)
-    Reference Tile Height, Width:  (1080 x 1920)
-    Vertical, Horizontal Reference Tile Offset:  (0 x 0)
-    Bitdepth:  (12, 12, 12)
-    Signed:  (False, False, False)
-    Vertical, Horizontal Subsampling:  ((1, 1), (1, 1), (1, 1))"""
-
-jplh_color_group_box = r"""Compositing Layer Header Box (jplh) @ (314227, 31)
-    Colour Group Box (cgrp) @ (314235, 23)
-        Colour Specification Box (colr) @ (314243, 15)
-            Method:  enumerated colorspace
-            Precedence:  0
-            Colorspace:  sRGB"""
 
 goodstuff_codestream_header = r"""File:  goodstuff.j2k
 Codestream:

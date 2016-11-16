@@ -110,11 +110,16 @@ class TestSuite(MetadataBase):
 
     def test_default_ftyp(self):
         """Should be able to instantiate a FileTypeBox"""
-        ftyp = glymur.jp2box.FileTypeBox()
+        expected = glymur.jp2box.FileTypeBox()
 
         # Test the representation instantiation.
-        newbox = eval(repr(ftyp))
-        self.verify_filetype_box(newbox, FileTypeBox())
+        actual = eval(repr(expected))
+
+        self.assertEqual(actual.brand, expected.brand)
+        self.assertEqual(actual.minor_version, expected.minor_version)
+        self.assertEqual(actual.minor_version, 0)
+        for cl in expected.compatibility_list:
+            self.assertIn(cl, actual.compatibility_list)
 
     def test_colourspecification_box(self):
         """Verify __repr__ method on colr box."""

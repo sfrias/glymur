@@ -1324,7 +1324,31 @@ class TestPrinting(unittest.TestCase):
 
         actual = str(codestream.segment[2])
 
-        self.assertEqual(actual, fixtures.multiple_precinct_size)
+        expected = ("COD marker segment @ (51, 18)\n"
+                    "    Coding style:\n"
+                    "        Entropy coder, with partitions\n"
+                    "        SOP marker segments:  False\n"
+                    "        EPH marker segments:  False\n"
+                    "    Coding style parameters:\n"
+                    "        Progression order:  LRCP\n"
+                    "        Number of layers:  1\n"
+                    "        Multiple component transformation usage:  "
+                    "reversible\n"
+                    "        Number of resolutions:  6\n"
+                    "        Code block height, width:  (64 x 64)\n"
+                    "        Wavelet transform:  5-3 reversible\n"
+                    "        Precinct size:  "
+                    "((16, 16), (32, 32), (64, 64), (128, 128), (128, 128), "
+                    "(128, 128))\n"
+                    "        Code block context:\n"
+                    "            Selective arithmetic coding bypass:  False\n"
+                    "            Reset context probabilities on coding pass "
+                    "boundaries:  False\n"
+                    "            Termination on each coding pass:  False\n"
+                    "            Vertically stripe causal context:  False\n"
+                    "            Predictable termination:  False\n"
+                    "            Segmentation symbols:  False")
+        self.assertEqual(actual, expected)
 
     def test_old_short_option(self):
         """

@@ -643,6 +643,8 @@ class TestSuite(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     glymur.Jp2k(self.jp2file)[:]
 
+    @unittest.skipIf(glymur.version.openjpeg_version < '2.0.0',
+                     'Requires 2.0.0 or better.')
     def test_read_bands(self):
         """
         Have to use read_bands if the subsampling is not uniform

@@ -338,10 +338,16 @@ class TestSuite(unittest.TestCase):
                 box = glymur.jp2box.UUIDBox.parse(f, 0, 380)
 
         actual = str(box)
-        expected = ("UUID Box (uuid) @ (0, 380)\n"
-                    "    UUID:  "
-                    "b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)\n"
-                    "    UUID Data:  corrupt")
+        if fixtures.HAVE_GDAL:
+            expected = ("UUID Box (uuid) @ (0, 380)\n"
+                        "    UUID:  "
+                        "b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)\n"
+                        "    UUID Data:  corrupt")
+        else:
+            expected = ("UUID Box (uuid) @ (0, 380)\n"
+                        "    UUID:  "
+                        "b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)\n"
+                        "    UUID Data:  None")
         self.assertEqual(actual, expected)
 
     def test_bad_tag_datatype(self):

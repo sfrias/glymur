@@ -4,6 +4,7 @@
 # Standard library imports
 import os
 import pkg_resources as pkg
+import sys
 import tempfile
 import unittest
 import uuid
@@ -82,6 +83,7 @@ class TestSuite(unittest.TestCase):
             0.0, 0.0, 0.0, -2523306.125, -268608.875, 0.0
         ))
 
+    @unittest.skipIf(sys.hexversion < 0x03000000, "Don't bother testing u''")
     def test_printing(self):
         jp2 = Jp2k(self.hirise_jp2file_name)
         actual = str(jp2.box[4])

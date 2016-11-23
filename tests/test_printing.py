@@ -225,7 +225,26 @@ class TestPrinting(unittest.TestCase):
             segment = glymur.codestream.CODsegment(*pargs, length=12,
                                                    offset=174)
         actual = str(segment)
-        expected = fixtures.issue_186_progression_order
+        expected = ("COD marker segment @ (174, 12)\n"
+            "    Coding style:\n"
+            "        Entropy coder, without partitions\n"
+            "        SOP marker segments:  False\n"
+            "        EPH marker segments:  False\n"
+            "    Coding style parameters:\n"
+            "        Progression order:  33 (invalid)\n"
+            "        Number of layers:  1\n"
+            "        Multiple component transformation usage:  reversible\n"
+            "        Number of resolutions:  6\n"
+            "        Code block height, width:  (32 x 32)\n"
+            "        Wavelet transform:  9-7 irreversible\n"
+            "        Precinct size:  (32768, 32768)\n"
+            "        Code block context:\n"
+            "            Selective arithmetic coding bypass:  False\n"
+            "            Reset context probabilities on coding pass boundaries:  False\n"
+            "            Termination on each coding pass:  False\n"
+            "            Vertically stripe causal context:  False\n"
+            "            Predictable termination:  False\n"
+            "            Segmentation symbols:  False")
         self.assertEqual(actual, expected)
 
     def test_bad_wavelet_transform(self):
@@ -1199,11 +1218,16 @@ class TestPrinting(unittest.TestCase):
                                                  palette_index=(0, 1, 2, 3),
                                                  length=24, offset=130)
         actual = str(cmap)
-        self.assertEqual(actual, fixtures.issue_182_cmap)
+        expected = ("Component Mapping Box (cmap) @ (130, 24)\n"
+            "    Component 0 ==> palette column 0\n"
+            "    Component 0 ==> palette column 1\n"
+            "    Component 0 ==> palette column 2\n"
+            "    Component 0 ==> palette column 3")
+        self.assertEqual(actual, expected)
 
         glymur.set_option('print.short', True)
         actual = str(cmap)
-        expected = fixtures.issue_182_cmap.splitlines()[0]
+        expected = expected.splitlines()[0]
         self.assertEqual(actual, expected)
 
     def test_issue183(self):
@@ -1216,7 +1240,11 @@ class TestPrinting(unittest.TestCase):
                                       icc_profile=None, length=12, offset=62)
 
         actual = str(colr)
-        self.assertEqual(actual, fixtures.issue_183_colr)
+        expected = ("Colour Specification Box (colr) @ (62, 12)\n"
+            "    Method:  restricted ICC profile\n"
+            "    Precedence:  0\n"
+            "    ICC Profile:  None")
+        self.assertEqual(actual, expected)
 
     def test_rreq(self):
         """

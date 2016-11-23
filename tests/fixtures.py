@@ -534,40 +534,6 @@ file1_xml_box = """XML Box (xml ) @ (36, 439)
         </GENERAL_CREATION_INFO>
     </IMAGE_CREATION>"""
 
-issue_182_cmap = """Component Mapping Box (cmap) @ (130, 24)
-    Component 0 ==> palette column 0
-    Component 0 ==> palette column 1
-    Component 0 ==> palette column 2
-    Component 0 ==> palette column 3"""
-
-issue_183_colr = """Colour Specification Box (colr) @ (62, 12)
-    Method:  restricted ICC profile
-    Precedence:  0
-    ICC Profile:  None"""
-
-
-# Progression order is invalid.
-issue_186_progression_order = """COD marker segment @ (174, 12)
-    Coding style:
-        Entropy coder, without partitions
-        SOP marker segments:  False
-        EPH marker segments:  False
-    Coding style parameters:
-        Progression order:  33 (invalid)
-        Number of layers:  1
-        Multiple component transformation usage:  reversible
-        Number of resolutions:  6
-        Code block height, width:  (32 x 32)
-        Wavelet transform:  9-7 irreversible
-        Precinct size:  (32768, 32768)
-        Code block context:
-            Selective arithmetic coding bypass:  False
-            Reset context probabilities on coding pass boundaries:  False
-            Termination on each coding pass:  False
-            Vertically stripe causal context:  False
-            Predictable termination:  False
-            Segmentation symbols:  False"""
-
 goodstuff_codestream_header = r"""File:  goodstuff.j2k
 Codestream:
     SOC marker segment @ (0, 0)

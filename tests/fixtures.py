@@ -262,28 +262,21 @@ SimpleRDF = """<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
   </rdf:Description>
 </rdf:RDF>"""
 
-text_gbr_34 = """Colour Specification Box (colr) @ (179, 1339)
-    Method:  any ICC profile
-    Precedence:  2
-    Approximation:  accurately represents correct colorspace definition
-    ICC Profile:
-        {'Size': 1328,
-         'Preferred CMM Type': 1634758764,
-         'Version': '2.2.0',
-         'Device Class': 'display device profile',
-         'Color Space': 'RGB',
-         'Connection Space': 'XYZ',
-         'Datetime': datetime.datetime(2009, 2, 25, 11, 26, 11),
-         'File Signature': 'acsp',
-         'Platform': 'APPL',
-         'Flags': 'not embedded, can be used independently',
-         'Device Manufacturer': 'appl',
-         'Device Model': '',
-         'Device Attributes': 'reflective, glossy, positive media polarity, color '
-                              'media',
-         'Rendering Intent': 'perceptual',
-         'Illuminant': array([ 0.96420288,  1.        ,  0.8249054 ]),
-         'Creator': 'appl'}"""
+SimpleRDF = """<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+  <rdf:Description rdf:about='Test:XMPCoreCoverage/kSimpleRDF'
+                   xmlns:ns1='ns:test1/' xmlns:ns2='ns:test2/'>
+
+    <ns1:SimpleProp>Simple value</ns1:SimpleProp>
+
+    <ns1:Distros>
+      <rdf:Bag>
+        <rdf:li>Suse</rdf:li>
+        <rdf:li>Fedora</rdf:li>
+      </rdf:Bag>
+    </ns1:Distros>
+
+  </rdf:Description>
+</rdf:RDF>"""
 
 text_gbr_35 = """Colour Specification Box (colr) @ (179, 1339)
     Method:  any ICC profile
@@ -417,12 +410,6 @@ EOC marker segment @ (1135517, 0)"""
 
 codestream = '\n'.join([codestream_header, codestream_trailer])
 
-_kwargs = {
-    'xmp': _indent(nemo_xmp),
-    'codestream': _indent(codestream_header)
-}
-nemo_with_codestream_header = nemo_fmt.format(**_kwargs)
-
 nemo_dump_short = r"""JPEG 2000 Signature Box (jP  ) @ (0, 12)
 File Type Box (ftyp) @ (12, 20)
 JP2 Header Box (jp2h) @ (32, 45)
@@ -453,27 +440,6 @@ UUID Box (uuid) @ (77, 3146)
 {xmp}
 Contiguous Codestream Box (jp2c) @ (3223, 1132296)"""
 nemo_dump_no_codestream = _fmt.format(xmp=_indent(nemo_xmp))
-
-
-nemo_dump_no_codestream_no_xml = r"""JPEG 2000 Signature Box (jP  ) @ (0, 12)
-    Signature:  0d0a870a
-File Type Box (ftyp) @ (12, 20)
-    Brand:  jp2
-    Compatibility:  ['jp2 ']
-JP2 Header Box (jp2h) @ (32, 45)
-    Image Header Box (ihdr) @ (40, 22)
-        Size:  [1456 2592 3]
-        Bitdepth:  8
-        Signed:  False
-        Compression:  wavelet
-        Colorspace Unknown:  False
-    Colour Specification Box (colr) @ (62, 15)
-        Method:  enumerated colorspace
-        Precedence:  0
-        Colorspace:  sRGB
-UUID Box (uuid) @ (77, 3146)
-    UUID:  be7acfcb-97a9-42e8-9c71-999491e3afac (XMP)
-Contiguous Codestream Box (jp2c) @ (3223, 1132296)"""
 
 _kwargs = {
     'xmp': _indent(nemo_xmp),
@@ -519,20 +485,16 @@ text_GBR_rreq = r"""Reader Requirements Box (rreq) @ (40, 109)
         UUID bc45a774-dd50-4ec6-a9f6-f3a137f47e90
         UUID d7c8c5ef-951f-43b2-8757-042500f538e8"""
 
-file1_xml = """<IMAGE_CREATION xmlns="http://www.jpeg.org/jpx/1.0/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.jpeg.org/jpx/1.0/xml http://www.jpeg.org/metadata/15444-2.xsd">
-    <GENERAL_CREATION_INFO>
-        <CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>
-        <IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>
-    </GENERAL_CREATION_INFO>
-</IMAGE_CREATION>"""
-
-file1_xml_box = """XML Box (xml ) @ (36, 439)
-    <IMAGE_CREATION xmlns="http://www.jpeg.org/jpx/1.0/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.jpeg.org/jpx/1.0/xml http://www.jpeg.org/metadata/15444-2.xsd">
-        <GENERAL_CREATION_INFO>
-            <CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>
-            <IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>
-        </GENERAL_CREATION_INFO>
-    </IMAGE_CREATION>"""
+file1_xml_box = ('XML Box (xml ) @ (36, 439)\n'
+    '<IMAGE_CREATION xmlns="http://www.jpeg.org/jpx/1.0/xml" '
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+    'xsi:schemaLocation="http://www.jpeg.org/jpx/1.0/xml '
+    'http://www.jpeg.org/metadata/15444-2.xsd">\n'
+    '    <GENERAL_CREATION_INFO>\n'
+    '        <CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>\n'
+    '        <IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>\n'
+    '    </GENERAL_CREATION_INFO>\n'
+    '</IMAGE_CREATION>')
 
 goodstuff_codestream_header = r"""File:  goodstuff.j2k
 Codestream:

@@ -154,18 +154,24 @@ class TestPrinting(unittest.TestCase):
 
         Original test file was input/conformance/file1.jp2
         """
-        elt = ET.fromstring(fixtures.file1_xml)
+        item = '\n'.join(fixtures.file1_xml_box.splitlines()[1:])
+        elt = ET.fromstring(item)
         xml = ET.ElementTree(elt)
         box = glymur.jp2box.XMLBox(xml=xml, length=439, offset=36)
         actual = str(box)
-        expected = fixtures.file1_xml_box
+
+        header = fixtures.file1_xml_box.splitlines()[0]
+        body = '\n'.join(['    ' + line for line in item.splitlines()])
+        expected = header + '\n' + body
+
         self.assertEqual(actual, expected)
 
     def test_xml_short_option(self):
         """
         verify printing of XML box when print.xml option set to false
         """
-        elt = ET.fromstring(fixtures.file1_xml)
+        item = '\n'.join(fixtures.file1_xml_box.splitlines()[1:])
+        elt = ET.fromstring(item)
         xml = ET.ElementTree(elt)
         box = glymur.jp2box.XMLBox(xml=xml, length=439, offset=36)
         glymur.set_option('print.short', True)
@@ -178,7 +184,8 @@ class TestPrinting(unittest.TestCase):
         """
         verify printing of XML box when print.xml option set to false
         """
-        elt = ET.fromstring(fixtures.file1_xml)
+        item = '\n'.join(fixtures.file1_xml_box.splitlines()[1:])
+        elt = ET.fromstring(item)
         xml = ET.ElementTree(elt)
         box = glymur.jp2box.XMLBox(xml=xml, length=439, offset=36)
 
@@ -699,8 +706,7 @@ class TestPrinting(unittest.TestCase):
         actual = str(j.box[3])
 
         if 'lxml' in sys.modules.keys():
-            expected = fixtures.nemo_xmp_box
-            self.assertEqual(actual, expected)
+            self.assertEqual(actual, fixtures.nemo_xmp_box)
 
     def test_codestream(self):
         """

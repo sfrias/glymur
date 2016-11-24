@@ -35,7 +35,7 @@ _QUANTIZATION_STYLE = {
     0: '\n    Quantization style:  no quantization, ',
     1: '\n    Quantization style:  scalar implicit, ',
     2: '\n    Quantization style:  scalar explicit, ',
-}            
+}
 
 _NO_PROFILE = 0
 _PROFILE_0 = 1

@@ -601,11 +601,10 @@ class ChannelDefinitionBox(Jp2kBox):
         num_components = len(self.association)
         f.write(struct.pack('>I4s', 8 + 2 + num_components * 6, b'cdef'))
         f.write(struct.pack('>H', num_components))
-        for j in range(num_components):
-            f.write(struct.pack('>' + 'H' * 3,
-                                   self.index[j],
-                                   self.channel_type[j],
-                                   self.association[j]))
+        fmt = '>' + 'H' * 3
+        iterable = zip(self.index, self.channel_type, self.association)
+        for index, channel_type, association in iterable:
+            f.write(struct.pack(fmt, index, channel_type, association))
 
     @classmethod
     def parse(cls, f, offset, length):
@@ -2133,7 +2132,7 @@ class PaletteBox(Jp2kBox):
         # The palette is unsigned and all components have the same width.
         # This should cover all but a vanishingly small share of palettes.
         b = bps[0]
-        dtype = np.uint8 if b <=8 else np.uint16 if b <= 16 else np.uint32
+        dtype = np.uint8 if b <= 8 else np.uint16 if b <= 16 else np.uint32
 
         palette = np.frombuffer(read_buffer[3 + ncols:], dtype=dtype)
         palette = np.reshape(palette, (nrows, ncols))
@@ -2820,7 +2819,7 @@ class NumberListBox(Jp2kBox):
         """Write a NumberList box to file.
         """
         f.write(struct.pack('>I4s',
-                               len(self.associations) * 4 + 8, b'nlst'))
+                            len(self.associations) * 4 + 8, b'nlst'))
 
         fmt = '>' + 'I' * len(self.associations)
         write_buffer = struct.pack(fmt, *self.associations)
@@ -3344,22 +3343,22 @@ class UUIDBox(Jp2kBox):
 
         lst = [text]
 
-        if (((config.get_option('print.xml') is False) and
-            (self.uuid == _XMP_UUID))):
-            # If it's an XMP UUID, don't print the XML contents.
-            pass
-
-        elif self.uuid == _XMP_UUID:
-            line = 'UUID Data:\n{0}'
-            try:
-                b = ET.tostring(self.data, encoding='utf-8', pretty_print=True)
-            except TypeError:
-                # No lxml, have to fall back onto stdlib xml.etree.ElementTree,
-                # but that cannot do pretty print.
-                b = ET.tostring(self.data.getroot(), encoding='utf-8')
-            s = b.decode('utf-8').strip()
-            text = line.format(s)
-            lst.append(text)
+        if self.uuid == _XMP_UUID:
+            if not config.get_option('print.xml'):
+                # XMP is XML, so don't print it's contents.
+                pass
+            else:
+                line = 'UUID Data:\n{0}'
+                try:
+                    b = ET.tostring(self.data, encoding='utf-8',
+                                    pretty_print=True)
+                except TypeError:
+                    # No lxml, have to fall back onto stdlib
+                    # xml.etree.ElementTree, but that cannot do pretty print.
+                    b = ET.tostring(self.data.getroot(), encoding='utf-8')
+                s = b.decode('utf-8').strip()
+                text = line.format(s)
+                lst.append(text)
         elif self.uuid == _EXIF_UUID:
             text = 'UUID Data:  {0}'.format(str(self.data))
             lst.append(text)

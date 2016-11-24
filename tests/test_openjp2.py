@@ -9,11 +9,7 @@ import tempfile
 import unittest
 if sys.hexversion >= 0x03000000:
     from unittest.mock import patch
-    from io import StringIO
 else:
-    from StringIO import StringIO
-
-    # Third party library import
     from mock import patch
 
 # Third party library imports ...
@@ -22,7 +18,6 @@ import numpy as np
 # Local imports ...
 import glymur
 from glymur.lib import openjp2
-from . import fixtures
 
 
 @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
@@ -389,42 +384,42 @@ class TestPrintingOpenjp2(unittest.TestCase):
         ptype = glymur.lib.openjp2.PocType()
         actual = str(ptype)
         expected = ("<class 'glymur.lib.openjp2.PocType'>:\n"
-            "    resno0: 0\n"
-            "    compno0: 0\n"
-            "    layno1: 0\n"
-            "    resno1: 0\n"
-            "    compno1: 0\n"
-            "    layno0: 0\n"
-            "    precno0: 0\n"
-            "    precno1: 0\n"
-            "    prg1: 0\n"
-            "    prg: 0\n"
-            "    progorder: b''\n"
-            "    tile: 0\n"
-            "    tx0: 0\n"
-            "    tx1: 0\n"
-            "    ty0: 0\n"
-            "    ty1: 0\n"
-            "    layS: 0\n"
-            "    resS: 0\n"
-            "    compS: 0\n"
-            "    prcS: 0\n"
-            "    layE: 0\n"
-            "    resE: 0\n"
-            "    compE: 0\n"
-            "    prcE: 0\n"
-            "    txS: 0\n"
-            "    txE: 0\n"
-            "    tyS: 0\n"
-            "    tyE: 0\n"
-            "    dx: 0\n"
-            "    dy: 0\n"
-            "    lay_t: 0\n"
-            "    res_t: 0\n"
-            "    comp_t: 0\n"
-            "    prec_t: 0\n"
-            "    tx0_t: 0\n"
-            "    ty0_t: 0\n")
+                    "    resno0: 0\n"
+                    "    compno0: 0\n"
+                    "    layno1: 0\n"
+                    "    resno1: 0\n"
+                    "    compno1: 0\n"
+                    "    layno0: 0\n"
+                    "    precno0: 0\n"
+                    "    precno1: 0\n"
+                    "    prg1: 0\n"
+                    "    prg: 0\n"
+                    "    progorder: b''\n"
+                    "    tile: 0\n"
+                    "    tx0: 0\n"
+                    "    tx1: 0\n"
+                    "    ty0: 0\n"
+                    "    ty1: 0\n"
+                    "    layS: 0\n"
+                    "    resS: 0\n"
+                    "    compS: 0\n"
+                    "    prcS: 0\n"
+                    "    layE: 0\n"
+                    "    resE: 0\n"
+                    "    compE: 0\n"
+                    "    prcE: 0\n"
+                    "    txS: 0\n"
+                    "    txE: 0\n"
+                    "    tyS: 0\n"
+                    "    tyE: 0\n"
+                    "    dx: 0\n"
+                    "    dy: 0\n"
+                    "    lay_t: 0\n"
+                    "    res_t: 0\n"
+                    "    comp_t: 0\n"
+                    "    prec_t: 0\n"
+                    "    tx0_t: 0\n"
+                    "    ty0_t: 0\n")
         self.assertEqual(actual, expected)
 
     def test_default_compression_parameters(self):

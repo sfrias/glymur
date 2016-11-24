@@ -171,4 +171,3 @@ class TestSuite(fixtures.MetadataBase):
             with self.assertRaises(IOError):
                 Jp2k(tfile.name, data=data,
                      cinema4k=True, cratios=[200, 100, 50])
-

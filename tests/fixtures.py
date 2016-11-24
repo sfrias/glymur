@@ -1,13 +1,11 @@
 """
 Test fixtures common to more than one test point.
 """
-import os
 import re
 import subprocess
 import sys
 import textwrap
 import unittest
-import warnings
 
 import numpy as np
 
@@ -52,6 +50,7 @@ def low_memory_linux_machine():
     stdout, stderr = p3.communicate()
     nbytes = int(stdout.decode('utf-8').strip())
     return nbytes < 2000
+
 
 class MetadataBase(unittest.TestCase):
     """
@@ -121,6 +120,7 @@ try:
     HAVE_GDAL = True
 except ImportError:
     HAVE_GDAL = False
+
 
 def _indent(textstr):
     """
@@ -470,67 +470,75 @@ Contiguous Codestream Box (jp2c) @ (3223, 1132296)
 nemo_dump_no_xml = _fmt.format(codestream=_indent(codestream_header))
 
 # Output of reader requirements printing for text_GBR.jp2
-text_GBR_rreq = r"""Reader Requirements Box (rreq) @ (40, 109)
-    Fully Understands Aspect Mask:  0xffff
-    Display Completely Mask:  0xf8f0
-    Standard Features and Masks:
-        Feature 001:  0x8000 Deprecated - contains no extensions
-        Feature 005:  0x4080 Unrestricted JPEG 2000 Part 1 codestream, ITU-T Rec. T.800 | ISO/IEC 15444-1
-        Feature 012:  0x2040 Deprecated - codestream is contiguous
-        Feature 018:  0x1020 Deprecated - support for compositing is not required
-        Feature 044:  0x810 Compositing layer uses Any ICC profile
-    Vendor Features:
-        UUID 3a0d0218-0ae9-4115-b376-4bca41ce0e71
-        UUID 47c92ccc-d1a1-4581-b904-38bb5467713b
-        UUID bc45a774-dd50-4ec6-a9f6-f3a137f47e90
-        UUID d7c8c5ef-951f-43b2-8757-042500f538e8"""
+x = ("Reader Requirements Box (rreq) @ (40, 109)\n"
+     "    Fully Understands Aspect Mask:  0xffff\n"
+     "    Display Completely Mask:  0xf8f0\n"
+     "    Standard Features and Masks:\n"
+     "        Feature 001:  0x8000 Deprecated - contains no extensions\n"
+     "        Feature 005:  0x4080 Unrestricted JPEG 2000 Part 1 codestream, "
+     "ITU-T Rec. T.800 | ISO/IEC 15444-1\n"
+     "        Feature 012:  0x2040 Deprecated - codestream is contiguous\n"
+     "        Feature 018:  0x1020 Deprecated - "
+     "support for compositing is not required\n"
+     "        Feature 044:  0x810 Compositing layer uses Any ICC profile\n"
+     "    Vendor Features:\n"
+     "        UUID 3a0d0218-0ae9-4115-b376-4bca41ce0e71\n"
+     "        UUID 47c92ccc-d1a1-4581-b904-38bb5467713b\n"
+     "        UUID bc45a774-dd50-4ec6-a9f6-f3a137f47e90\n"
+     "        UUID d7c8c5ef-951f-43b2-8757-042500f538e8")
+text_GBR_rreq = x
 
-file1_xml_box = ('XML Box (xml ) @ (36, 439)\n'
-    '<IMAGE_CREATION xmlns="http://www.jpeg.org/jpx/1.0/xml" '
-    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
-    'xsi:schemaLocation="http://www.jpeg.org/jpx/1.0/xml '
-    'http://www.jpeg.org/metadata/15444-2.xsd">\n'
-    '    <GENERAL_CREATION_INFO>\n'
-    '        <CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>\n'
-    '        <IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>\n'
-    '    </GENERAL_CREATION_INFO>\n'
-    '</IMAGE_CREATION>')
+x = ('XML Box (xml ) @ (36, 439)\n'
+     '<IMAGE_CREATION xmlns="http://www.jpeg.org/jpx/1.0/xml" '
+     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+     'xsi:schemaLocation="http://www.jpeg.org/jpx/1.0/xml '
+     'http://www.jpeg.org/metadata/15444-2.xsd">\n'
+     '    <GENERAL_CREATION_INFO>\n'
+     '        <CREATION_TIME>2001-11-01T13:45:00.000-06:00</CREATION_TIME>\n'
+     '        <IMAGE_SOURCE>Professional 120 Image</IMAGE_SOURCE>\n'
+     '    </GENERAL_CREATION_INFO>\n'
+     '</IMAGE_CREATION>')
+file1_xml_box = x
 
-goodstuff_codestream_header = r"""File:  goodstuff.j2k
-Codestream:
-    SOC marker segment @ (0, 0)
-    SIZ marker segment @ (2, 47)
-        Profile:  no profile
-        Reference Grid Height, Width:  (800 x 480)
-        Vertical, Horizontal Reference Grid Offset:  (0 x 0)
-        Reference Tile Height, Width:  (800 x 480)
-        Vertical, Horizontal Reference Tile Offset:  (0 x 0)
-        Bitdepth:  (8, 8, 8)
-        Signed:  (False, False, False)
-        Vertical, Horizontal Subsampling:  ((1, 1), (1, 1), (1, 1))
-    COD marker segment @ (51, 12)
-        Coding style:
-            Entropy coder, without partitions
-            SOP marker segments:  False
-            EPH marker segments:  False
-        Coding style parameters:
-            Progression order:  LRCP
-            Number of layers:  1
-            Multiple component transformation usage:  reversible
-            Number of resolutions:  6
-            Code block height, width:  (64 x 64)
-            Wavelet transform:  5-3 reversible
-            Precinct size:  (32768, 32768)
-            Code block context:
-                Selective arithmetic coding bypass:  False
-                Reset context probabilities on coding pass boundaries:  False
-                Termination on each coding pass:  False
-                Vertically stripe causal context:  False
-                Predictable termination:  False
-                Segmentation symbols:  False
-    QCD marker segment @ (65, 19)
-        Quantization style:  no quantization, 2 guard bits
-        Step size:  [(0, 8), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), (0, 10)]"""
+x = ("File:  goodstuff.j2k\n"
+     "Codestream:\n"
+     "    SOC marker segment @ (0, 0)\n"
+     "    SIZ marker segment @ (2, 47)\n"
+     "        Profile:  no profile\n"
+     "        Reference Grid Height, Width:  (800 x 480)\n"
+     "        Vertical, Horizontal Reference Grid Offset:  (0 x 0)\n"
+     "        Reference Tile Height, Width:  (800 x 480)\n"
+     "        Vertical, Horizontal Reference Tile Offset:  (0 x 0)\n"
+     "        Bitdepth:  (8, 8, 8)\n"
+     "        Signed:  (False, False, False)\n"
+     "        Vertical, Horizontal Subsampling:  ((1, 1), (1, 1), (1, 1))\n"
+     "    COD marker segment @ (51, 12)\n"
+     "        Coding style:\n"
+     "            Entropy coder, without partitions\n"
+     "            SOP marker segments:  False\n"
+     "            EPH marker segments:  False\n"
+     "        Coding style parameters:\n"
+     "            Progression order:  LRCP\n"
+     "            Number of layers:  1\n"
+     "            Multiple component transformation usage:  reversible\n"
+     "            Number of resolutions:  6\n"
+     "            Code block height, width:  (64 x 64)\n"
+     "            Wavelet transform:  5-3 reversible\n"
+     "            Precinct size:  (32768, 32768)\n"
+     "            Code block context:\n"
+     "                Selective arithmetic coding bypass:  False\n"
+     "                Reset context probabilities "
+     "on coding pass boundaries:  False\n"
+     "                Termination on each coding pass:  False\n"
+     "                Vertically stripe causal context:  False\n"
+     "                Predictable termination:  False\n"
+     "                Segmentation symbols:  False\n"
+     "    QCD marker segment @ (65, 19)\n"
+     "        Quantization style:  no quantization, 2 guard bits\n"
+     "        Step size:  [(0, 8), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), "
+     "(0, 10), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), (0, 10), (0, 9), "
+     "(0, 9), (0, 10)]")
+goodstuff_codestream_header = x
 
 # manually verified via gdalinfo
 geotiff_uuid = """UUID Box (uuid) @ (149, 523)
@@ -559,7 +567,132 @@ geotiff_uuid = """UUID Box (uuid) @ (149, 523)
     Lower Right (-2523305.875, -268609.125) (137d25'49.09"E,  4d31'53.75"S
     Center      (-2523306.000, -268609.000) (137d25'49.09"E,  4d31'53.75"S"""
 
-geotiff_uuid_without_gdal = """UUID Box (uuid) @ (149, 523)
-    UUID:  b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)
-    UUID Data:  OrderedDict([('ImageWidth', 1), ('ImageLength', 1), ('BitsPerSample', 8), ('Compression', 1), ('PhotometricInterpretation', 1), ('StripOffsets', 8), ('SamplesPerPixel', 1), ('RowsPerStrip', 1), ('StripByteCounts', 1), ('PlanarConfiguration', 1), ('ModelPixelScale', (0.25, 0.25, 0.0)), ('ModelTiePoint', (0.0, 0.0, 0.0, -2523306.125, -268608.875, 0.0)), ('GeoKeyDirectory', (1, 1, 0, 18, 1024, 0, 1, 1, 1025, 0, 1, 1, 1026, 34737, 21, 0, 2048, 0, 1, 32767, 2049, 34737, 9, 21, 2050, 0, 1, 32767, 2054, 0, 1, 9102, 2056, 0, 1, 32767, 2057, 34736, 1, 4, 2058, 34736, 1, 5, 3072, 0, 1, 32767, 3074, 0, 1, 32767, 3075, 0, 1, 17, 3076, 0, 1, 9001, 3082, 34736, 1, 2, 3083, 34736, 1, 3, 3088, 34736, 1, 1, 3089, 34736, 1, 0)), ('GeoDoubleParams', (0.0, 180.0, 0.0, 0.0, 3396190.0, 3396190.0)), ('GeoAsciiParams', 'Equirectangular MARS|GCS_MARS|')])"""
+x = ("UUID Box (uuid) @ (149, 523)\n"
+     "    UUID:  b14bf8bd-083d-4b43-a5ae-8cd7d5a6ce03 (GeoTIFF)\n"
+     "    UUID Data:  "
+     "OrderedDict([('ImageWidth', 1), "
+     "('ImageLength', 1), "
+     "('BitsPerSample', 8), "
+     "('Compression', 1), "
+     "('PhotometricInterpretation', 1), "
+     "('StripOffsets', 8), "
+     "('SamplesPerPixel', 1), "
+     "('RowsPerStrip', 1), "
+     "('StripByteCounts', 1), "
+     "('PlanarConfiguration', 1), "
+     "('ModelPixelScale', (0.25, 0.25, 0.0)), "
+     "('ModelTiePoint', (0.0, 0.0, 0.0, -2523306.125, -268608.875, 0.0)), "
+     "('GeoKeyDirectory', (1, 1, 0, 18, "
+     "1024, 0, 1, 1, "
+     "1025, 0, 1, 1, "
+     "1026, 34737, 21, 0, "
+     "2048, 0, 1, 32767, "
+     "2049, 34737, 9, 21, "
+     "2050, 0, 1, 32767, "
+     "2054, 0, 1, 9102, "
+     "2056, 0, 1, 32767, "
+     "2057, 34736, 1, 4, "
+     "2058, 34736, 1, 5, "
+     "3072, 0, 1, 32767, "
+     "3074, 0, 1, 32767, "
+     "3075, 0, 1, 17, "
+     "3076, 0, 1, 9001, "
+     "3082, 34736, 1, 2, "
+     "3083, 34736, 1, 3, "
+     "3088, 34736, 1, 1, "
+     "3089, 34736, 1, 0)), "
+     "('GeoDoubleParams', (0.0, 180.0, 0.0, 0.0, 3396190.0, 3396190.0)), "
+     "('GeoAsciiParams', 'Equirectangular MARS|GCS_MARS|')])")
+geotiff_uuid_without_gdal = x
 
+x = ("Codestream:\n"
+     "    SOC marker segment @ (0, 0)\n"
+     "    SIZ marker segment @ (2, 47)\n"
+     "        Profile:  no profile\n"
+     "        Reference Grid Height, Width:  (800 x 480)\n"
+     "        Vertical, Horizontal Reference Grid Offset:  (0 x 0)\n"
+     "        Reference Tile Height, Width:  (800 x 480)\n"
+     "        Vertical, Horizontal Reference Tile Offset:  (0 x 0)\n"
+     "        Bitdepth:  (8, 8, 8)\n"
+     "        Signed:  (False, False, False)\n"
+     "        Vertical, Horizontal Subsampling:  ((1, 1), (1, 1), (1, 1))\n"
+     "    COD marker segment @ (51, 12)\n"
+     "        Coding style:\n"
+     "            Entropy coder, without partitions\n"
+     "            SOP marker segments:  False\n"
+     "            EPH marker segments:  False\n"
+     "        Coding style parameters:\n"
+     "            Progression order:  LRCP\n"
+     "            Number of layers:  1\n"
+     "            Multiple component transformation usage:  reversible\n"
+     "            Number of resolutions:  6\n"
+     "            Code block height, width:  (64 x 64)\n"
+     "            Wavelet transform:  5-3 reversible\n"
+     "            Precinct size:  (32768, 32768)\n"
+     "            Code block context:\n"
+     "                Selective arithmetic coding bypass:  False\n"
+     "                Reset context probabilities "
+     "on coding pass boundaries:  False\n"
+     "                Termination on each coding pass:  False\n"
+     "                Vertically stripe causal context:  False\n"
+     "                Predictable termination:  False\n"
+     "                Segmentation symbols:  False\n"
+     "    QCD marker segment @ (65, 19)\n"
+     "        Quantization style:  no quantization, 2 guard bits\n"
+     "        Step size:  [(0, 8), (0, 9), (0, 9), (0, 10), (0, 9), "
+     "(0, 9), (0, 10), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), "
+     "(0, 10), (0, 9), (0, 9), (0, 10)]\n"
+     "    SOT marker segment @ (86, 10)\n"
+     "        Tile part index:  0\n"
+     "        Tile part length:  115132\n"
+     "        Tile part instance:  0\n"
+     "        Number of tile parts:  1\n"
+     "    COC marker segment @ (98, 9)\n"
+     "        Associated component:  1\n"
+     "        Coding style for this component:  "
+     "Entropy coder, PARTITION = 0\n"
+     "        Coding style parameters:\n"
+     "            Number of resolutions:  6\n"
+     "            Code block height, width:  (64 x 64)\n"
+     "            Wavelet transform:  5-3 reversible\n"
+     "            Precinct size:  (32768, 32768)\n"
+     "            Code block context:\n"
+     "                Selective arithmetic coding bypass:  False\n"
+     "                Reset context probabilities "
+     "on coding pass boundaries:  False\n"
+     "                Termination on each coding pass:  False\n"
+     "                Vertically stripe causal context:  False\n"
+     "                Predictable termination:  False\n"
+     "                Segmentation symbols:  False\n"
+     "    QCC marker segment @ (109, 20)\n"
+     "        Associated Component:  1\n"
+     "        Quantization style:  no quantization, 2 guard bits\n"
+     "        Step size:  [(0, 8), (0, 9), (0, 9), (0, 10), (0, 9), "
+     "(0, 9), (0, 10), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), "
+     "(0, 10), (0, 9), (0, 9), (0, 10)]\n"
+     "    COC marker segment @ (131, 9)\n"
+     "        Associated component:  2\n"
+     "        Coding style for this component:  "
+     "Entropy coder, PARTITION = 0\n"
+     "        Coding style parameters:\n"
+     "            Number of resolutions:  6\n"
+     "            Code block height, width:  (64 x 64)\n"
+     "            Wavelet transform:  5-3 reversible\n"
+     "            Precinct size:  (32768, 32768)\n"
+     "            Code block context:\n"
+     "                Selective arithmetic coding bypass:  False\n"
+     "                Reset context probabilities "
+     "on coding pass boundaries:  False\n"
+     "                Termination on each coding pass:  False\n"
+     "                Vertically stripe causal context:  False\n"
+     "                Predictable termination:  False\n"
+     "                Segmentation symbols:  False\n"
+     "    QCC marker segment @ (142, 20)\n"
+     "        Associated Component:  2\n"
+     "        Quantization style:  no quantization, 2 guard bits\n"
+     "        Step size:  [(0, 8), (0, 9), (0, 9), (0, 10), (0, 9), "
+     "(0, 9), (0, 10), (0, 9), (0, 9), (0, 10), (0, 9), (0, 9), "
+     "(0, 10), (0, 9), (0, 9), (0, 10)]\n"
+     "    SOD marker segment @ (164, 0)\n"
+     "    EOC marker segment @ (115218, 0)")
+j2k_codestream_2 = x

@@ -1498,9 +1498,9 @@ class Jp2k(Jp2kBox):
             raise IOError(msg)
 
         if component.sgnd:
-            dtype = np.int8 if component.prec <=8 else np.int16
+            dtype = np.int8 if component.prec <= 8 else np.int16
         else:
-            dtype = np.uint8 if component.prec <=8 else np.uint16
+            dtype = np.uint8 if component.prec <= 8 else np.uint16
 
         return dtype
 

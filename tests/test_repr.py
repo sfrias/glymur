@@ -17,7 +17,7 @@ import numpy as np
 import glymur
 from glymur import Jp2k
 from glymur.jp2box import ColourSpecificationBox
-from glymur.jp2box import FileTypeBox, ImageHeaderBox, JP2HeaderBox
+from glymur.jp2box import ImageHeaderBox, JP2HeaderBox
 from glymur.jp2box import BitsPerComponentBox, UnknownBox
 from glymur.core import COLOR, RED, GREEN, BLUE
 from .fixtures import MetadataBase

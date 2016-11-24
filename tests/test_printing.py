@@ -1301,8 +1301,8 @@ class TestPrinting(unittest.TestCase):
             # No need to verify, it's enough that we don't error out.
             str(box)
 
-    @unittest.skipIf(sys.hexversion < 0x03000000,
-                     'OrderedDict prints differently on python2')
+    @unittest.skipIf(sys.hexversion < 0x03050000,
+                     'OrderedDict prints differently.')
     def test_icc_profile(self):
         """
         verify icc profile printing with a jpx
@@ -1336,11 +1336,7 @@ class TestPrinting(unittest.TestCase):
         box = glymur.jp2box.ColourSpecificationBox.parse(fp, 179, 1339)
 
         actual = str(box)
-
-        if sys.hexversion < 0x03050000:
-            expected = fixtures.text_gbr_34
-        else:
-            expected = fixtures.text_gbr_35
+        expected = fixtures.text_gbr_35
 
         self.assertEqual(actual, expected)
 

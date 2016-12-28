@@ -1,10 +1,17 @@
 language: python
-python:
-  # We don't actually use the Travis Python, but this keeps it organized.
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
+matrix:
+    - python: 2.7
+      env:
+          - JOB_NAME "27_latest"
+    - python: 3.3
+      env:
+          - JOB_NAME "33_latest"
+    - python: 3.4
+      env:
+          - JOB_NAME "34_latest"
+    - python: 3.5
+      env:
+          - JOB_NAME "35_latest"
 install:
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading if the
@@ -23,9 +30,7 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda config --append channels conda-forge
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy contextlib2 mock openjpeg
-  - source activate test-environment
+  - ci/install_travis.sh
   - python setup.py install
 
 script:

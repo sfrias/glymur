@@ -4,12 +4,16 @@ matrix:
     include:
     - python: 2.7
       env:
+          - JOB_NAME "27_earliest"
+          - JOB_TAG=27_earliest
+    - python: 2.7
+      env:
           - JOB_NAME "27_latest"
           - JOB_TAG=27_latest
     - python: 3.3
       env:
-          - JOB_NAME "33"
-          - JOB_TAG=33
+          - JOB_NAME "33_no_extras"
+          - JOB_TAG=33_no_extras
     - python: 3.4
       env:
           - JOB_NAME "34_latest"

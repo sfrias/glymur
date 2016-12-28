@@ -5,15 +5,19 @@ matrix:
     - python: 2.7
       env:
           - JOB_NAME "27_latest"
+          - JOB_TAG=27_latest
     - python: 3.3
       env:
           - JOB_NAME "33_latest"
+          - JOB_TAG=33_latest
     - python: 3.4
       env:
           - JOB_NAME "34_latest"
+          - JOB_TAG=34_latest
     - python: 3.5
       env:
           - JOB_NAME "35_latest"
+          - JOB_TAG=34_latest
 install:
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading if the

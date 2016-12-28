@@ -1,0 +1,4 @@
+contextlib2
+mock
+numpy
+openjpeg

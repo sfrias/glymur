@@ -1,2 +1,5 @@
+libgdal
+gdal
+lxml
 numpy
 openjpeg

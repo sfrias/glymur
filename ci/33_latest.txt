@@ -1,5 +1,4 @@
-# libgdal and python33 trigger an UnsatisfiableError in conda.
+# libgdal, lxml, and python33 trigger an UnsatisfiableError in conda.
 # Not crucial to test that combination.
-lxml=3.6.4
 numpy
 openjpeg

@@ -59,3 +59,4 @@ install:
 
 script:
   - python -m unittest discover
+  - python -c "import glymur; print(glymur.version.info)"

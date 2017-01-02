@@ -4,6 +4,11 @@ matrix:
     include:
     - python: 2.7
       env:
+          - JOB_NAME: "27_openjpeg15"
+          - JOB_TAG=27_opj15_no_opj2
+          - OPJ15=1
+    - python: 2.7
+      env:
           - JOB_NAME "27_earliest"
           - JOB_TAG=27_earliest
     - python: 2.7
@@ -24,8 +29,10 @@ matrix:
           - JOB_TAG=35_latest
     - python: 3.5
       env:
-          - JOB_NAME "35_no_openjpeg"
-          - JOB_TAG=35_no_openjpeg
+          - JOB_NAME "35_no_opj2"
+          - JOB_TAG=35_no_opj2
+before_install:
+  - sh -c "if test $OPJ15 -eq 1; then bash ci/install_openjpeg15.sh; fi"
 install:
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading if the

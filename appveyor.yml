@@ -36,10 +36,6 @@ environment:
 platform:
     - x64
 
-install:
-  # We need wheel installed to build wheels
-  - "%PYTHON%\\python.exe -m pip install wheel"
-
 build: off
 
 install:

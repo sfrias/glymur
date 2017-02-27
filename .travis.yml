@@ -63,7 +63,7 @@ install:
   - conda config --append channels conda-forge
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
-  - conda install --file ci/requirements_"$TRAVIS_PYTHON_VERSION"_""$JOB_TAG".txt
+  - conda install --file ci/requirements_"$TRAVIS_PYTHON_VERSION"_"$JOB_TAG".txt
   - python setup.py install
 
 script:

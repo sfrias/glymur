@@ -6,6 +6,7 @@ import datetime
 import doctest
 from io import BytesIO
 import os
+import pathlib
 import re
 import struct
 import sys
@@ -245,6 +246,11 @@ class TestJp2k(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         pass
+
+    def test_pathlib(self):
+        p = pathlib.Path(self.jp2file)
+        jp2 = Jp2k(p)
+        self.assertEqual(jp2.shape, (1456, 2592, 3))
 
     @unittest.skipIf(re.match('1.5.(1|2)', openjpeg_version) is not None,
                      "Mysteriously fails in 1.5.1 and 1.5.2")

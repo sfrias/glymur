@@ -2,4 +2,3 @@
 # Not crucial to test that combination.
 numpy
 openjpeg
-pathlib2

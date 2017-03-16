@@ -15,9 +15,11 @@ import uuid
 import warnings
 if sys.hexversion >= 0x03030000:
     from unittest.mock import patch
-    import pathlib
 else:
     from mock import patch
+if sys.hexversion >= 0x03040000:
+    import pathlib
+else:
     import pathlib2 as pathlib
 from xml.etree import cElementTree as ET
 

@@ -994,20 +994,18 @@ class CODsegment(Segment):
         self._numresolutions = nr
 
         if nr > opj2.J2K_MAXRLVLS:
-            msg = "Invalid number of resolutions: ({numres})."
-            msg = msg.format(numres=nr + 1)
+            msg = f"Invalid number of resolutions: ({nr +1})."
             warnings.warn(msg, UserWarning)
         self.num_res = nr
 
         if prog_order not in [LRCP, RLCP, RPCL, PCRL, CPRL]:
-            msg = "Invalid progression order in COD segment: {prog_order}."
-            warnings.warn(msg.format(prog_order=prog_order), UserWarning)
+            msg = f"Invalid progression order in COD segment: {prog_order}."
+            warnings.warn(msg, UserWarning)
         self.prog_order = prog_order
 
         if xform not in [WAVELET_XFORM_9X7_IRREVERSIBLE,
                          WAVELET_XFORM_5X3_REVERSIBLE]:
-            msg = "Invalid wavelet transform in COD segment: {xform}."
-            msg = msg.format(xform=xform)
+            msg = f"Invalid wavelet transform in COD segment: {xform}."
             warnings.warn(msg, UserWarning)
 
         cblk_width = 4 * math.pow(2, xcb)

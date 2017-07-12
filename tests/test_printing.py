@@ -14,15 +14,9 @@ import unittest
 from uuid import UUID
 import warnings
 
-if sys.hexversion < 0x03000000:
-    from StringIO import StringIO
-else:
-    from io import StringIO
+from io import StringIO
 
-if sys.hexversion <= 0x03030000:
-    from mock import patch
-else:
-    from unittest.mock import patch
+from unittest.mock import patch
 
 # Third party imports ...
 import numpy as np

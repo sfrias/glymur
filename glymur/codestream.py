@@ -197,10 +197,8 @@ class Codestream(object):
             try:
                 segment = process_marker_segment[self._marker_id](fptr)
             except KeyError:
-                msg = ('Invalid marker ID 0x{marker_id:x} encountered at byte '
-                       '{offset:d}.')
-                msg = msg.format(offset=self._offset,
-                                 marker_id=self._marker_id)
+                msg = (f'Invalid marker ID 0x{self._marker_id:x} '
+                       f'encountered at byte {self._offset:d}.')
                 warnings.warn(msg, UserWarning)
                 break
 
@@ -224,9 +222,8 @@ class Codestream(object):
     def _parse_unrecognized_segment(self, fptr):
         """Looks like a valid marker, but not sure from reading the specs.
         """
-        msg = ("Unrecognized codestream marker 0x{marker_id:x} encountered at "
-               "byte offset {offset}.")
-        msg = msg.format(marker_id=self._marker_id, offset=fptr.tell())
+        msg = (f"Unrecognized codestream marker 0x{self._marker_id:x} "
+               f"encountered at byte offset {fptr.tell()}.")
         warnings.warn(msg, UserWarning)
         cpos = fptr.tell()
         read_buffer = fptr.read(2)
@@ -235,7 +232,7 @@ class Codestream(object):
         if ((next_item & 0xff00) >> 8) == 255:
                 # No segment associated with this marker, so reset
                 # to two bytes after it.
-            segment = Segment(id='0x{0:x}'.format(self._marker_id),
+            segment = Segment(id=f'0x{self._marker_id:x}',
                               offset=self._offset, length=0)
         else:
             segment = self._parse_reserved_segment(fptr)
@@ -263,7 +260,7 @@ class Codestream(object):
         else:
             data = None
 
-        segment = Segment(marker_id='0x{0:x}'.format(self._marker_id),
+        segment = Segment(marker_id=f'0x{self._marker_id:x}',
                           offset=offset, length=length, data=data)
         return segment
 
@@ -590,9 +587,8 @@ class Codestream(object):
         mantissa_exponent_offset = 3 if cls._csiz > 256 else 2
         cqcc, sqcc = struct.unpack_from(fmt, read_buffer)
         if cqcc >= cls._csiz:
-            msg = ("Invalid QCC component number ({invalid_comp_no}), "
-                   "the actual number of components is only {valid_comp_no}.")
-            msg = msg.format(invalid_comp_no=cqcc, valid_comp_no=cls._csiz)
+            msg = (f"Invalid QCC component number ({cqcc}), "
+                   f"the actual number of components is only {cls._csiz}.")
             warnings.warn(msg, UserWarning)
 
         spqcc = read_buffer[mantissa_exponent_offset:]
@@ -675,7 +671,7 @@ class Codestream(object):
 
         rsiz = data[0]
         if rsiz not in _KNOWN_PROFILES:
-            msg = "Invalid profile: (Rsiz={rsiz}).".format(rsiz=rsiz)
+            msg = f"Invalid profile: (Rsiz={rsiz})."
             warnings.warn(msg, UserWarning)
 
         xysiz = (data[1], data[2])
@@ -696,28 +692,22 @@ class Codestream(object):
 
         for j, subsampling in enumerate(zip(xrsiz, yrsiz)):
             if 0 in subsampling:
-                msg = ("Invalid subsampling value for component {comp}: "
-                       "dx={dx}, dy={dy}.")
-                msg = msg.format(comp=j, dx=subsampling[0], dy=subsampling[1])
+                msg = (f"Invalid subsampling value for component {j}: "
+                       f"dx={subsampling[0]}, dy={subsampling[1]}.")
                 warnings.warn(msg, UserWarning)
 
         try:
             num_tiles_x = (xysiz[0] - xyosiz[0]) / (xytsiz[0] - xytosiz[0])
             num_tiles_y = (xysiz[1] - xyosiz[1]) / (xytsiz[1] - xytosiz[1])
         except ZeroDivisionError:
-            msg = ("Invalid tile specification:  "
-                   "size of {num_tile_rows} x {num_tile_cols}, "
-                   "offset of {row_offset} x {col_offset}.")
-            msg = msg.format(num_tile_rows=xytsiz[1],
-                             num_tile_cols=xytsiz[0],
-                             row_offset=xytosiz[1],
-                             col_offset=xytosiz[0])
+            msg = (f"Invalid tile specification:  "
+                   f"size of {xytsiz[1]} x {xytsiz[0]}, "
+                   f"offset of {xytosiz[1]} x {xytosiz[0]}.")
             warnings.warn(msg, UserWarning)
         else:
             numtiles = math.ceil(num_tiles_x) * math.ceil(num_tiles_y)
             if numtiles > 65535:
-                msg = "Invalid number of tiles: ({numtiles})."
-                msg = msg.format(numtiles=numtiles)
+                msg = f"Invalid number of tiles: ({numtiles})."
                 warnings.warn(msg, UserWarning)
 
         kwargs = {
@@ -854,7 +844,7 @@ class Codestream(object):
     def _parse_reserved_marker(self, fptr):
         """Marker range between 0xff30 and 0xff39.
         """
-        the_id = '0x{0:x}'.format(self._marker_id)
+        the_id = '0x{self._marker_id:x}'
         segment = Segment(marker_id=the_id, offset=self._offset, length=0)
         return segment
 
@@ -882,10 +872,9 @@ class Segment(object):
         self.data = data
 
     def __str__(self):
-        msg = '{marker_id} marker segment @ ({offset}, {length})'
-        return msg.format(marker_id=self.marker_id,
-                          length=self.length,
-                          offset=self.offset)
+        msg = (f'{self.marker_id} marker segment @ '
+               f'({self.offset}, {self.length})')
+        return msg
 
 
 class COCsegment(Segment):
@@ -935,24 +924,18 @@ class COCsegment(Segment):
     def __str__(self):
         msg = Segment.__str__(self)
 
+        cblh, cblw = int(self.code_block_size[0]), int(self.code_block_size[1])
+        xform = _WAVELET_TRANSFORM_DISPLAY[self.spcoc[4]]
         msg += '\n'
-        msg += ('    Associated component:  {assoc_comp}\n'
-                '    Coding style for this component:  '
-                'Entropy coder, PARTITION = {partition}\n'
-                '    Coding style parameters:\n'
-                '        Number of resolutions:  {num_res}\n'
-                '        Code block height, width:  ({cblh} x {cblw})\n'
-                '        Wavelet transform:  {xform}\n'
-                '        Precinct size:  {psize}\n'
-                '        {context_string}')
-        msg = msg.format(assoc_comp=self.ccoc,
-                         partition=0 if self.scoc == 0 else 1,
-                         num_res=self.spcoc[0] + 1,
-                         cblh=int(self.code_block_size[0]),
-                         cblw=int(self.code_block_size[1]),
-                         xform=_WAVELET_TRANSFORM_DISPLAY[self.spcoc[4]],
-                         context_string=_context_string(self.spcoc[3]),
-                         psize=self.precinct_size)
+        msg += (f'    Associated component:  {self.ccoc}\n'
+                f'    Coding style for this component:  '
+                f'Entropy coder, PARTITION = {0 if self.scoc == 0 else 1}\n'
+                f'    Coding style parameters:\n'
+                f'        Number of resolutions:  {self.spcoc[0] + 1}\n'
+                f'        Code block height, width:  ({cblh} x {cblw})\n'
+                f'        Wavelet transform:  {xform}\n'
+                f'        Precinct size:  {self.precinct_size}\n'
+                f'        {_context_string(self.spcoc[3])}')
 
         return msg
 

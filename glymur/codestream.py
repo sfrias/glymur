@@ -182,9 +182,8 @@ class Codestream(object):
                 self._marker_id, = struct.unpack('>H', read_buffer)
             except struct.error:
                 offset = fptr.tell() - 2
-                msg = ('Invalid codestream, expected to find a marker '
-                       'at byte position {offset}.')
-                msg = msg.format(offset=offset)
+                msg = (f'Invalid codestream, expected to find a marker '
+                       f'at byte position {offset}.')
                 raise IOError(msg)
 
             self._offset = fptr.tell() - 2
@@ -1019,52 +1018,45 @@ class CODsegment(Segment):
             self.precinct_size = precinct_size
 
     def __str__(self):
-        msg = Segment.__str__(self)
-
-        msg += '\n'
-        msg += ('    Coding style:\n'
-                '        Entropy coder, {with_without} partitions\n'
-                '        SOP marker segments:  {sop}\n'
-                '        EPH marker segments:  {eph}\n'
-                '    Coding style parameters:\n'
-                '        Progression order:  {prog}\n'
-                '        Number of layers:  {num_layers}\n'
-                '        Multiple component transformation usage:  {mct}\n'
-                '        Number of resolutions:  {num_resolutions}\n'
-                '        Code block height, width:  ({cbh} x {cbw})\n'
-                '        Wavelet transform:  {xform}\n'
-                '        Precinct size:  {precinct_size}\n'
-                '        {code_block_context}')
-
         if self.mct == 0:
-            mct_str = 'no transform specified'
+            mct = 'no transform specified'
         elif self.mct & 0x01:
-            mct_str = 'reversible'
+            mct = 'reversible'
         elif self.mct & 0x02:
-            mct_str = 'irreversible'
+            mct = 'irreversible'
         else:
-            mct_str = 'unknown'
+            mct = 'unknown'
 
         try:
             progression_order = _PROGRESSION_ORDER_DISPLAY[self.prog_order]
         except KeyError:
-            progression_order = '{prog} (invalid)'.format(prog=self.prog_order)
+            progression_order = f'{self.prog_order} (invalid)'
+
         try:
             xform = _WAVELET_TRANSFORM_DISPLAY[self.xform]
         except KeyError:
-            xform = '{xform} (invalid)'.format(xform=self.xform)
-        msg = msg.format(with_without='with' if (self.scod & 1) else 'without',
-                         sop=((self.scod & 2) > 0),
-                         eph=((self.scod & 4) > 0),
-                         prog=progression_order,
-                         num_layers=self.layers,
-                         mct=mct_str,
-                         num_resolutions=self.num_res + 1,
-                         cbh=int(self.code_block_size[0]),
-                         cbw=int(self.code_block_size[1]),
-                         xform=xform,
-                         precinct_size=self.precinct_size,
-                         code_block_context=_context_string(self.cstyle))
+            xform = f'{self.xform} (invalid)'
+
+        with_without = 'with' if (self.scod & 1) else 'without'
+
+        cbh = int(self.code_block_size[0])
+        cbw = int(self.code_block_size[1])
+
+        msg = Segment.__str__(self)
+        msg += '\n'
+        msg += (f'    Coding style:\n'
+                f'        Entropy coder, {with_without} partitions\n'
+                f'        SOP marker segments:  {(self.scod & 2) > 0}\n'
+                f'        EPH marker segments:  {(self.scod & 4) > 0}\n'
+                f'    Coding style parameters:\n'
+                f'        Progression order:  {progression_order}\n'
+                f'        Number of layers:  {self.layers}\n'
+                f'        Multiple component transformation usage:  {mct}\n'
+                f'        Number of resolutions:  {self.num_res + 1}\n'
+                f'        Code block height, width:  ({cbh} x {cbw})\n'
+                f'        Wavelet transform:  {xform}\n'
+                f'        Precinct size:  {self.precinct_size}\n'
+                f'        {_context_string(self.cstyle)}')
 
         return msg
 
@@ -1104,10 +1096,10 @@ class CMEsegment(Segment):
         msg = Segment.__str__(self) + '\n'
         if self.rcme == 1:
             # latin-1 string
-            msg += '    "{ccme}"'.format(ccme=self.ccme.decode('latin-1'))
+            msg += f'''    "{self.ccme.decode('latin-1')}"'''
         else:
-            msg += "    binary data (rcme = {rcme}):  {nbytes} bytes"
-            msg = msg.format(rcme=self.rcme, nbytes=len(self.ccme))
+            msg += (f"    binary data (rcme = {self.rcme}):  "
+                    f"{len(self.ccme)} bytes")
         return msg
 
 
@@ -1137,8 +1129,8 @@ class CRGsegment(Segment):
         msg = Segment.__str__(self)
         msg += '\n    Vertical, Horizontal offset: '
         for j in range(len(self.xcrg)):
-            msg += ' ({0:.2f}, {1:.2f})'.format(self.ycrg[j] / 65535.0,
-                                                self.xcrg[j] / 65535.0)
+            yoff, xoff = (self.ycrg[j] / 65535), (self.xcrg[j] / 65535)
+            msg += f" ({yoff:.2f}, {xoff:.2f})"
         return msg
 
 

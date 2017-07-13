@@ -364,7 +364,7 @@ class TestFileTypeBox(unittest.TestCase):
 
     def test_bad_brand_on_parse(self):
         """The JP2 file file type box does not contain a valid brand.
-        
+
         Expect a specific validation error.
         """
         relpath = os.path.join('data', 'issue396.jp2')
@@ -373,7 +373,7 @@ class TestFileTypeBox(unittest.TestCase):
             # Lots of things wrong with this file.
             warnings.simplefilter('ignore')
             with self.assertRaises(IOError):
-                jp2 = Jp2k(filename)
+                Jp2k(filename)
 
     def test_brand_unknown(self):
         """A ftyp box brand must be 'jp2 ' or 'jpx '."""
@@ -409,7 +409,8 @@ class TestFileTypeBox(unittest.TestCase):
             tfile.flush()
 
             with self.assertWarns(UserWarning):
-                jp2 = Jp2k(tfile.name)
+                Jp2k(tfile.name)
+
 
 class TestColourSpecificationBox(unittest.TestCase):
     """Test suite for colr box instantiation."""
@@ -500,7 +501,7 @@ class TestColourSpecificationBox(unittest.TestCase):
     def test_write_colr_with_bad_method(self):
         """
         A colr box has an invalid method.
-        
+
         Expect an IOError when trying to write to file.
         """
         with warnings.catch_warnings():

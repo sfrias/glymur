@@ -1,7 +1,6 @@
 """
 Test fixtures common to more than one test point.
 """
-import os
 import re
 import subprocess
 import sys
@@ -52,6 +51,7 @@ def low_memory_linux_machine():
     stdout, stderr = p3.communicate()
     nbytes = int(stdout.decode('utf-8').strip())
     return nbytes < 2000
+
 
 class MetadataBase(unittest.TestCase):
     """
@@ -199,6 +199,7 @@ try:
 except ImportError:
     HAVE_GDAL = False
 
+
 def _indent(textstr):
     """
     Indent a string.
@@ -231,7 +232,7 @@ try:
         # Probably too old.  On Ubuntu 12.04.5, the old PIL
         # is still used for the backend, and it can't read
         # the images we need.
-        raise ImportError('MPL is too old')  
+        raise ImportError('MPL is too old')
     from matplotlib.pyplot import imread
 
     # The whole point of trying to import PIL is to determine if it's there

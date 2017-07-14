@@ -1207,22 +1207,15 @@ class PODsegment(Segment):
         msg = Segment.__str__(self)
         for j in range(len(self.rspod)):
 
-            msg += '\n    '
-            lines = ['Progression change {0}:',
-                     '    Resolution index start:  {1}',
-                     '    Component index start:  {2}',
-                     '    Layer index end:  {3}',
-                     '    Resolution index end:  {4}',
-                     '    Component index end:  {5}',
-                     '    Progression order:  {6}']
-            submsg = '\n    '.join(lines)
-            msg += submsg.format(j,
-                                 self.rspod[j],
-                                 self.cspod[j],
-                                 self.lyepod[j],
-                                 self.repod[j],
-                                 self.cdpod[j],
-                                 _PROGRESSION_ORDER_DISPLAY[self.ppod[j]])
+            podd = _PROGRESSION_ORDER_DISPLAY[self.ppod[j]]
+            msg += '\n'
+            msg += (f'    Progression change {j}:\n'
+                    f'        Resolution index start:  {self.rspod[j]}\n'
+                    f'        Component index start:  {self.cspod[j]}\n'
+                    f'        Layer index end:  {self.lyepod[j]}\n'
+                    f'        Resolution index end:  {self.repod[j]}\n'
+                    f'        Component index end:  {self.cdpod[j]}\n'
+                    f'        Progression order:  {podd}')
 
         return msg
 

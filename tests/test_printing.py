@@ -1067,6 +1067,7 @@ class TestPrinting(unittest.TestCase):
         params = (0, 0, 1, 33, 128, 1, 0, 128, 1, 33, 257, 4)
         segment = glymur.codestream.PODsegment(params, 20, 878)
         actual = str(segment)
+        self.maxDiff = None
 
         expected = ('POD marker segment @ (878, 20)\n'
                     '    Progression change 0:\n'

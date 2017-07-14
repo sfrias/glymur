@@ -92,7 +92,7 @@ class Ifd(object):
             fmt = self.datatype2fmt[dtype][0] * count
             payload_size = self.datatype2fmt[dtype][1] * count
         except KeyError:
-            msg = 'Invalid TIFF tag datatype ({0}).'.format(dtype)
+            msg = f'Invalid TIFF tag datatype ({dtype}).'
             raise IOError(msg)
 
         if payload_size <= 4:
@@ -132,7 +132,7 @@ class Ifd(object):
                 tag_name = tagnum2name[tag]
             except KeyError:
                 # Ok, we don't recognize this tag.  Just use the numeric id.
-                msg = 'Unrecognized Exif tag ({tag}).'.format(tag=tag)
+                msg = f'Unrecognized Exif tag ({tag}).'
                 warnings.warn(msg, UserWarning)
                 tag_name = tag
             self.processed_ifd[tag_name] = value

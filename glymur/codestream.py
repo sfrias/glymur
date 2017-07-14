@@ -1251,11 +1251,9 @@ class PLTsegment(Segment):
         self.offset = offset
 
     def __str__(self):
-        msg = Segment.__str__(self)
-        msg += "\n    Index:  {0}"
-        msg += "\n    Iplt:  {1}"
-        msg = msg.format(self.zplt, self.iplt)
-
+        msg = Segment.__str__(self) + '\n'
+        msg += (f"    Index:  {self.zplt}\n"
+                f"    Iplt:  {self.iplt}")
         return msg
 
 

@@ -119,29 +119,8 @@ class Jp2kBox(object):
         for box in self.box:
             boxstr = str(box)
             # Indent the child boxes to make the association clear.
-            msg += '\n' + self._indent(boxstr)
+            msg += '\n' + textwrap.indent(boxstr, ' ' * 4)
         return msg
-
-    def _indent(self, textstr, indent_level=4):
-        """
-        Indent a string.
-
-        Textwrap's indent method only exists for 3.3 or above.  In 2.7 we have
-        to fake it.
-
-        Parameters
-        ----------
-        textstring : str
-            String to be indented.
-        indent_level : str
-            Number of spaces of indentation to add.
-
-        Returns
-        -------
-        str
-            Possibly multi-line string indented by the specified amount.
-        """
-        return textwrap.indent(textstr, ' ' * indent_level)
 
     def _write_superbox(self, fptr, box_id):
         """Write a superbox.
@@ -418,14 +397,14 @@ class ColourSpecificationBox(Jp2kBox):
                 text = 'ICC Profile:  None'
             else:
                 text = pprint.pformat(self.icc_profile)
-                text = self._indent(text)
+                text = textwrap.indent(text, ' ' * 4)
                 text = '\n'.join(['ICC Profile:', text])
 
         lst.append(text)
 
         text = '\n'.join(lst)
 
-        text = '\n'.join([title, self._indent(text)])
+        text = '\n'.join([title, textwrap.indent(text, ' ' * 4)])
 
         return text
 
@@ -580,7 +559,7 @@ class ChannelDefinitionBox(Jp2kBox):
             lst.append(text)
 
         text = '\n'.join(lst)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
         text = '\n'.join([title, text])
         return text
 
@@ -902,7 +881,7 @@ class ComponentMappingBox(Jp2kBox):
             lst.append(text)
 
         text = '\n'.join(lst)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
         text = '\n'.join([title, text])
 
         return text
@@ -1017,7 +996,7 @@ class ContiguousCodestreamBox(Jp2kBox):
             lst.append(str(segment))
 
         text = '\n'.join(lst)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
         text = '\n'.join([title, text])
         return text
 
@@ -1129,7 +1108,7 @@ class DataReferenceBox(Jp2kBox):
         for box in self.DR:
             lst.append(str(box))
         text = '\n'.join(lst)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
 
         text = '\n'.join([title, text])
         return text
@@ -1242,7 +1221,7 @@ class FileTypeBox(Jp2kBox):
         lst.append(text)
 
         text = '\n'.join(lst)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
 
         text = '\n'.join([title, text])
 
@@ -1395,7 +1374,7 @@ class FragmentListBox(Jp2kBox):
             lst.append(text)
 
         text = '\n'.join(lst)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
         text = '\n'.join([title, text])
         return text
 
@@ -1668,7 +1647,7 @@ class ImageHeaderBox(Jp2kBox):
         lst.append(text)
 
         text = '\n'.join(lst)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
         text = '\n'.join([title, text])
 
         return text
@@ -1837,7 +1816,7 @@ class BitsPerComponentBox(Jp2kBox):
         body = body.format(bpc=', '.join(str(x) for x in self.bpc),
                            sgn=', '.join(str(x) for x in self.signed))
 
-        body = self._indent(body)
+        body = textwrap.indent(body, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -1969,7 +1948,7 @@ class JPEG2000SignatureBox(Jp2kBox):
         body = 'Signature:  {0:02x}{1:02x}{2:02x}{3:02x}'
         body = body.format(self.signature[0], self.signature[1],
                            self.signature[2], self.signature[3])
-        body = self._indent(body)
+        body = textwrap.indent(body, ' ' * 4)
         text = '\n'.join([title, body])
         return text
 
@@ -2059,7 +2038,7 @@ class PaletteBox(Jp2kBox):
             return title
 
         body = 'Size:  ({0} x {1})'.format(*self.palette.shape)
-        body = self._indent(body)
+        body = textwrap.indent(body, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -2307,7 +2286,7 @@ class ReaderRequirementsBox(Jp2kBox):
             }
             lst2.append(text.format(**kwargs))
         text = '\n'.join(lst2)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
         lst.append(text)
 
         text = 'Vendor Features:'
@@ -2318,11 +2297,11 @@ class ReaderRequirementsBox(Jp2kBox):
             text = 'UUID {0}'.format(self.vendor_feature[j])
             lst2.append(text)
         text = '\n'.join(lst2)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
         lst.append(text)
 
         text = '\n'.join(lst)
-        text = self._indent(text)
+        text = textwrap.indent(text, ' ' * 4)
         text = '\n'.join([title, text])
 
         return text
@@ -2551,7 +2530,7 @@ class CaptureResolutionBox(Jp2kBox):
         lst.append(text)
 
         text = '\n'.join(lst)
-        body = self._indent(text)
+        body = textwrap.indent(text, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -2626,7 +2605,7 @@ class DisplayResolutionBox(Jp2kBox):
         lst.append(text)
 
         text = '\n'.join(lst)
-        body = self._indent(text)
+        body = textwrap.indent(text, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -2689,7 +2668,7 @@ class LabelBox(Jp2kBox):
             return title
 
         text = 'Label:  {0}'.format(self.label)
-        body = self._indent(text)
+        body = textwrap.indent(text, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -2776,7 +2755,7 @@ class NumberListBox(Jp2kBox):
             lst.append(text)
 
         body = '\n'.join(lst)
-        body = self._indent(body)
+        body = textwrap.indent(body, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -2878,7 +2857,7 @@ class XMLBox(Jp2kBox):
                                pretty_print=True).decode('utf-8').rstrip()
         else:
             body = 'None'
-        body = self._indent(body)
+        body = textwrap.indent(body, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -2989,7 +2968,7 @@ class UUIDListBox(Jp2kBox):
             text = 'UUID[{item_no}]:  {uuid}'.format(item_no=j, uuid=uuid_item)
             lst.append(text)
         body = '\n'.join(lst)
-        body = self._indent(body)
+        body = textwrap.indent(body, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -3169,7 +3148,7 @@ class DataEntryURLBox(Jp2kBox):
                            flag1=self.flag[1],
                            flag2=self.flag[2],
                            url=self.url)
-        body = self._indent(body)
+        body = textwrap.indent(body, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -3354,7 +3333,7 @@ class UUIDBox(Jp2kBox):
             lst.append(text)
 
         body = '\n'.join(lst)
-        body = self._indent(body)
+        body = textwrap.indent(body, ' ' * 4)
 
         text = '\n'.join([title, body])
         return text
@@ -3379,6 +3358,8 @@ class UUIDBox(Jp2kBox):
         sref = osr.SpatialReference()
         sref.ImportFromWkt(proj_ref)
         psz_pretty_wkt = sref.ExportToPrettyWkt(False)
+        psz_pretty_wkt = textwrap.indent(sref.ExportToPrettyWkt(False),
+                                         ' ' * 4)
 
         # report geotransform
         geo_transform = gtif.GetGeoTransform(can_return_null=True)
@@ -3424,7 +3405,7 @@ class UUIDBox(Jp2kBox):
                "{upper_right}\n"
                "{lower_right}\n"
                "{center}")
-        msg = fmt.format(coordinate_system=self._indent(psz_pretty_wkt),
+        msg = fmt.format(coordinate_system=psz_pretty_wkt,
                          geotransform=geotransform_str,
                          upper_left=uleft, upper_right=uright,
                          lower_left=lleft, lower_right=lright, center=center)

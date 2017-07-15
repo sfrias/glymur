@@ -1209,40 +1209,6 @@ class TestJp2k_write(fixtures.MetadataBase):
                          glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
         self.assertEqual(c.segment[2].precinct_size, ((32768, 32768)))
 
-    @unittest.skipIf(glymur.config.load_openjpeg_library('openjpeg') is None,
-                     "Needs openjpeg before this test make sense.")
-    def test_NR_ENC_Bretagne1_ppm_1_encode_v15(self):
-        """
-        Test JPEG writing with version 1.5
-
-        Original file tested was
-
-            input/nonregression/Bretagne1.ppm
-
-        """
-        data = self.jp2_data
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with patch('glymur.jp2k.version.openjpeg_version_tuple', new=(1, 5, 0)):
-                with patch('glymur.jp2k.opj2.OPENJP2', new=None):
-                    j = Jp2k(tfile.name, shape=data.shape)
-                    j[:] = data
-                    c = j.get_codestream()
-
-        # COD: Coding style default
-        self.assertFalse(c.segment[2].scod & 2)  # no sop
-        self.assertFalse(c.segment[2].scod & 4)  # no eph
-        self.assertEqual(c.segment[2].prog_order, glymur.core.LRCP)
-        self.assertEqual(c.segment[2].layers, 1)  # layers = 3
-        self.assertEqual(c.segment[2].mct, 1)  # mct
-        self.assertEqual(c.segment[2].num_res, 5)  # levels
-        self.assertEqual(tuple(c.segment[2].code_block_size),
-                         (64, 64))  # cblksz
-        self.verify_codeblock_style(c.segment[2].cstyle,
-                                    [False, False, False, False, False, False])
-        self.assertEqual(c.segment[2].xform,
-                         glymur.core.WAVELET_XFORM_5X3_REVERSIBLE)
-        self.assertEqual(c.segment[2].precinct_size, ((32768, 32768)))
-
     @unittest.skipIf(fixtures.low_memory_linux_machine(), "Low memory machine")
     def test_NR_ENC_Bretagne1_ppm_3_encode(self):
         """
@@ -1940,52 +1906,6 @@ class TestJp2k_write(fixtures.MetadataBase):
                              glymur.core.CPRL)
 
 
-class TestJp2k_1_x(unittest.TestCase):
-    """Test suite for openjpeg 1.x, not appropriate for 2.x"""
-
-    def setUp(self):
-        self.jp2file = glymur.data.nemo()
-        self.j2kfile = glymur.data.goodstuff()
-
-    def test_tile(self):
-        """tile option not allowed for 1.x.
-        """
-        with patch('glymur.version.openjpeg_version_tuple', new=(1, 5, 0)):
-            with patch('glymur.version.openjpeg_version', new="1.5.0"):
-                j2k = Jp2k(self.j2kfile)
-                with warnings.catch_warnings():
-                    # The tile keyword is deprecated, so suppress the warning.
-                    warnings.simplefilter('ignore')
-                    with self.assertRaises(TypeError):
-                        j2k.read(tile=0)
-
-    def test_layer(self):
-        """layer option not allowed for 1.x.
-        """
-        with patch('glymur.version.openjpeg_version', new="1.5.0"):
-            with patch('glymur.version.openjpeg_version_tuple', new=(1, 5, 0)):
-                j2k = Jp2k(self.j2kfile)
-                with self.assertRaises(IOError):
-                    j2k.layer = 1
-
-    @unittest.skipIf(((glymur.lib.openjpeg.OPENJPEG is None) or
-                      (glymur.lib.openjpeg.version() < '1.5.0')),
-                     "OpenJPEG version one must be present")
-    def test_read_version_15(self):
-        """
-        Test read using version 1.5
-        """
-        j = Jp2k(self.j2kfile)
-        expected = j[:]
-        with patch('glymur.jp2k.opj2.OPENJP2', new=None):
-            actual = j._read_openjpeg()
-            np.testing.assert_array_equal(actual, expected)
-
-            actual = j._read_openjpeg(area=(0, 0, 250, 250))
-            np.testing.assert_array_equal(actual, expected[:250, :250])
-
-@unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
-                 "Requires as least v2.0")
 class TestJp2k_2_0(unittest.TestCase):
     """Test suite requiring at least version 2.0"""
 

@@ -15,7 +15,7 @@ import numpy as np
 
 # Local imports ...
 import glymur
-from glymur.lib import openjp2, openjpeg
+from glymur.lib import openjp2
 from . import fixtures
 
 

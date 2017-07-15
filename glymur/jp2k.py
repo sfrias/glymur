@@ -32,7 +32,7 @@ from . import core, version
 from .jp2box import (Jp2kBox, JPEG2000SignatureBox, FileTypeBox,
                      JP2HeaderBox, ColourSpecificationBox,
                      ContiguousCodestreamBox, ImageHeaderBox)
-from .lib import openjpeg as opj, openjp2 as opj2
+from .lib import openjp2 as opj2
 
 
 class Jp2k(Jp2kBox):
@@ -1097,10 +1097,7 @@ class Jp2k(Jp2kBox):
                    "glymur.  Your version is {version}")
             raise RuntimeError(msg.format(version=version.openjpeg_version))
 
-        if version.openjpeg_version_tuple[0] < 2:
-            img = self._read_openjpeg(**kwargs)
-        else:
-            img = self._read_openjp2(**kwargs)
+        img = self._read_openjp2(**kwargs)
         return img
 
     def read(self, **kwargs):
@@ -1152,77 +1149,6 @@ class Jp2k(Jp2kBox):
                    "\n\n{siz_segment}")
             msg = msg.format(siz_segment=str(self.codestream.segment[1]))
             raise IOError(msg)
-
-    def _read_openjpeg(self, rlevel=0, verbose=False, area=None):
-        """Read a JPEG 2000 image using libopenjpeg.
-
-        Parameters
-        ----------
-        rlevel : int, optional
-            Factor by which to rlevel output resolution.  Use -1 to get the
-            lowest resolution thumbnail.
-        verbose : bool, optional
-            Print informational messages produced by the OpenJPEG library.
-        area : tuple, optional
-            Specifies decoding image area,
-            (first_row, first_col, last_row, last_col)
-
-        Returns
-        -------
-        ndarray
-            The image data.
-
-        Raises
-        ------
-        RuntimeError
-            If the image has differing subsample factors.
-        """
-        self._subsampling_sanity_check()
-
-        self._populate_dparams(rlevel)
-
-        with ExitStack() as stack:
-            try:
-                self._dparams.decod_format = self._codec_format
-
-                dinfo = opj.create_decompress(self._dparams.decod_format)
-
-                event_mgr = opj.EventMgrType()
-                handler = ctypes.cast(_INFO_CALLBACK, ctypes.c_void_p)
-                event_mgr.info_handler = handler if self.verbose else None
-                event_mgr.warning_handler = ctypes.cast(_WARNING_CALLBACK,
-                                                        ctypes.c_void_p)
-                event_mgr.error_handler = ctypes.cast(_ERROR_CALLBACK,
-                                                      ctypes.c_void_p)
-                opj.set_event_mgr(dinfo, ctypes.byref(event_mgr))
-
-                opj.setup_decoder(dinfo, self._dparams)
-
-                with open(self.filename, 'rb') as fptr:
-                    src = fptr.read()
-                cio = opj.cio_open(dinfo, src)
-
-                raw_image = opj.decode(dinfo, cio)
-
-                stack.callback(opj.image_destroy, raw_image)
-                stack.callback(opj.destroy_decompress, dinfo)
-                stack.callback(opj.cio_close, cio)
-
-                image = self._extract_image(raw_image)
-
-            except ValueError:
-                opj2.check_error(0)
-
-        if area is not None:
-            x0, y0, x1, y1 = area
-            extent = 2 ** rlevel
-
-            area = [int(round(float(x) / extent + 2 ** -20)) for x in area]
-            rows = slice(area[0], area[2], None)
-            cols = slice(area[1], area[3], None)
-            image = image[rows, cols]
-
-        return image
 
     def _read_openjp2(self, rlevel=0, layer=None, area=None, tile=None,
                       verbose=False):

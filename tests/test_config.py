@@ -155,49 +155,6 @@ class TestSuiteConfigFile(unittest.TestCase):
                             imp.reload(glymur.lib.openjp2)
                         self.assertIsNone(glymur.lib.openjp2.OPENJP2)
 
-    @unittest.skipIf(load_openjpeg_library('openjpeg') is None,
-                     "Needs openjpeg before this test make sense.")
-    @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
-    def test_openjpeg_specified_by_config(self):
-        """
-        Verify that we get openjpeg 1.x if specified in config file.
-        """
-        with tempfile.TemporaryDirectory() as tdir:
-            configdir = os.path.join(tdir, 'glymur')
-            os.mkdir(configdir)
-            fname = os.path.join(configdir, 'glymurrc')
-            with open(fname, 'w') as fptr:
-                # Essentially comment out openjp2 and preferentially load
-                # openjpeg instead.
-                fptr.write('[library]\n')
-                fptr.write('openjp2: None\n')
-                openjpeg_lib = load_openjpeg_library('openjpeg')
-                msg = 'openjpeg: {openjpeg}\n'
-                msg = msg.format(openjpeg=openjpeg_lib._name)
-                fptr.write(msg)
-                fptr.flush()
-                with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
-                    imp.reload(glymur.lib.openjp2)
-                    imp.reload(glymur.lib.openjpeg)
-                    self.assertIsNone(glymur.lib.openjp2.OPENJP2)
-                    self.assertIsNotNone(glymur.lib.openjpeg.OPENJPEG)
-
-    @unittest.skipIf(glymur.lib.openjp2.OPENJP2 is None,
-                     "Needs openjp2 before this test make sense.")
-    @unittest.skipIf(load_openjpeg_library('openjp2') is None,
-                     "OpenJP2 must be found before this test can work.")
-    @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
-    def test_config_dir_but_no_config_file(self):
-
-        with tempfile.TemporaryDirectory() as tdir:
-            configdir = os.path.join(tdir, 'glymur')
-            os.mkdir(configdir)
-            with patch.dict('os.environ', {'XDG_CONFIG_HOME': tdir}):
-                # Should still be able to load openjpeg, despite the
-                # configuration file not being there
-                imp.reload(glymur.lib.openjpeg)
-                self.assertIsNotNone(glymur.lib.openjp2.OPENJP2)
-
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
     def test_config_file_in_current_directory(self):
         """A configuration file in the current directory should be honored."""

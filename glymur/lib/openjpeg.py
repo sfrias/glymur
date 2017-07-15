@@ -19,10 +19,7 @@ def version():
     """Wrapper for opj_version library routine."""
     OPENJPEG.opj_version.restype = ctypes.c_char_p
     library_version = OPENJPEG.opj_version()
-    if sys.hexversion >= 0x03000000:
-        return library_version.decode('utf-8')
-    else:
-        return library_version
+    return library_version.decode('utf-8')
 
 # Need to get the minor version, make sure we are at least at 1.4.x
 if OPENJPEG is not None:

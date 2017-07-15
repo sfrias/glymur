@@ -141,11 +141,7 @@ class Jp2kBox(object):
         str
             Possibly multi-line string indented by the specified amount.
         """
-        if sys.hexversion >= 0x03030000:
-            return textwrap.indent(textstr, ' ' * indent_level)
-        else:
-            lst = [(' ' * indent_level + x) for x in textstr.split('\n')]
-            return '\n'.join(lst)
+        return textwrap.indent(textstr, ' ' * indent_level)
 
     def _write_superbox(self, fptr, box_id):
         """Write a superbox.
@@ -1310,21 +1306,19 @@ class FileTypeBox(Jp2kBox):
         read_buffer = fptr.read(num_bytes)
         # Extract the brand, minor version.
         (brand, minor_version) = struct.unpack_from('>4sI', read_buffer, 0)
-        if sys.hexversion >= 0x030000:
-            brand = brand.decode('utf-8')
+        brand = brand.decode('utf-8')
 
         # Extract the compatibility list.  Each entry has 4 bytes.
         num_entries = int((length - 16) / 4)
         compatibility_list = []
         for j in range(int(num_entries)):
             entry, = struct.unpack_from('>4s', read_buffer, 8 + j * 4)
-            if sys.hexversion >= 0x03000000:
-                try:
-                    entry = entry.decode('utf-8')
-                except UnicodeDecodeError:
-                    # The entry is invalid, but we've got code to catch this
-                    # later on.
-                    pass
+            try:
+                entry = entry.decode('utf-8')
+            except UnicodeDecodeError:
+                # The entry is invalid, but we've got code to catch this
+                # later on.
+                pass
 
             compatibility_list.append(entry)
 
@@ -2917,18 +2911,6 @@ class XMLBox(Jp2kBox):
         """
         num_bytes = offset + length - fptr.tell()
         read_buffer = fptr.read(num_bytes)
-
-        if sys.hexversion < 0x03000000 and codecs.BOM_UTF8 in read_buffer:
-            # Python3 with utf-8 handles this just fine.  Actually so does
-            # Python2 right here since we decode using utf-8.  The real
-            # problem comes when __str__ is used on the XML box, and that
-            # is where Python2 falls short because of the ascii codec.
-            msg = ('A BOM (byte order marker) was detected and '
-                   'removed from the XML contents in the box starting at byte '
-                   'offset {offset:d}.')
-            msg = msg.format(offset=offset)
-            warnings.warn(msg, UserWarning)
-            read_buffer = read_buffer.replace(codecs.BOM_UTF8, b'')
 
         try:
             text = read_buffer.decode('utf-8')

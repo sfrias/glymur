@@ -1,6 +1,7 @@
 """
 Configure glymur to use installed libraries if possible.
 """
+from configparser import ConfigParser, NoOptionError, NoSectionError
 import copy
 import ctypes
 from ctypes.util import find_library
@@ -8,13 +9,6 @@ import os
 import platform
 import sys
 import warnings
-
-if sys.hexversion <= 0x03000000:
-    from ConfigParser import SafeConfigParser as ConfigParser
-    from ConfigParser import NoOptionError, NoSectionError
-else:
-    from configparser import ConfigParser
-    from configparser import NoOptionError, NoSectionError
 
 # default library locations for MacPorts
 _macports_default_location = {'openjp2': '/opt/local/lib/libopenjp2.dylib',

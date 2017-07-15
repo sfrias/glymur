@@ -6,6 +6,7 @@ import datetime
 import doctest
 from io import BytesIO
 import os
+import pathlib
 import re
 import struct
 import sys
@@ -13,14 +14,7 @@ import tempfile
 import unittest
 import uuid
 import warnings
-if sys.hexversion >= 0x03030000:
-    from unittest.mock import patch
-else:
-    from mock import patch
-if sys.hexversion >= 0x03040000:
-    import pathlib
-else:
-    import pathlib2 as pathlib
+from unittest.mock import patch
 from xml.etree import cElementTree as ET
 
 # Third party library imports ...

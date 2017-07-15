@@ -18,10 +18,7 @@ class TestOpenJPEG(unittest.TestCase):
         """Only versions 1.3, 1.4, and 1.5 are supported."""
         version = glymur.lib.openjpeg.version()
         regex = re.compile('1.[345].[0-9]')
-        if sys.hexversion <= 0x03020000:
-            self.assertRegexpMatches(version, regex)
-        else:
-            self.assertRegex(version, regex)
+        self.assertRegex(version, regex)
 
     def test_default_decoder_parameters(self):
         """Verify that we properly set the default decode parameters."""

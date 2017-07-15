@@ -76,8 +76,6 @@ class TestSuiteOptions(unittest.TestCase):
                 glymur.config.set_printoptions(blah='value-blah')
 
 
-@unittest.skipIf(sys.hexversion < 0x03020000,
-                 "TemporaryDirectory introduced in 3.2.")
 @unittest.skipIf(glymur.lib.openjp2.OPENJP2 is None,
                  "Needs openjp2 library first before these tests make sense.")
 class TestSuiteConfigFile(unittest.TestCase):

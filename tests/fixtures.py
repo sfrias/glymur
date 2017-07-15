@@ -183,9 +183,7 @@ NO_SKIMAGE_FREEIMAGE_SUPPORT = False
 try:
     import skimage
     import skimage.io
-    if (((sys.hexversion >= 0x03000000) and
-         ('Anaconda' in sys.version) and
-         (re.match('0.10', skimage.__version__)))):
+    if 'Anaconda' in sys.version and re.match('0.10', skimage.__version__):
         NO_SKIMAGE_FREEIMAGE_SUPPORT = True
     else:
         skimage.io.use_plugin('freeimage', 'imread')
@@ -218,11 +216,7 @@ def _indent(textstr):
     indented_string : str
         Possibly multi-line string indented a certain bit.
     """
-    if sys.hexversion >= 0x03030000:
-        return textwrap.indent(textstr, '    ')
-    else:
-        lst = [('    ' + x) for x in textstr.split('\n')]
-        return '\n'.join(lst)
+    return textwrap.indent(textstr, '    ')
 
 
 try:

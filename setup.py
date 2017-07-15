@@ -19,17 +19,11 @@ kwargs = {
         'console_scripts': ['jp2dump=glymur.command_line:main'],
     },
     'license': 'MIT',
+    'install_requires': ['numpy>=1.7.1', 'setuptools'],
     'test_suite': 'glymur.test'
 }
 
-install_requires = ['numpy>=1.7.1', 'setuptools']
-if sys.hexversion < 0x03030000:
-    install_requires.append('contextlib2>=0.4')
-    install_requires.append('mock>=0.7.2')
-kwargs['install_requires'] = install_requires
-
 clssfrs = ["Programming Language :: Python",
-           "Programming Language :: Python :: 2.7",
            "Programming Language :: Python :: 3.3",
            "Programming Language :: Python :: 3.4",
            "Programming Language :: Python :: 3.5",

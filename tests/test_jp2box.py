@@ -395,8 +395,6 @@ class TestFileTypeBox(unittest.TestCase):
                 ftyp.write(tfile)
 
     @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
-    @unittest.skipIf(sys.hexversion < 0x03000000,
-                     "assertWarns not introduced until 3.2")
     def test_cl_entry_not_utf8(self):
         """A ftyp box cl list entry must be utf-8 decodable."""
         with open(self.jp2file, mode='rb') as f:
@@ -1299,10 +1297,7 @@ class TestRepr(MetadataBase):
         regexp += r"""[(]xml=<lxml.etree._ElementTree\sobject\s"""
         regexp += """at\s0x([a-fA-F0-9]*)>[)]"""
 
-        if sys.hexversion < 0x03000000:
-            self.assertRegexpMatches(repr(box), regexp)
-        else:
-            self.assertRegex(repr(box), regexp)
+        self.assertRegex(repr(box), regexp)
 
     def test_readerrequirements_box(self):
         """Verify rreq repr method."""
@@ -1332,10 +1327,7 @@ class TestRepr(MetadataBase):
         regexp += """UUID\('00000000-0000-0000-0000-000000000000'\),\s"""
         regexp += """raw_data=<byte\sarray\s10\selements>\)"""
 
-        if sys.hexversion < 0x03000000:
-            self.assertRegexpMatches(repr(box), regexp)
-        else:
-            self.assertRegex(repr(box), regexp)
+        self.assertRegex(repr(box), regexp)
 
     def test_uuid_box_xmp(self):
         """Verify uuid repr method for XMP UUID box."""

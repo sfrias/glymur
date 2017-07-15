@@ -5,7 +5,6 @@ Tests for libopenjp2 wrapping functions.
 from io import StringIO
 import os
 import re
-import sys
 import tempfile
 import unittest
 from unittest.mock import patch

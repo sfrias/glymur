@@ -2,7 +2,7 @@
 """Test suite for printing.
 """
 # Standard library imports
-from io import BytesIO, StringIO
+from io import BytesIO
 import os
 import pkg_resources as pkg
 import shutil
@@ -12,7 +12,6 @@ import tempfile
 import unittest
 import uuid
 import warnings
-from unittest.mock import patch
 
 # Third party library imports ...
 try:

@@ -28,7 +28,7 @@ from glymur.codestream import LRCP, WAVELET_XFORM_5X3_REVERSIBLE
 from glymur.core import RESTRICTED_ICC_PROFILE, ANY_ICC_PROFILE
 from glymur.core import COLOR, RED, GREEN, BLUE
 from glymur.jp2box import BitsPerComponentBox, ColourSpecificationBox
-from glymur.jp2box import LabelBox, UnknownBox
+from glymur.jp2box import LabelBox
 from glymur import Jp2k, command_line
 from . import fixtures
 from .fixtures import (WINDOWS_TMP_FILE_MSG,
@@ -305,8 +305,8 @@ class TestPrinting(unittest.TestCase):
         actual = str(box)
 
         expected = ("Bits Per Component Box (bpcc) @ (62, 12)\n"
-                     "    Bits per component:  [5, 5, 5, 1]\n"
-                     "    Signed:  [False, False, True, False]")
+                    "    Bits per component:  [5, 5, 5, 1]\n"
+                    "    Signed:  [False, False, True, False]")
 
         self.assertEqual(actual, expected)
 
@@ -904,7 +904,6 @@ class TestPrinting(unittest.TestCase):
                     "    Association[3]:  unrecognized")
 
         self.assertEqual(actual, expected)
-
 
     def test_nlst_short(self):
         glymur.set_option('print.short', True)
@@ -1524,8 +1523,6 @@ class TestJp2dump(unittest.TestCase):
         file = os.path.join('data', 'edf_c2_1178956.jp2')
         file = pkg.resource_filename(__name__, file)
         actual = self.run_jp2dump(['', '-x', file])
-
-        expected = fixtures
 
         # The "CME marker segment" part is the last segment in the codestream
         # header.

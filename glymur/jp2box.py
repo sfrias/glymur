@@ -12,13 +12,11 @@ References
 """
 
 # Standard library imports ...
-import codecs
 import io
 import math
 import os
 import pprint
 import struct
-import sys
 import textwrap
 from uuid import UUID
 import warnings
@@ -2106,7 +2104,7 @@ class PaletteBox(Jp2kBox):
         # The palette is unsigned and all components have the same width.
         # This should cover all but a vanishingly small share of palettes.
         b = bps[0]
-        dtype = np.uint8 if b <=8 else np.uint16 if b <= 16 else np.uint32
+        dtype = np.uint8 if b <= 8 else np.uint16 if b <= 16 else np.uint32
 
         palette = np.frombuffer(read_buffer[3 + ncols:], dtype=dtype)
         palette = np.reshape(palette, (nrows, ncols))
@@ -3306,7 +3304,7 @@ class UUIDBox(Jp2kBox):
         lst = [text]
 
         if (((config.get_option('print.xml') is False) and
-            (self.uuid == _XMP_UUID))):
+             (self.uuid == _XMP_UUID))):
             # If it's an XMP UUID, don't print the XML contents.
             pass
 

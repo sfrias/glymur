@@ -3,10 +3,8 @@ OPENJP2 may be present in some form or other.
 """
 # Standard library imports ...
 import contextlib
-import ctypes
 import imp
 import os
-import sys
 import tempfile
 import unittest
 import warnings
@@ -18,7 +16,6 @@ except ImportError:
 
 # Local imports ...
 import glymur
-from glymur.config import load_openjpeg_library
 from glymur import Jp2k
 from .fixtures import WINDOWS_TMP_FILE_MSG
 

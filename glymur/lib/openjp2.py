@@ -3,8 +3,6 @@ Wraps individual functions in openjp2 library.
 """
 
 import ctypes
-import re
-import sys
 import textwrap
 
 from ..config import glymur_config

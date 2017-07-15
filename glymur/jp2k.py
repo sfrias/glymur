@@ -140,7 +140,7 @@ class Jp2k(Jp2kBox):
         """
         Jp2kBox.__init__(self)
 
-        # In case of pathlib.Paths... 
+        # In case of pathlib.Paths...
         self.filename = str(filename)
 
         self.box = []
@@ -396,10 +396,7 @@ class Jp2k(Jp2kBox):
             msg = "Cannot specify cratios and psnr options together."
             raise IOError(msg)
 
-        if version.openjpeg_version_tuple[0] == 1:
-            cparams = opj.set_default_encoder_parameters()
-        else:
-            cparams = opj2.set_default_encoder_parameters()
+        cparams = opj2.set_default_encoder_parameters()
 
         outfile = self.filename.encode()
         num_pad_bytes = opj2.PATH_LEN - len(outfile)
@@ -509,77 +506,7 @@ class Jp2k(Jp2kBox):
         self._determine_colorspace(**kwargs)
         self._populate_cparams(img_array, **kwargs)
 
-        if opj2.OPENJP2 is not None:
-            self._write_openjp2(img_array, verbose=verbose)
-        else:
-            self._write_openjpeg(img_array, verbose=verbose)
-
-    def _write_openjpeg(self, img_array, verbose=False):
-        """
-        Write JPEG 2000 file using OpenJPEG 1.5 interface.
-        """
-        if img_array.ndim == 2:
-            # Force the image to be 3D.  Just makes things easier later on.
-            img_array = img_array.reshape(img_array.shape[0],
-                                          img_array.shape[1],
-                                          1)
-
-        self._populate_comptparms(img_array)
-
-        with ExitStack() as stack:
-            image = opj.image_create(self._comptparms, self._colorspace)
-            stack.callback(opj.image_destroy, image)
-
-            numrows, numcols, numlayers = img_array.shape
-
-            # set image offset and reference grid
-            image.contents.x0 = self._cparams.image_offset_x0
-            image.contents.y0 = self._cparams.image_offset_y0
-            image.contents.x1 = (image.contents.x0 +
-                                 (numcols - 1) * self._cparams.subsampling_dx +
-                                 1)
-            image.contents.y1 = (image.contents.y0 +
-                                 (numrows - 1) * self._cparams.subsampling_dy +
-                                 1)
-
-            # Stage the image data to the openjpeg data structure.
-            for k in range(0, numlayers):
-                layer = np.ascontiguousarray(img_array[:, :, k],
-                                             dtype=np.int32)
-                dest = image.contents.comps[k].data
-                src = layer.ctypes.data
-                ctypes.memmove(dest, src, layer.nbytes)
-
-            cinfo = opj.create_compress(self._cparams.codec_fmt)
-            stack.callback(opj.destroy_compress, cinfo)
-
-            # Setup the info, warning, and error handlers.
-            # Always use the warning and error handler.  Use of an info
-            # handler is optional.
-            event_mgr = opj.EventMgrType()
-            _info_handler = _INFO_CALLBACK if verbose else None
-            event_mgr.info_handler = _info_handler
-            event_mgr.warning_handler = ctypes.cast(_WARNING_CALLBACK,
-                                                    ctypes.c_void_p)
-            event_mgr.error_handler = ctypes.cast(_ERROR_CALLBACK,
-                                                  ctypes.c_void_p)
-
-            opj.setup_encoder(cinfo, ctypes.byref(self._cparams), image)
-
-            cio = opj.cio_open(cinfo)
-            stack.callback(opj.cio_close, cio)
-
-            if not opj.encode(cinfo, cio, image):
-                raise IOError("Encode error.")
-
-            pos = opj.cio_tell(cio)
-
-            blob = ctypes.string_at(cio.contents.buffer, pos)
-            fptr = open(self.filename, 'wb')
-            stack.callback(fptr.close)
-            fptr.write(blob)
-
-        self.parse()
+        self._write_openjp2(img_array, verbose=verbose)
 
     def _validate_j2k_colorspace(self, cparams, colorspace):
         """
@@ -1242,11 +1169,7 @@ class Jp2k(Jp2kBox):
         tile : int
             Number of tile to decode.
         """
-        if opj2.OPENJP2 is not None:
-            dparam = opj2.set_default_decoder_parameters()
-        else:
-            dparam = opj.DecompressionParametersType()
-            opj.set_default_decoder_parameters(ctypes.byref(dparam))
+        dparam = opj2.set_default_decoder_parameters()
 
         infile = self.filename.encode()
         nelts = opj2.PATH_LEN - len(infile)
@@ -1426,9 +1349,9 @@ class Jp2k(Jp2kBox):
             raise IOError(msg)
 
         if component.sgnd:
-            dtype = np.int8 if component.prec <=8 else np.int16
+            dtype = np.int8 if component.prec <= 8 else np.int16
         else:
-            dtype = np.uint8 if component.prec <=8 else np.uint16
+            dtype = np.uint8 if component.prec <= 8 else np.uint16
 
         return dtype
 
@@ -1539,10 +1462,7 @@ class Jp2k(Jp2kBox):
             comp_prec = 16
 
         numrows, numcols, num_comps = img_array.shape
-        if version.openjpeg_version_tuple[0] == 1:
-            comptparms = (opj.ImageComptParmType * num_comps)()
-        else:
-            comptparms = (opj2.ImageComptParmType * num_comps)()
+        comptparms = (opj2.ImageComptParmType * num_comps)()
         for j in range(num_comps):
             comptparms[j].dx = self._cparams.subsampling_dx
             comptparms[j].dy = self._cparams.subsampling_dy

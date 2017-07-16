@@ -28,9 +28,6 @@ constructor.
     >>> import glymur, numpy as np
     >>> jp2 = glymur.Jp2k('zeros.jp2', data=np.zeros((640, 480), dtype=np.uint8))
 
-You must have OpenJPEG version 1.5 or more recent in order to write JPEG 2000
-images with glymur.
-
 ... display metadata?
 =====================
 There are two ways.  From the command line, the console script **jp2dump** is

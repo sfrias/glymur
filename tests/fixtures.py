@@ -14,7 +14,7 @@ import numpy as np
 import glymur
 
 # If openjpeg is not installed, many tests cannot be run.
-if glymur.version.openjpeg_version < '1.5.0':
+if glymur.version.openjpeg_version < '2.1.0':
     OPENJPEG_NOT_AVAILABLE = True
     OPENJPEG_NOT_AVAILABLE_MSG = 'OpenJPEG library not installed'
 else:
@@ -172,24 +172,6 @@ class MetadataBase(unittest.TestCase):
             self.assertIsNone(actual.icc_profile)
 
 
-NO_READ_BACKEND_MSG = "Matplotlib with the PIL backend must be available in "
-NO_READ_BACKEND_MSG += "order to run the tests in this suite."
-
-# The Cinema2K/4K tests seem to need the freeimage backend to skimage.io
-# in order to work.  Unfortunately, scikit-image/freeimage is about as wonky as
-# it gets.  Anaconda can get totally weirded out on versions up through 3.6.4
-# on Python3 with scikit-image up through version 0.10.0.
-NO_SKIMAGE_FREEIMAGE_SUPPORT = False
-try:
-    import skimage
-    import skimage.io
-    if 'Anaconda' in sys.version and re.match('0.10', skimage.__version__):
-        NO_SKIMAGE_FREEIMAGE_SUPPORT = True
-    else:
-        skimage.io.use_plugin('freeimage', 'imread')
-except ((ImportError, RuntimeError)):
-    NO_SKIMAGE_FREEIMAGE_SUPPORT = True
-
 # Do we have gdal?
 try:
     import gdal
@@ -217,24 +199,6 @@ def _indent(textstr):
         Possibly multi-line string indented a certain bit.
     """
     return textwrap.indent(textstr, '    ')
-
-
-try:
-    import matplotlib
-    if not re.match('[1-9]\.[3-9]', matplotlib.__version__):
-        # Probably too old.  On Ubuntu 12.04.5, the old PIL
-        # is still used for the backend, and it can't read
-        # the images we need.
-        raise ImportError('MPL is too old')  
-    from matplotlib.pyplot import imread
-
-    # The whole point of trying to import PIL is to determine if it's there
-    # or not.  We won't use it directly.
-    import PIL
-
-    NO_READ_BACKEND = False
-except ImportError:
-    NO_READ_BACKEND = True
 
 
 def read_image(infile):
@@ -522,8 +486,6 @@ _kwargs = {
     'xmp': _indent(nemo_xmp),
     'codestream': _indent(codestream_header)
 }
-nemo_with_codestream_header = nemo_fmt.format(**_kwargs)
-
 nemo_dump_short = r"""JPEG 2000 Signature Box (jP  ) @ (0, 12)
 File Type Box (ftyp) @ (12, 20)
 JP2 Header Box (jp2h) @ (32, 45)

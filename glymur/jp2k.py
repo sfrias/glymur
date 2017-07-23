@@ -1298,6 +1298,8 @@ class Jp2k(Jp2kBox):
             dtypes.append(self._component2dtype(component))
             nrows.append(component.h)
             ncols.append(component.w)
+            self._validate_nonzero_image_size(component.h, component.w, k)
+
         is_cube = all(r == nrows[0] and c == ncols[0] and d == dtypes[0]
                       for r, c, d in zip(nrows, ncols, dtypes))
 
@@ -1307,11 +1309,8 @@ class Jp2k(Jp2kBox):
             image = []
 
         for k in range(raw_image.contents.numcomps):
-            component = raw_image.contents.comps[k]
 
-            self._validate_nonzero_image_size(nrows[k], ncols[k], k)
-
-            addr = ctypes.addressof(component.data.contents)
+            addr = ctypes.addressof(raw_image.contents.comps[k].data.contents)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 nelts = nrows[k] * ncols[k]

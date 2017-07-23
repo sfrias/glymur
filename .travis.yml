@@ -14,11 +14,6 @@ matrix:
       env:
           - JOB_NAME "35_no_opj"
           - JOB_TAG=no_opj
-    - python: 3.5
-      env:
-          - JOB_NAME "35_openjpeg15"
-          - JOB_TAG=opj15
-          - OPJ15=1
     - python: 3.6
       env:
           - JOB_NAME "36_latest"

@@ -1905,6 +1905,7 @@ class TestJp2k_write(fixtures.MetadataBase):
                              glymur.core.CPRL)
 
 
+@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 class TestJp2k_2_0(unittest.TestCase):
     """Test suite requiring at least version 2.0"""
 

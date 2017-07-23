@@ -8,14 +8,9 @@ License:  MIT
 """
 # Standard library imports...
 from collections import Counter
-try:
-    from contextlib import ExitStack
-    from itertools import filterfalse
-except ImportError:
-    # v2.7, third party library import ...
-    from contextlib2 import ExitStack
-    from itertools import ifilterfalse as filterfalse
+from contextlib import ExitStack
 import ctypes
+from itertools import filterfalse
 import math
 import os
 import re

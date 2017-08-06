@@ -16,6 +16,7 @@ except ImportError:
     from contextlib2 import ExitStack
     from itertools import ifilterfalse as filterfalse
 import ctypes
+import io
 import math
 import os
 import re
@@ -40,8 +41,8 @@ class Jp2k(Jp2kBox):
 
     Attributes
     ----------
-    filename : str
-        The path to the JPEG 2000 file.
+    filename : str or file-like object
+        The JPEG 2000 file.
     box : sequence
         List of top-level boxes in the file.  Each box may in turn contain
         its own list of boxes.  Will be empty if the file consists only of a
@@ -140,8 +141,18 @@ class Jp2k(Jp2kBox):
         """
         Jp2kBox.__init__(self)
 
-        # In case of pathlib.Paths... 
-        self.filename = str(filename)
+        # Need to figure out what we have here.
+        if isinstance(filename, str):
+            # Simple string path.
+            self.filename = filename
+        else:
+            # Pathlib or other file-like object
+            try:
+                # This is pathlib only
+                self.filename = str(filename.absolute())
+            except AttributeError:
+                # Other file-like object.
+                self.filename = filename.name
 
         self.box = []
         self._codec_format = None

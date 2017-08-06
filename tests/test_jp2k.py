@@ -250,6 +250,11 @@ class TestJp2k(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
+    def test_file_object(self):
+        with open(self.jp2file, "rb") as f:
+            jp2 = Jp2k(f)
+            self.assertEqual(jp2.shape, (1456, 2592, 3))
+
     def test_pathlib(self):
         p = pathlib.Path(self.jp2file)
         jp2 = Jp2k(p)

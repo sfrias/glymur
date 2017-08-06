@@ -153,6 +153,7 @@ class Jp2k(Jp2kBox):
             except AttributeError:
                 # Other file-like object.
                 self.filename = filename.name
+        self.length = os.path.getsize(self.filename)
 
         self.box = []
         self._codec_format = None
@@ -278,8 +279,6 @@ class Jp2k(Jp2kBox):
         IOError
             The file was not JPEG 2000.
         """
-        self.length = os.path.getsize(self.filename)
-
         with open(self.filename, 'rb') as fptr:
 
             # Make sure we have a JPEG2000 file.  It could be either JP2 or

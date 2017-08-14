@@ -254,8 +254,8 @@ class TestJp2k(unittest.TestCase):
         """
         Version 2.2.0 of openjpeg is not yet supported.
         """
-        with patch('glymur.version.openjpeg_version_tuple', new=(2, 2, 0)):
-            with self.assertRaises(IOError):
+        with patch('glymur.version.openjpeg_version', new='2.2.0'):
+            with self.assertRaises(TypeError):
                 j2k = Jp2k(self.jp2file)
                 j2k[:]
 
@@ -841,12 +841,12 @@ class TestJp2k(unittest.TestCase):
         """
         with patch('glymur.version.openjpeg_version_tuple', new=(0, 0, 0)):
             with patch('glymur.version.openjpeg_version', new='0.0.0'):
-                with self.assertRaises(RuntimeError):
+                with self.assertRaises(TypeError):
                     with warnings.catch_warnings():
                         # Suppress a deprecation warning for raw read method.
                         warnings.simplefilter("ignore")
                         glymur.Jp2k(self.jp2file).read()
-                with self.assertRaises(RuntimeError):
+                with self.assertRaises(TypeError):
                     glymur.Jp2k(self.jp2file)[:]
 
     def test_read_bands_without_openjp2(self):

@@ -250,6 +250,15 @@ class TestJp2k(unittest.TestCase):
     def tearDownClass(cls):
         pass
 
+    def test_v2p2p0(self):
+        """
+        Version 2.2.0 of openjpeg is not yet supported.
+        """
+        with patch('glymur.version.openjpeg_version_tuple', new=(2, 2, 0)):
+            with self.assertRaises(IOError):
+                j2k = Jp2k(self.jp2file)
+                j2k[:]
+
     def test_pathlib(self):
         p = pathlib.Path(self.jp2file)
         jp2 = Jp2k(p)

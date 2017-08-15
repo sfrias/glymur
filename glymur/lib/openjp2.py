@@ -32,7 +32,7 @@ def version():
 if OPENJP2 is not None:
     _MAJOR, _MINOR, _PATCH = [int(x) for x in version().split('.')]
 else:
-    _MINOR = 0
+    _MAJOR, _MINOR, _PATCH = 0, 0, 0
 
 ERROR_MSG_LST = []
 

@@ -2,6 +2,7 @@
 """Test suite for printing.
 """
 # Standard library imports
+from io import BytesIO, StringIO
 import os
 import pkg_resources as pkg
 import shutil
@@ -9,15 +10,9 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import uuid
 import warnings
-if sys.hexversion >= 0x03000000:
-    from unittest.mock import patch
-    from io import BytesIO, StringIO
-else:
-    from mock import patch
-    from StringIO import StringIO
-    from io import BytesIO
 
 # Third party library imports ...
 try:
@@ -248,7 +243,6 @@ class TestSuite(unittest.TestCase):
                 self.assertTrue(isinstance(jp2.box[-1].data,
                                            ET.ElementTree))
 
-    @unittest.skipIf(sys.hexversion < 0x03000000, "assertWarns is PY3K")
     def test_bad_exif_tag(self):
         """
         Corrupt the Exif IFD with an invalid tag should produce a warning.
@@ -429,8 +423,7 @@ class TestSuiteHiRISE(unittest.TestCase):
         else:
             # Only verify if PY3K, don't bother with Python2.  OrderedDicts
             # print out differently.
-            if sys.hexversion >= 0x03040000:
-                self.assertEqual(actual, fixtures.geotiff_uuid_without_gdal)
+            self.assertEqual(actual, fixtures.geotiff_uuid_without_gdal)
 
 
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

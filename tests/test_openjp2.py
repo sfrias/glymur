@@ -2,26 +2,20 @@
 Tests for libopenjp2 wrapping functions.
 """
 # Standard library imports ...
+from io import StringIO
 import os
 import re
 import sys
 import tempfile
 import unittest
-if sys.hexversion >= 0x03000000:
-    from unittest.mock import patch
-    from io import StringIO
-else:
-    from StringIO import StringIO
-
-    # Third party library import
-    from mock import patch
+from unittest.mock import patch
 
 # Third party library imports ...
 import numpy as np
 
 # Local imports ...
 import glymur
-from glymur.lib import openjp2, openjpeg
+from glymur.lib import openjp2
 from . import fixtures
 
 
@@ -349,7 +343,6 @@ def xtx5_setup(filename):
     tile_encoder(**kwargs)
 
 
-@unittest.skipIf(sys.hexversion < 0x03000000, "do not care about 2.7 here")
 @unittest.skipIf(re.match('0|1|2.0', glymur.version.openjpeg_version),
                  "Requires openjpeg 2.1.0 or higher")
 class TestPrintingOpenjp2(unittest.TestCase):

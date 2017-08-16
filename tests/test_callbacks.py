@@ -2,20 +2,14 @@
 Test suite for openjpeg's callback functions.
 """
 # Standard library imports ...
+from io import StringIO
 import os
 import re
 import sys
 import tempfile
 import warnings
 import unittest
-if sys.hexversion >= 0x03030000:
-    from unittest.mock import patch
-    from io import StringIO
-else:
-    from StringIO import StringIO
-
-    # Third party imports ...
-    from mock import patch
+from unittest.mock import patch
 
 # Local imports ...
 import glymur
@@ -107,7 +101,4 @@ class TestCallbacks(unittest.TestCase):
                                            [0-9]+\.[0-9]+\ss""",
                                re.VERBOSE)
 
-            if sys.hexversion <= 0x03020000:
-                self.assertRegexpMatches(actual, regex)
-            else:
-                self.assertRegex(actual, regex)
+            self.assertRegex(actual, regex)

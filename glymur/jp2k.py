@@ -8,13 +8,8 @@ License:  MIT
 """
 # Standard library imports...
 from collections import Counter
-try:
-    from contextlib import ExitStack
-    from itertools import filterfalse
-except ImportError:
-    # v2.7, third party library import ...
-    from contextlib2 import ExitStack
-    from itertools import ifilterfalse as filterfalse
+from contextlib import ExitStack
+from itertools import filterfalse
 import ctypes
 import math
 import os
@@ -32,7 +27,7 @@ from . import core, version
 from .jp2box import (Jp2kBox, JPEG2000SignatureBox, FileTypeBox,
                      JP2HeaderBox, ColourSpecificationBox,
                      ContiguousCodestreamBox, ImageHeaderBox)
-from .lib import openjpeg as opj, openjp2 as opj2
+from .lib import openjp2 as opj2
 
 
 class Jp2k(Jp2kBox):
@@ -396,10 +391,7 @@ class Jp2k(Jp2kBox):
             msg = "Cannot specify cratios and psnr options together."
             raise IOError(msg)
 
-        if version.openjpeg_version_tuple[0] == 1:
-            cparams = opj.set_default_encoder_parameters()
-        else:
-            cparams = opj2.set_default_encoder_parameters()
+        cparams = opj2.set_default_encoder_parameters()
 
         outfile = self.filename.encode()
         num_pad_bytes = opj2.PATH_LEN - len(outfile)

@@ -7,7 +7,6 @@ import ctypes
 from io import BytesIO
 import os
 import struct
-import sys
 import tempfile
 import unittest
 import warnings

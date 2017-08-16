@@ -844,7 +844,6 @@ class TestJp2k(unittest.TestCase):
                 with self.assertRaises(exp_error):
                     glymur.Jp2k(self.jp2file).read_bands()
 
-        
     @unittest.skipIf(sys.platform == 'win32', WINDOWS_TMP_FILE_MSG)
     def test_zero_length_reserved_segment(self):
         """
@@ -970,7 +969,7 @@ class TestJp2k(unittest.TestCase):
         file = pkg.resource_filename(__name__, file)
         j = Jp2k(file)
         d0 = j[:]
-        
+
         j.layer = 1
         d1 = j[:]
 
@@ -1140,7 +1139,7 @@ class TestJp2k_write(fixtures.MetadataBase):
 
         with tempfile.NamedTemporaryFile(suffix=".jp2") as tfile:
             with self.assertRaises(IOError):
-                j2 = j.wrap(tfile.name, boxes=boxes)
+                j.wrap(tfile.name, boxes=boxes)
 
     @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
                      "Requires as least v2.0")
@@ -1912,27 +1911,6 @@ class TestJp2k_1_x(unittest.TestCase):
     def setUp(self):
         self.jp2file = glymur.data.nemo()
         self.j2kfile = glymur.data.goodstuff()
-
-    def test_tile(self):
-        """tile option not allowed for 1.x.
-        """
-        with patch('glymur.version.openjpeg_version_tuple', new=(1, 5, 0)):
-            with patch('glymur.version.openjpeg_version', new="1.5.0"):
-                j2k = Jp2k(self.j2kfile)
-                with warnings.catch_warnings():
-                    # The tile keyword is deprecated, so suppress the warning.
-                    warnings.simplefilter('ignore')
-                    with self.assertRaises(TypeError):
-                        j2k.read(tile=0)
-
-    def test_layer(self):
-        """layer option not allowed for 1.x.
-        """
-        with patch('glymur.version.openjpeg_version', new="1.5.0"):
-            with patch('glymur.version.openjpeg_version_tuple', new=(1, 5, 0)):
-                j2k = Jp2k(self.j2kfile)
-                with self.assertRaises(IOError):
-                    j2k.layer = 1
 
 
 @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,

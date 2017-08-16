@@ -3,10 +3,8 @@ OPENJP2 may be present in some form or other.
 """
 # Standard library imports ...
 import contextlib
-import ctypes
 import imp
 import os
-import sys
 import tempfile
 import unittest
 from unittest.mock import patch

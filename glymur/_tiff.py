@@ -361,5 +361,5 @@ class ExifImageIfd(Ifd):
                    51041: 'NoiseProfile'}
 
     def __init__(self, endian, read_buffer, offset):
-        Ifd.__init__(self, endian, read_buffer, offset)
+        super().__init__(endian, read_buffer, offset)
         self.post_process(self.tagnum2name)

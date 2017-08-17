@@ -133,7 +133,7 @@ class Jp2k(Jp2kBox):
         verbose : bool, optional
             Print informational messages produced by the OpenJPEG library.
         """
-        Jp2kBox.__init__(self)
+        super().__init__()
 
         # In case of pathlib.Paths...
         self.filename = str(filename)

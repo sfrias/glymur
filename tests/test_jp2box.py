@@ -33,6 +33,7 @@ from glymur.jp2box import (
 from glymur.core import COLOR, OPACITY, SRGB, GREYSCALE
 from glymur.core import RED, GREEN, BLUE, GREY, WHOLE_IMAGE
 from .fixtures import WINDOWS_TMP_FILE_MSG, MetadataBase
+from .fixtures import OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG
 
 
 def docTearDown(doctest_obj):
@@ -116,6 +117,7 @@ class TestDataEntryURL(unittest.TestCase):
                 self.assertEqual(url + chr(0), read_url)
 
 
+@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
 class TestChannelDefinition(unittest.TestCase):
     """Test suite for channel definition boxes."""

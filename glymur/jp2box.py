@@ -3282,7 +3282,7 @@ class UUIDBox(Jp2kBox):
             self.data = self.raw_data
 
     def __repr__(self):
-        msg = ("glymur.jp2box.UUIDBox(the_uuid={0}, "
+        msg = ("glymur.jp2box.UUIDBox({0}, "
                "raw_data=<byte array {1} elements>)")
         return msg.format(repr(self.uuid), len(self.raw_data))
 

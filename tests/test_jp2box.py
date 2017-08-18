@@ -50,6 +50,7 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
+@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", WINDOWS_TMP_FILE_MSG)
 class TestDataEntryURL(unittest.TestCase):
     """Test suite for DataEntryURL boxes."""

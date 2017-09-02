@@ -12,7 +12,6 @@ import warnings
 
 # Local imports ...
 import glymur
-from glymur.config import load_openjpeg_library
 from glymur import Jp2k
 from .fixtures import WINDOWS_TMP_FILE_MSG
 

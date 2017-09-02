@@ -4,7 +4,6 @@ Test suite for openjpeg's callback functions.
 # Standard library imports ...
 from io import StringIO
 import os
-import re
 import tempfile
 import warnings
 import unittest

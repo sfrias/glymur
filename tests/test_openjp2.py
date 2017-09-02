@@ -16,7 +16,7 @@ import numpy as np
 import glymur
 from glymur.lib import openjp2
 from . import fixtures
-from fixtures import OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG
+from .fixtures import OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG
 
 
 @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")

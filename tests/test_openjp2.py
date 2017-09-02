@@ -19,6 +19,7 @@ from . import fixtures
 from .fixtures import OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG
 
 
+@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
 class TestOpenJP2(unittest.TestCase):
     """Test openjp2 library functionality.

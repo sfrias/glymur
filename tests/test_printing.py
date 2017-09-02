@@ -370,9 +370,6 @@ class TestPrinting(unittest.TestCase):
             glymur.set_option('hi', 'low')
 
     @unittest.skipIf('lxml' not in sys.modules.keys(), "No lxml")
-    @unittest.skipIf(re.match("1.5|2",
-                              glymur.version.openjpeg_version) is None,
-                     "Must have openjpeg 1.5 or higher to run")
     def test_asoc_label_box(self):
         """verify printing of asoc, label boxes"""
         # Construct a fake file with an asoc and a label box, as

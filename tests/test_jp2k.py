@@ -69,8 +69,6 @@ class SliceProtocolBase(unittest.TestCase):
 
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
-@unittest.skipIf(re.match("1.5|2", glymur.version.openjpeg_version) is None,
-                 "Must have openjpeg 1.5 or higher to run")
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestSliceProtocolBaseWrite(SliceProtocolBase):
 
@@ -215,8 +213,6 @@ class TestSliceProtocolRead(SliceProtocolBase):
         expected = self.j2k_data[3:8, :, :]
         np.testing.assert_array_equal(actual, expected)
 
-    @unittest.skipIf(re.match("0|1", glymur.version.openjpeg_version),
-                     "Must have openjpeg 2 or higher to run")
     def test_region_rlevel5(self):
         """
         maximim rlevel
@@ -249,8 +245,6 @@ class TestJp2k(unittest.TestCase):
         jp2 = Jp2k(p)
         self.assertEqual(jp2.shape, (1456, 2592, 3))
 
-    @unittest.skipIf(re.match('1.5.(1|2)', openjpeg_version) is not None,
-                     "Mysteriously fails in 1.5.1 and 1.5.2")
     def test_no_cxform_pclr_jpx(self):
         """
         Indices for pclr jpxfile still usable if no color transform specified
@@ -389,8 +383,6 @@ class TestJp2k(unittest.TestCase):
         jpx = Jp2k(self.jpxfile)
         self.assertEqual(jpx.shape, (1024, 1024, 3))
 
-    @unittest.skipIf(re.match("0|1.[0-4]", glymur.version.openjpeg_version),
-                     "Must have openjpeg 1.5 or higher to run")
     @unittest.skipIf(os.name == "nt", "Unexplained failure on windows")
     def test_irreversible(self):
         """Irreversible"""

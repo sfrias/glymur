@@ -342,8 +342,6 @@ def xtx5_setup(filename):
     tile_encoder(**kwargs)
 
 
-@unittest.skipIf(re.match('0|1|2.0', glymur.version.openjpeg_version),
-                 "Requires openjpeg 2.1.0 or higher")
 class TestPrintingOpenjp2(unittest.TestCase):
     """Tests for verifying how printing works on openjp2 library structures."""
     def setUp(self):

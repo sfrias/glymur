@@ -13,6 +13,8 @@ from unittest.mock import patch
 import glymur
 
 
+@unittest.skipIf(glymur.version.openjpeg_version[0] != '2',
+                 "Missing openjp2 library.")
 class TestCallbacks(unittest.TestCase):
     """Test suite for callbacks."""
 
@@ -20,8 +22,6 @@ class TestCallbacks(unittest.TestCase):
         self.jp2file = glymur.data.nemo()
         self.j2kfile = glymur.data.goodstuff()
 
-    @unittest.skipIf(glymur.version.openjpeg_version[0] != '2',
-                     "Missing openjp2 library.")
     @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
     def test_info_callback_on_write_backwards_compatibility(self):
         """Verify messages printed when writing an image in verbose mode."""
@@ -37,8 +37,6 @@ class TestCallbacks(unittest.TestCase):
         expected = '[INFO] tile number 1 / 1'
         self.assertEqual(actual, expected)
 
-    @unittest.skipIf(glymur.version.openjpeg_version[0] != '2',
-                     "Missing openjp2 library.")
     @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
     def test_info_callback_on_write(self):
         """Verify messages printed when writing an image in verbose mode."""
@@ -51,8 +49,6 @@ class TestCallbacks(unittest.TestCase):
         expected = '[INFO] tile number 1 / 1'
         self.assertEqual(actual, expected)
 
-    @unittest.skipIf(glymur.version.openjpeg_version[0] == '0',
-                     "Missing openjpeg/openjp2 library.")
     def test_info_callbacks_on_read(self):
         """stdio output when info callback handler is enabled"""
 

@@ -337,13 +337,6 @@ class Jp2k(Jp2kBox):
         fps : {24, 48}
             Frames per second.
         """
-        if re.match("1.5|2.0", version.openjpeg_version) is not None:
-            msg = ("Writing Cinema2K or Cinema4K files is not supported with "
-                   "OpenJPEG library versions less than 2.1.0.  The installed "
-                   "version of OpenJPEG is {version}.")
-            msg = msg.format(version=version.openjpeg_version)
-            raise IOError(msg)
-
         # Cinema modes imply MCT.
         self._cparams.tcp_mct = 1
 

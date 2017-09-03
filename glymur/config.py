@@ -10,10 +10,6 @@ import platform
 import sys
 import warnings
 
-# default library locations for MacPorts
-_macports_default_location = {'openjp2': '/opt/local/lib/libopenjp2.dylib',
-                              'openjpeg': '/opt/local/lib/libopenjpeg.dylib'}
-
 
 def glymurrc_fname():
     """Return the path to the configuration file.
@@ -68,7 +64,7 @@ def load_openjpeg_library(libname):
     if path is None:
         if platform.system() == 'Darwin':
             # OpenJPEG may have been installed via MacPorts
-            path = _macports_default_location[libname]
+            path = '/opt/local/lib/libopenjp2.dylib'
 
         if path is not None and not os.path.exists(path):
             # the mac/win default location does not exist.

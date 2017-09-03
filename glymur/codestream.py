@@ -1232,17 +1232,17 @@ class PODsegment(Segment):
 
     def __str__(self):
         msg = Segment.__str__(self)
+        msg += '\n'
+
+        submsg = ('    Progression change {0}:\n'
+                  '        Resolution index start:  {1}\n'
+                  '        Component index start:  {2}\n'
+                  '        Layer index end:  {3}\n'
+                  '        Resolution index end:  {4}\n'
+                  '        Component index end:  {5}\n'
+                  '        Progression order:  {6}\n')
         for j in range(len(self.rspod)):
 
-            msg += '\n    '
-            lines = ['Progression change {0}:',
-                     '    Resolution index start:  {1}',
-                     '    Component index start:  {2}',
-                     '    Layer index end:  {3}',
-                     '    Resolution index end:  {4}',
-                     '    Component index end:  {5}',
-                     '    Progression order:  {6}']
-            submsg = '\n    '.join(lines)
             msg += submsg.format(j,
                                  self.rspod[j],
                                  self.cspod[j],
@@ -1251,7 +1251,7 @@ class PODsegment(Segment):
                                  self.cdpod[j],
                                  _PROGRESSION_ORDER_DISPLAY[self.ppod[j]])
 
-        return msg
+        return msg.rstrip()
 
 
 class PLTsegment(Segment):

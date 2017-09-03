@@ -1600,23 +1600,6 @@ class TestJp2k_write(fixtures.MetadataBase):
             self.assertEqual(codestream.segment[2].xform,
                              glymur.core.WAVELET_XFORM_9X7_IRREVERSIBLE)
 
-    def test_cinema_mode_with_too_old_version_of_openjpeg(self):
-        """
-        Cinema mode not allowed for anything less than 2.0.1
-
-        Origin file tested was
-
-            input/nonregression/X_4_2K_24_185_CBR_WB_000.tif
-
-        """
-        data = np.zeros((857, 2048, 3), dtype=np.uint8)
-        versions = ["1.5.0", "2.0.0"]
-        for version in versions:
-            with patch('glymur.version.openjpeg_version', new=version):
-                with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-                    with self.assertRaises(IOError):
-                        Jp2k(tfile.name, data=data, cinema2k=48)
-
     def test_cinema2K_with_others(self):
         """
         Can't specify cinema2k with any other options.

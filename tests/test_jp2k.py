@@ -72,6 +72,26 @@ class SliceProtocolBase(unittest.TestCase):
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestSliceProtocolBaseWrite(SliceProtocolBase):
 
+    def test_write_tile_by_tile(self):
+        """
+        Verify that we can write images tile by tile.
+        """
+        data = self.j2k_data[:, :, 0].copy()
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            height, width = data.shape[:2]
+            theight, twidth = height // 2, width // 2
+            with Jp2k(tfile.name, shape=(height, width),
+                      tileshape=(theight, twidth)) as jp2:
+                for r in range(0, height, theight):
+                    rows = slice(r, r + theight)
+                    for c in range(0, width, twidth):
+                        cols = slice(c, c + twidth)
+                        jp2[rows, cols] = data[rows, cols].copy()
+
+        actual = Jp2k(tfile.name)[:]
+        expected = data
+        np.testing.assert_array_equal(actual, expected)
+
     def test_write_ellipsis(self):
         expected = self.j2k_data
 

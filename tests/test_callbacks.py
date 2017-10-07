@@ -50,20 +50,16 @@ class TestCallbacks(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_info_callbacks_on_read(self):
-        """stdio output when info callback handler is enabled"""
+        """
+        Set the verbose flag, do a read operation.
 
-        # Verify that we get the expected stdio output when our internal info
-        # callback handler is enabled.
+        Verify that sys.stdout produces information.  Don't bother matching
+        the exact string because this may change the next time OpenJPEG is
+        update.
+        """
         jp2 = glymur.Jp2k(self.j2kfile)
-        with patch('sys.stdout', new=StringIO()) as fake_out:
+        with patch('sys.stdout', new=StringIO()) as mock_stdout:
             jp2.verbose = True
             jp2[::2, ::2]
-            actual = fake_out.getvalue().strip()
 
-        expected = ('[INFO] Start to read j2k main header (0).\n'
-                    '[INFO] Main header has been correctly decoded.\n'
-                    '[INFO] Setting decoding area to 0,0,480,800\n'
-                    '[INFO] Header of tile 1 / 1 has been read.\n'
-                    '[INFO] Tile 1/1 has been decoded.\n'
-                    '[INFO] Image data has been updated with tile 1.')
-        self.assertEqual(actual, expected)
+        self.assertIn('[INFO]', mock_stdout.getvalue())

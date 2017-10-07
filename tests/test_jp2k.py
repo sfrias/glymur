@@ -1151,8 +1151,11 @@ class TestJp2k_write(fixtures.MetadataBase):
 
         """
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            j = Jp2k(tfile.name, data=self.jp2_data,
-                     psnr=[30, 35, 40], numres=2)
+            with warnings.catch_warnings():
+                # Warning emitted in OpenJPEG 2.3.0 due to TCP rates.
+                warnings.simplefilter('ignore')
+                j = Jp2k(tfile.name, data=self.jp2_data,
+                         psnr=[30, 35, 40], numres=2)
 
             codestream = j.get_codestream()
 
@@ -1209,9 +1212,12 @@ class TestJp2k_write(fixtures.MetadataBase):
 
         """
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            j = Jp2k(tfile.name,
-                     data=self.jp2_data,
-                     psnr=[30, 35, 40], cbsize=(16, 16), psizes=[(64, 64)])
+            with warnings.catch_warnings():
+                # Warning emitted in OpenJPEG 2.3.0 due to TCP rates.
+                warnings.simplefilter('ignore')
+                j = Jp2k(tfile.name,
+                         data=self.jp2_data,
+                         psnr=[30, 35, 40], cbsize=(16, 16), psizes=[(64, 64)])
 
             codestream = j.get_codestream()
 
@@ -1483,9 +1489,12 @@ class TestJp2k_write(fixtures.MetadataBase):
 
         """
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            jp2 = Jp2k(tfile.name,
-                       data=self.jp2_data,
-                       psnr=[30, 35, 50], prog='LRCP', numres=3)
+            with warnings.catch_warnings():
+                # Warning emitted in OpenJPEG 2.3.0 due to TCP rates.
+                warnings.simplefilter('ignore')
+                jp2 = Jp2k(tfile.name,
+                           data=self.jp2_data,
+                           psnr=[30, 35, 50], prog='LRCP', numres=3)
 
             ids = [box.box_id for box in jp2.box]
             self.assertEqual(ids, ['jP  ', 'ftyp', 'jp2h', 'jp2c'])

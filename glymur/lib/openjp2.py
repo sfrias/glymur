@@ -614,6 +614,29 @@ def create_compress(codec_format):
     return codec
 
 
+def codec_set_threads(codec, num_threads):
+    """
+    Allocates worker threads for the compressor/decompressor.
+
+    This function Wraps the openjp2 library function opj_codec_set_threads.
+
+    Parameters
+    ----------
+    codec
+        Decompressor handler
+    num_threads : int
+        Number of threads.
+
+    Raises
+    ------
+    RuntimeError
+        If the OpenJPEG library routine opj_decode fails.
+    """
+    OPENJP2.opj_codec_set_threads.argtypes = [CODEC_TYPE, ctypes.c_int32]
+    OPENJP2.opj_codec_set_threads.restype = check_error
+    OPENJP2.opj_codec_set_threads(codec, num_threads)
+
+
 def decode(codec, stream, image):
     """Reads an entire image.
 

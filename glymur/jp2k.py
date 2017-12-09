@@ -46,16 +46,18 @@ class Jp2k(Jp2kBox):
 
     Properties
     ----------
+    codestream : glymur.codestream.Codestream
+        JP2 or J2K codestream object.
     ignore_pclr_cmap_cdef : bool
         Whether or not to ignore the pclr, cmap, or cdef boxes during any
         color transformation, defaults to False.
     layer : int
         Zero-based number of quality layer to decode.
+    num_threads : int
+        Set the number of threads that the decompressor uses.
     verbose : bool
         Whether or not to print informational messages produced by the
         OpenJPEG library, defaults to false.
-    codestream : glymur.codestream.Codestream
-        JP2 or J2K codestream object.
 
     Examples
     --------
@@ -143,6 +145,8 @@ class Jp2k(Jp2kBox):
         self._colorspace = None
         self._layer = 0
         self._codestream = None
+        self._num_threads = 1
+
         if data is not None:
             self._shape = data.shape
         else:
@@ -240,6 +244,17 @@ class Jp2k(Jp2kBox):
     @shape.setter
     def shape(self, shape):
         self._shape = shape
+
+    @property
+    def num_threads(self):
+        return self._num_threads
+
+    @num_threads.setter
+    def num_threads(self, num_threads):
+        """
+        To be used only by the decompressor.
+        """
+        self._num_threads = num_threads
 
     def __repr__(self):
         msg = "glymur.Jp2k('{0}')".format(self.filename)
@@ -1126,6 +1141,8 @@ class Jp2k(Jp2kBox):
                 opj2.set_info_handler(codec, None)
 
             opj2.setup_decoder(codec, self._dparams)
+            opj2.codec_set_threads(codec, self.num_threads)
+
             raw_image = opj2.read_header(stream, codec)
             stack.callback(opj2.image_destroy, raw_image)
 

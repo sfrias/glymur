@@ -983,6 +983,17 @@ class TestJp2k(unittest.TestCase):
         j = Jp2k(file)
         self.assertEqual(j.layer, 0)
 
+    def test_thread_support(self):
+        """
+        SCENARIO:  Set a non-default thread support value.
+
+        EXPECTED RESULTS:
+        """
+        jp2 = Jp2k(self.jp2file)
+        jp2.num_threads = 2
+        jp2[:]
+        self.assertTrue(True)
+
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

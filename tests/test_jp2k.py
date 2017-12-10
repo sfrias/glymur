@@ -1002,7 +1002,7 @@ class TestJp2k(unittest.TestCase):
             self.assertTrue(True)
             return
 
-        jp2.num_threads = 2
+        jp2.num_threads = num_cpus
         t0 = time.time()
         jp2[:]
         t1 = time.time()

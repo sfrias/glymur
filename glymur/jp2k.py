@@ -254,7 +254,11 @@ class Jp2k(Jp2kBox):
         """
         To be used only by the decompressor.
         """
-        self._num_threads = num_threads
+        if opj2.has_thread_support():
+            self._num_threads = num_threads
+        else:
+            msg = 'The OpenJPEG library is not configured with thread support.'
+            raise RuntimeError(msg)
 
     def __repr__(self):
         msg = "glymur.Jp2k('{0}')".format(self.filename)

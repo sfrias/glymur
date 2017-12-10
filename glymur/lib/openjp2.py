@@ -834,6 +834,19 @@ def end_decompress(codec, stream):
     OPENJP2.opj_end_decompress(codec, stream)
 
 
+def has_thread_support():
+    """
+    Is the library configured with thread support?
+
+    Returns
+    -------
+        True if the library is configured with thread support.
+    """
+    OPENJP2.opj_has_thread_support.restype = BOOL_TYPE
+    ret = OPENJP2.opj_has_thread_support()
+    return True if ret else False
+
+
 def image_destroy(image):
     """Deallocate any resources associated with an image.
 

@@ -11,6 +11,7 @@ import re
 import struct
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 import uuid
@@ -987,12 +988,27 @@ class TestJp2k(unittest.TestCase):
         """
         SCENARIO:  Set a non-default thread support value.
 
-        EXPECTED RESULTS:
+        EXPECTED RESULTS:  Using more threads speeds up a full read.
         """
         jp2 = Jp2k(self.jp2file)
-        jp2.num_threads = 2
+        t0 = time.time()
         jp2[:]
-        self.assertTrue(True)
+        t1 = time.time()
+        delta0 = t1 - t0
+
+        num_cpus = glymur.lib.openjp2.get_num_cpus()
+        if num_cpus == 1:
+            # Nothing to do, can't use more threads.
+            self.assertTrue(True)
+            return
+
+        jp2.num_threads = 2
+        t0 = time.time()
+        jp2[:]
+        t1 = time.time()
+        delta1 = t1 - t0
+
+        self.assertTrue(delta1 < delta0)
 
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)

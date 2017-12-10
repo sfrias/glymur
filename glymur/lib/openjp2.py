@@ -834,6 +834,20 @@ def end_decompress(codec, stream):
     OPENJP2.opj_end_decompress(codec, stream)
 
 
+def get_num_cpus():
+    """
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+        Return the number of virtual CPUs.
+    """
+    OPENJP2.opj_get_num_cpus.restype = ctypes.c_int32
+    return OPENJP2.opj_get_num_cpus()
+
+
 def has_thread_support():
     """
     Is the library configured with thread support?

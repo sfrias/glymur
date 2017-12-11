@@ -254,7 +254,7 @@ class Jp2k(Jp2kBox):
         """
         To be used only by the decompressor.
         """
-        if opj2.has_thread_support():
+        if version.openjpeg_version >= '2.2.0' and opj2.has_thread_support():
             self._num_threads = num_threads
         else:
             msg = 'The OpenJPEG library is not configured with thread support.'

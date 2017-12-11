@@ -632,6 +632,11 @@ def codec_set_threads(codec, num_threads):
     RuntimeError
         If the OpenJPEG library routine opj_decode fails.
     """
+    if not hasattr(OPENJP2, 'opj_codec_set_threads'):
+        msg = ("The opj_codec_set_threads function is not implemented in this "
+               "version of OpenJPEG ({version}).")
+        msg = msg.format(version=version())
+        raise NotImplementedError(msg)
     OPENJP2.opj_codec_set_threads.argtypes = [CODEC_TYPE, ctypes.c_int32]
     OPENJP2.opj_codec_set_threads.restype = check_error
     OPENJP2.opj_codec_set_threads(codec, num_threads)

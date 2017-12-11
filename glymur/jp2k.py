@@ -1145,7 +1145,8 @@ class Jp2k(Jp2kBox):
                 opj2.set_info_handler(codec, None)
 
             opj2.setup_decoder(codec, self._dparams)
-            opj2.codec_set_threads(codec, self.num_threads)
+            if version.openjpeg_version >= '2.2.0':
+                opj2.codec_set_threads(codec, self.num_threads)
 
             raw_image = opj2.read_header(stream, codec)
             stack.callback(opj2.image_destroy, raw_image)

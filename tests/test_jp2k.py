@@ -984,6 +984,8 @@ class TestJp2k(unittest.TestCase):
         j = Jp2k(file)
         self.assertEqual(j.layer, 0)
 
+    @unittest.skipIf(glymur.version.openjpeg_version < '2.2.0',
+                     "Requires as least v2.2.0")
     def test_thread_support(self):
         """
         SCENARIO:  Set a non-default thread support value.

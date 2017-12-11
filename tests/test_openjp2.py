@@ -26,6 +26,7 @@ class TestOpenJP2(unittest.TestCase):
     Some tests correspond to those in the openjpeg test suite.
     """
 
+    @unittest.skipIf(glymur.lib.openjp2.version() < '2.2.0', 'Not implemented')
     def test_get_num_cpus(self):
         """
         SCENARIO:  Hard to test this.  Values will be different across

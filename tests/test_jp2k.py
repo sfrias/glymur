@@ -1012,6 +1012,17 @@ class TestJp2k(unittest.TestCase):
 
         self.assertTrue(delta1 < delta0)
 
+    def test_thread_support_on_openjpeg_lt_220(self):
+        """
+        SCENARIO:  Set number of threads on openjpeg < 2.2.0
+
+        EXPECTED RESULTS:  RuntimeError
+        """
+        jp2 = Jp2k(self.jp2file)
+        with patch('glymur.jp2k.version.openjpeg_version', new='2.1.0'):
+            with self.assertRaises(RuntimeError):
+                jp2.num_threads = 2
+
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)

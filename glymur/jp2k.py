@@ -253,6 +253,20 @@ class Jp2k(Jp2kBox):
     def num_threads(self, num_threads):
         """
         To be used only by the decompressor.
+
+        Examples
+        --------
+        >>> import glymur
+        >>> import time
+        >>> jp2file = glymur.data.nemo()
+        >>> jp2 = glymur.Jp2k(jp2file)
+        >>> t0 = time.time(); data = jp2[:]; t1 = time.time()
+        >>> t1 - t0 #doctest: +SKIP
+        0.9024193286895752
+        >>> jp2.num_threads = 2
+        >>> t0 = time.time(); data = jp2[:]; t1 = time.time()
+        >>> t1 - t0 #doctest: +SKIP
+        0.4060473537445068
         """
         if version.openjpeg_version >= '2.2.0' and opj2.has_thread_support():
             self._num_threads = num_threads

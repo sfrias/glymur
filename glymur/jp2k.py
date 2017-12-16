@@ -80,14 +80,15 @@ class Jp2k(Jp2kBox):
 
     >>> import glymur
     >>> import time
-    >>> jp2file = glymur.data.nemo()
-    >>> jp2 = glymur.Jp2k(jp2file)
-    >>> t0 = time.time(); data = jp2[:]; t1 = time.time()
-    >>> t1 - t0 #doctest: +SKIP
+    >>> if glymur.version.openjpeg_version >= '2.2.0':
+    ...     jp2file = glymur.data.nemo()
+    ...     jp2 = glymur.Jp2k(jp2file)
+    ...     t0 = time.time(); data = jp2[:]; t1 = time.time()
+    ...     t1 - t0 #doctest: +SKIP
     0.9024193286895752
-    >>> jp2.num_threads = 2
-    >>> t0 = time.time(); data = jp2[:]; t1 = time.time()
-    >>> t1 - t0 #doctest: +SKIP
+    ...     jp2.num_threads = 2
+    ...     t0 = time.time(); data = jp2[:]; t1 = time.time()
+    ...     t1 - t0 #doctest: +SKIP
     0.4060473537445068
     """
 

@@ -148,6 +148,8 @@ class Jp2k(Jp2kBox):
         self._colorspace = None
         self._layer = 0
         self._codestream = None
+        self._num_threads = 1
+
         if data is not None:
             self._shape = data.shape
         else:
@@ -190,6 +192,21 @@ class Jp2k(Jp2kBox):
         if self._codestream is None:
             self._codestream = self.get_codestream(header_only=True)
         return self._codestream
+
+    @property
+    def num_threads(self):
+        return self._num_threads
+
+    @num_threads.setter
+    def num_threads(self, num_threads):
+        """
+        To be used only by the decompressor.
+        """
+        if version.openjpeg_version >= '2.2.0' and opj2.has_thread_support():
+            self._num_threads = num_threads
+        else:
+            msg = 'The OpenJPEG library is not configured with thread support.'
+            raise RuntimeError(msg)
 
     @property
     def verbose(self):
@@ -1285,6 +1302,9 @@ class Jp2k(Jp2kBox):
                 opj2.set_info_handler(codec, None)
 
             opj2.setup_decoder(codec, self._dparams)
+            if version.openjpeg_version >= '2.2.0':
+                opj2.codec_set_threads(codec, self.num_threads)
+
             raw_image = opj2.read_header(stream, codec)
             stack.callback(opj2.image_destroy, raw_image)
 

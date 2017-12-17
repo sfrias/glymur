@@ -35,6 +35,16 @@ class TestOpenJP2(unittest.TestCase):
     Some tests correspond to those in the openjpeg test suite.
     """
 
+    @unittest.skipIf(glymur.lib.openjp2.version() < '2.2.0', 'Not implemented')
+    def test_get_num_cpus(self):
+        """
+        SCENARIO:  Test the opj_get_num_cpus library function.
+
+        EXPECTED VALUE:  an integer
+        """
+        num_cpus = openjp2.get_num_cpus()
+        self.assertTrue(num_cpus >= 1)
+
     def test_default_encoder_parameters(self):
         """Ensure that the encoder structure is clean upon init."""
         cparams = openjp2.set_default_encoder_parameters()

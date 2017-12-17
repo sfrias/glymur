@@ -206,6 +206,12 @@ class Jp2k(Jp2kBox):
         """
         if version.openjpeg_version >= '2.2.0' and opj2.has_thread_support():
             self._num_threads = num_threads
+        elif version.openjpeg_version < '2.2.0':
+            msg = ("The num_threads property not supported unless the "
+                   "OpenJPEG library version is 2.2 or higher.  The installed "
+                   "version is {version}.")
+            msg = msg.format(version=version.openjpeg_version)
+            raise RuntimeError(msg)
         else:
             msg = 'The OpenJPEG library is not configured with thread support.'
             raise RuntimeError(msg)

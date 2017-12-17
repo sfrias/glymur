@@ -51,16 +51,18 @@ class Jp2k(Jp2kBox):
 
     Properties
     ----------
+    codestream : glymur.codestream.Codestream
+        JP2 or J2K codestream object.
     ignore_pclr_cmap_cdef : bool
         Whether or not to ignore the pclr, cmap, or cdef boxes during any
         color transformation, defaults to False.
     layer : int
         Zero-based number of quality layer to decode.
+    num_threads : int
+        Set the number of threads to be used by the decompressor
     verbose : bool
         Whether or not to print informational messages produced by the
         OpenJPEG library, defaults to false.
-    codestream : glymur.codestream.Codestream
-        JP2 or J2K codestream object.
 
     Examples
     --------

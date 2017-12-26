@@ -1007,7 +1007,7 @@ class TestJp2k(unittest.TestCase):
             self.assertTrue(True)
             return
 
-        glymur.set_option('num_threads', 4)
+        glymur.set_option('lib.num_threads', 4)
         t0 = time.time()
         jp2[:]
         t1 = time.time()
@@ -1023,7 +1023,7 @@ class TestJp2k(unittest.TestCase):
         """
         with patch('glymur.jp2k.version.openjpeg_version', new='2.1.0'):
             with self.assertRaises(RuntimeError):
-                glymur.set_option('num_threads', 4)
+                glymur.set_option('lib.num_threads', 4)
 
 
 @unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)

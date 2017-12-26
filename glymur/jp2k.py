@@ -23,7 +23,7 @@ import numpy as np
 
 # Local imports...
 from .codestream import Codestream
-from . import core, version, config
+from . import core, version, get_option
 from .jp2box import (Jp2kBox, JPEG2000SignatureBox, FileTypeBox,
                      JP2HeaderBox, ColourSpecificationBox,
                      ContiguousCodestreamBox, ImageHeaderBox)
@@ -1142,7 +1142,7 @@ class Jp2k(Jp2kBox):
 
             opj2.setup_decoder(codec, self._dparams)
             if version.openjpeg_version >= '2.2.0':
-                opj2.codec_set_threads(codec, config.get_option('lib.num_threads'))
+                opj2.codec_set_threads(codec, get_option('lib.num_threads'))
 
             raw_image = opj2.read_header(stream, codec)
             stack.callback(opj2.image_destroy, raw_image)

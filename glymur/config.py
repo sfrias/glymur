@@ -10,6 +10,9 @@ import platform
 import sys
 import warnings
 
+from . import version
+from .lib import openjp2 as opj2
+
 
 def glymurrc_fname():
     """Return the path to the configuration file.
@@ -165,6 +168,7 @@ _original_options = {
     'print.xml': True,
     'print.codestream': True,
     'print.short': False,
+    'num_threads': 1,
 }
 _options = copy.deepcopy(_original_options)
 
@@ -210,6 +214,11 @@ def set_option(key, value):
     """
     if key not in _options.keys():
         raise KeyError('{key} not valid.'.format(key=key))
+
+    if version.openjpeg_version < '2.2.0' or not opj2.has_thread_support():
+        msg = 'The OpenJPEG library is not configured with thread support.'
+        raise RuntimeError(msg)
+
     _options[key] = value
 
 

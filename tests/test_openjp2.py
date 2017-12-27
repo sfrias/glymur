@@ -26,8 +26,7 @@ from . import fixtures
 
 
 @unittest.skipIf(os.name == "nt", "Temporary file issue on window.")
-@unittest.skipIf(re.match(r'''0|1.5|2.0''',
-                          glymur.version.openjpeg_version) is not None,
+@unittest.skipIf(glymur.version.openjpeg_version < '2.1.0',
                  "Not to be run until 2.1.0")
 class TestOpenJP2(unittest.TestCase):
     """Test openjp2 library functionality.

@@ -243,6 +243,9 @@ class TestJp2k(unittest.TestCase):
         glymur.reset_option('all')
 
     def test_pathlib(self):
+        """
+        SCENARIO: Provide a pathlib.Path instead of a string for the filename.
+        """
         p = pathlib.Path(self.jp2file)
         jp2 = Jp2k(p)
         self.assertEqual(jp2.shape, (1456, 2592, 3))
@@ -1026,7 +1029,8 @@ class TestJp2k(unittest.TestCase):
                 glymur.set_option('lib.num_threads', 4)
 
 
-@unittest.skipIf(OPENJPEG_NOT_AVAILABLE, OPENJPEG_NOT_AVAILABLE_MSG)
+@unittest.skipIf(glymur.version.openjpeg_version < '2.1.0',
+                 "Requires as least v2.0")
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestJp2k_write(fixtures.MetadataBase):
     """Write tests, can be run by versions 1.5+"""
@@ -1066,8 +1070,6 @@ class TestJp2k_write(fixtures.MetadataBase):
             with self.assertRaises(IOError):
                 j.wrap(tfile.name, boxes=boxes)
 
-    @unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
-                     "Requires as least v2.0")
     def test_null_data(self):
         """
         Verify that we prevent trying to write images with one dimension zero.
@@ -1841,7 +1843,7 @@ class TestJp2k_write(fixtures.MetadataBase):
                              glymur.core.CPRL)
 
 
-@unittest.skipIf(glymur.version.openjpeg_version_tuple[0] < 2,
+@unittest.skipIf(glymur.version.openjpeg_version < '2.1.0',
                  "Requires as least v2.0")
 class TestJp2k_2_0(unittest.TestCase):
     """Test suite requiring at least version 2.0"""
@@ -1849,6 +1851,7 @@ class TestJp2k_2_0(unittest.TestCase):
     def setUp(self):
         self.jp2file = glymur.data.nemo()
         self.j2kfile = glymur.data.goodstuff()
+        self.jpxfile = glymur.data.jpxfile()
 
     def tearDown(self):
         pass
@@ -1920,20 +1923,6 @@ class TestJp2k_2_0(unittest.TestCase):
                 self.assertEqual(jasoc.box[3].box[0].box_id, 'lbl ')
                 self.assertEqual(jasoc.box[3].box[0].label, 'label')
                 self.assertEqual(jasoc.box[3].box[1].box_id, 'xml ')
-
-
-@unittest.skipIf(glymur.version.openjpeg_version < '2.0.0',
-                 "Not to be run until unless 2.0.1 or higher is present")
-class TestJp2k_2_1(unittest.TestCase):
-    """Only to be run in 2.0+."""
-
-    def setUp(self):
-        self.jp2file = glymur.data.nemo()
-        self.j2kfile = glymur.data.goodstuff()
-        self.jpxfile = glymur.data.jpxfile()
-
-    def tearDown(self):
-        pass
 
     def test_ignore_pclr_cmap_cdef_on_old_read(self):
         """
@@ -2028,9 +2017,8 @@ class TestParsing(unittest.TestCase):
         self.assertIsNotNone(jp2c._codestream)
 
 
-@unittest.skipIf(re.match(r'''0|1|2.0.0''',
-                          glymur.version.openjpeg_version) is not None,
-                 "Only supported in 2.0.1 or higher")
+@unittest.skipIf(glymur.version.openjpeg_version < '2.1.0',
+                 "Only supported in 2.1.0 or higher")
 class TestReadArea(unittest.TestCase):
     """
     Runs tests introduced in version 2.0+ or that pass only in 2.0+

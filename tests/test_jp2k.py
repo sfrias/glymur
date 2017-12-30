@@ -21,6 +21,8 @@ from xml.etree import cElementTree as ET
 # Third party library imports ...
 import numpy as np
 import pkg_resources as pkg
+import skimage.data
+import skimage.measure
 
 # Local imports
 import glymur
@@ -1030,10 +1032,10 @@ class TestJp2k(unittest.TestCase):
 
 
 @unittest.skipIf(glymur.version.openjpeg_version < '2.1.0',
-                 "Requires as least v2.0")
+                 "Requires as least v2.1")
 @unittest.skipIf(os.name == "nt", fixtures.WINDOWS_TMP_FILE_MSG)
 class TestJp2k_write(fixtures.MetadataBase):
-    """Write tests, can be run by versions 1.5+"""
+    """Write tests, can be run by versions 2.1"""
 
     @classmethod
     def setUpClass(cls):
@@ -1077,6 +1079,39 @@ class TestJp2k_write(fixtures.MetadataBase):
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
             with self.assertRaises(IOError):
                 Jp2k(tfile.name, data=np.zeros((0, 256), dtype=np.uint8))
+
+    def test_psnr(self):
+        """
+        SCENARIO:  Four peak signal-to-noise ratio values are supplied, the
+        last is zero.
+
+        EXPECTED RESULT:  Four quality layers, the first should be lossless.
+        """
+        kwargs = {
+            'data': skimage.data.camera(),
+            'psnr': [30, 35, 40, 0],
+        }
+        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+            with warnings.catch_warnings():
+                # OpenJPEG library warning about tcp rates in 2.3 and above
+                warnings.simplefilter('ignore')
+                j = Jp2k(tfile.name, **kwargs)
+
+            d = {}
+            for layer in range(4):
+                j.layer = layer
+                d[layer] = j[:]
+
+        psnr = [
+            skimage.measure.compare_psnr(skimage.data.camera(), d[j])
+            for j in range(4)
+        ]
+
+        # That first image should be lossless.
+        self.assertTrue(np.isinf(psnr[0]))
+
+        # PSNR should increase for the remaining images.
+        self.assertTrue(np.all(psnr[1:]) > 0)
 
     def test_NR_ENC_Bretagne1_ppm_2_encode(self):
         """

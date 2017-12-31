@@ -1080,6 +1080,36 @@ class TestJp2k_write(fixtures.MetadataBase):
             with self.assertRaises(IOError):
                 Jp2k(tfile.name, data=np.zeros((0, 256), dtype=np.uint8))
 
+    def test_psnr_zero_value_not_last(self):
+        """
+        SCENARIO:  The PSNR keyword argument has a zero value, but it is not
+        the last value.
+
+        EXPECTED RESULT:  RuntimeError
+        """
+        kwargs = {
+            'data': skimage.data.camera(),
+            'psnr': [0, 35, 40, 30],
+        }
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, **kwargs)
+
+    def test_psnr_non_zero_non_monotonically_decreasing(self):
+        """
+        SCENARIO:  The PSNR keyword argument is non-monotonically increasing
+        and does not contain zero.
+
+        EXPECTED RESULT:  RuntimeError
+        """
+        kwargs = {
+            'data': skimage.data.camera(),
+            'psnr': [30, 35, 40, 30],
+        }
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
+            with self.assertRaises(IOError):
+                Jp2k(tfile.name, **kwargs)
+
     def test_psnr(self):
         """
         SCENARIO:  Four peak signal-to-noise ratio values are supplied, the
@@ -1091,7 +1121,7 @@ class TestJp2k_write(fixtures.MetadataBase):
             'data': skimage.data.camera(),
             'psnr': [30, 35, 40, 0],
         }
-        with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
+        with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
             with warnings.catch_warnings():
                 # OpenJPEG library warning about tcp rates in 2.3 and above
                 warnings.simplefilter('ignore')

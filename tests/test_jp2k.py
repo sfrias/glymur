@@ -1030,6 +1030,19 @@ class TestJp2k(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 glymur.set_option('lib.num_threads', 4)
 
+    @patch('glymur.lib.openjp2.has_thread_support')
+    def test_thread_support_not_compiled_into_library(self, mock_ts):
+        """
+        SCENARIO:  Set number of threads on openjpeg >= 2.2.0, but openjpeg
+        has not been compiled with thread support.
+
+        EXPECTED RESULTS:  RuntimeError
+        """
+        mock_ts.return_value = False
+        with patch('glymur.jp2k.version.openjpeg_version', new='2.2.0'):
+            with self.assertRaises(RuntimeError):
+                glymur.set_option('lib.num_threads', 4)
+
 
 @unittest.skipIf(glymur.version.openjpeg_version < '2.1.0',
                  "Requires as least v2.1")

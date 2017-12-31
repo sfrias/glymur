@@ -401,24 +401,17 @@ class Jp2k(Jp2kBox):
                 msg = "Cannot specify cratios and psnr options together."
                 raise IOError(msg)
 
-            if 0 in psnr:
-                if psnr[-1] != 0:
-                    msg = ("If a zero value is supplied in the PSNR keyword "
-                           "argument, it must be in the final position.")
-                    raise IOError(msg)
+            if 0 in psnr and psnr[-1] != 0:
+                msg = ("If a zero value is supplied in the PSNR keyword "
+                       "argument, it must be in the final position.")
+                raise IOError(msg)
 
-                if np.any(np.diff(psnr[:-1]) < 0):
-                    msg = ("PSNR values must be increasing, with one "
-                           "exception - zero may be in the final position to "
-                           "indicate a lossless layer.")
-                    raise IOError(msg)
-
-            else:
-                if np.any(np.diff(psnr) < 0):
-                    msg = ("PSNR values must be increasing, with one "
-                           "exception - zero may be in the final position to "
-                           "indicate a lossless layer.")
-                    raise IOError(msg)
+            if (((0 in psnr and np.any(np.diff(psnr[:-1]) < 0)) or
+                 (0 not in psnr and np.any(np.diff(psnr) < 0)))):
+                msg = ("PSNR values must be increasing, with one exception - "
+                       "zero may be in the final position to indicate a "
+                       "lossless layer.")
+                raise IOError(msg)
 
         cparams = opj2.set_default_encoder_parameters()
 

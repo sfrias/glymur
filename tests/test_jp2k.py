@@ -1145,10 +1145,14 @@ class TestJp2k_write(fixtures.MetadataBase):
                 j.layer = layer
                 d[layer] = j[:]
 
-        psnr = [
-            skimage.measure.compare_psnr(skimage.data.camera(), d[j])
-            for j in range(4)
-        ]
+        with warnings.catch_warnings():
+            # MSE is zero for that first image, resulting in a divide-by-zero
+            # warning
+            warnings.simplefilter('ignore')
+            psnr = [
+                skimage.measure.compare_psnr(skimage.data.camera(), d[j])
+                for j in range(4)
+            ]
 
         # That first image should be lossless.
         self.assertTrue(np.isinf(psnr[0]))

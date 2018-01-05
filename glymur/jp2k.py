@@ -430,12 +430,10 @@ class Jp2k(Jp2kBox):
         if cinema2k is not None:
             self._cparams = cparams
             self._set_cinema_params('cinema2k', cinema2k)
-            return
 
         if cinema4k is not None:
             self._cparams = cparams
             self._set_cinema_params('cinema4k', cinema4k)
-            return
 
         if cbsize is not None:
             cparams.cblockw_init = cbsize[1]

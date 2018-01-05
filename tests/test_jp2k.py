@@ -1173,10 +1173,7 @@ class TestJp2k_write(fixtures.MetadataBase):
             'numres': 2,
         }
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
-            with warnings.catch_warnings():
-                # OpenJPEG library warning about tcp rates in 2.3 and above
-                warnings.simplefilter('ignore')
-                j = Jp2k(tfile.name, **kwargs)
+            j = Jp2k(tfile.name, **kwargs)
 
             codestream = j.get_codestream()
 

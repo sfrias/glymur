@@ -425,11 +425,6 @@ class Jp2k(Jp2kBox):
         else:
             cparams.codec_fmt = opj2.CODEC_J2K
 
-        # Set defaults to lossless to begin.
-        cparams.tcp_rates[0] = 0
-        cparams.tcp_numlayers = 1
-        cparams.cp_disto_alloc = 0
-
         cparams.irreversible = 1 if irreversible else 0
 
         if cinema2k is not None:
@@ -503,6 +498,12 @@ class Jp2k(Jp2kBox):
                        "if the colorspace is gray.")
                 raise IOError(msg)
             cparams.tcp_mct = 1 if mct else 0
+
+        # Set defaults to lossless to begin.
+        if cparams.tcp_numlayers == 0:
+            cparams.tcp_rates[0] = 0
+            cparams.tcp_numlayers += 1
+            cparams.cp_disto_alloc = 1
 
         self._validate_compression_params(img_array, cparams, colorspace)
 

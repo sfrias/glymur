@@ -1479,11 +1479,7 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         with tempfile.NamedTemporaryFile(suffix='.j2k') as tfile:
 
-            with warnings.catch_warnings():
-                # suppress a library warning
-                warnings.simplefilter('ignore')
-
-                j = Jp2k(tfile.name, data=self.jp2_data, cratios=[50])
+            j = Jp2k(tfile.name, data=self.jp2_data, cratios=[50])
 
             codestream = j.get_codestream(header_only=False)
 

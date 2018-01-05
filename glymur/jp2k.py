@@ -428,7 +428,7 @@ class Jp2k(Jp2kBox):
         # Set defaults to lossless to begin.
         cparams.tcp_rates[0] = 0
         cparams.tcp_numlayers = 1
-        cparams.cp_disto_alloc = 1
+        cparams.cp_disto_alloc = 0
 
         cparams.irreversible = 1 if irreversible else 0
 

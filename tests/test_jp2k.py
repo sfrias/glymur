@@ -1135,10 +1135,7 @@ class TestJp2k_write(fixtures.MetadataBase):
             'psnr': [30, 35, 40, 0],
         }
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
-            with warnings.catch_warnings():
-                # OpenJPEG library warning about tcp rates in 2.3 and above
-                warnings.simplefilter('ignore')
-                j = Jp2k(tfile.name, **kwargs)
+            j = Jp2k(tfile.name, **kwargs)
 
             d = {}
             for layer in range(4):

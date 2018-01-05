@@ -1510,13 +1510,8 @@ class TestJp2k_write(fixtures.MetadataBase):
         """
         with tempfile.NamedTemporaryFile(suffix='.jp2') as tfile:
 
-            with warnings.catch_warnings():
-                # suppress a library warning
-                warnings.simplefilter('ignore')
-
-                jp2 = Jp2k(tfile.name,
-                           data=self.jp2_data,
-                           psnr=[30, 35, 50], prog='LRCP', numres=3)
+            jp2 = Jp2k(tfile.name, data=self.jp2_data, psnr=[30, 35, 50],
+                       prog='LRCP', numres=3)
 
             ids = [box.box_id for box in jp2.box]
             self.assertEqual(ids, ['jP  ', 'ftyp', 'jp2h', 'jp2c'])
